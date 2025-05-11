@@ -1,7 +1,7 @@
 // src/components/lesson-generator-form.tsx
 "use client";
 
-import type { ChildProfile, GeneratedLesson } from '@/types';
+import type { ChildProfile, GeneratedLesson, LessonAttempt } from '@/types';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,6 +16,7 @@ import { useState } from 'react';
 import LessonDisplay from './lesson-display';
 import { Loader2, Wand2, Smile, History, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 
 const lessonGenerationSchema = z.object({
   lessonTopic: z.string().min(3, "Please specify a lesson topic (min 3 characters).").max(100, "Topic too long (max 100 chars)."),
@@ -41,6 +42,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
   const { toast } = useToast();
   const [generatedLesson, setGeneratedLesson] = useState<GeneratedLesson | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { addLessonAttempt } = useChildProfilesContext();
 
   const handleFormSubmit: SubmitHandler<LessonGenerationFormData> = async (data) => {
     setIsLoading(true);
@@ -73,6 +75,30 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
       setIsLoading(false);
     }
   };
+
+  const handleQuizComplete = (attemptData: Omit<LessonAttempt, 'attemptId'>) => {
+    if (childProfile) {
+      addLessonAttempt(childProfile.id, attemptData);
+      toast({
+        title: "Quiz Finished!",
+        description: `Score: ${attemptData.quizScore}%. Results saved.`,
+      });
+    }
+    // If user chose "Skip" or "Continue", we might want to clear the lesson
+    // This is now handled by onRestartLesson which is called by LessonDisplay on skip/continue
+  };
+
+  const handleRestartLesson = () => {
+    setGeneratedLesson(null); 
+    setIsLoading(false); 
+    // Optionally reset form fields if needed, or show a message
+    // form.resetField("lessonTopic"); // Example if you want to clear topic too
+    toast({
+        title: "Ready for a new Lesson",
+        description: "The previous lesson view has been cleared. Generate a new one or select a different topic."
+    });
+  };
+
 
   return (
     <div className="space-y-8">
@@ -171,13 +197,18 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
         </div>
       )}
 
-      {generatedLesson && (
+      {generatedLesson && !isLoading && ( // Ensure not loading when displaying lesson
         <div className="mt-10">
             <h2 className="text-2xl font-semibold mb-4 text-center text-primary">Generated Lesson Preview</h2>
-            <LessonDisplay lesson={generatedLesson} childProfile={childProfile} />
+            <LessonDisplay 
+                lesson={generatedLesson} 
+                childProfile={childProfile}
+                lessonTopic={form.getValues("lessonTopic")}
+                onQuizComplete={handleQuizComplete}
+                onRestartLesson={handleRestartLesson}
+            />
         </div>
       )}
     </div>
   );
 }
-

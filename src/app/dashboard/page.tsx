@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
-import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles } from 'lucide-react';
+import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon } from 'lucide-react';
 import Image from 'next/image';
+import { format } from 'date-fns';
 
 export default function DashboardOverviewPage() {
   const { profiles } = useChildProfilesContext();
@@ -64,6 +65,52 @@ export default function DashboardOverviewPage() {
           )}
         </CardContent>
       </Card>
+
+      {activeChild && activeChild.lessonAttempts && activeChild.lessonAttempts.length > 0 && (
+        <Card className="mt-6 shadow-md">
+          <CardHeader>
+            <CardTitle className="text-xl text-primary flex items-center gap-2">
+              <HistoryIcon className="h-6 w-6" /> Recent Activity for {activeChild.name}
+            </CardTitle>
+            <CardDescription>Overview of recent lessons and quiz attempts.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {activeChild.lessonAttempts.slice(-3).reverse().map(attempt => (
+                <li key={attempt.attemptId} className="p-3 border rounded-md bg-card hover:shadow-sm transition-shadow">
+                  <div className="flex justify-between items-start">
+                    <div>
+                        <h3 className="font-semibold text-foreground">{attempt.lessonTitle}</h3>
+                        <p className="text-sm text-muted-foreground">Topic: {attempt.lessonTopic}</p>
+                    </div>
+                    <span className={`font-bold text-lg ${attempt.quizScore >= 60 ? 'text-green-600' : 'text-destructive'}`}>
+                      {attempt.quizScore}%
+                    </span>
+                  </div>
+                  {attempt.quizTotalQuestions > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Score: {attempt.questionsAnsweredCorrectly}/{attempt.quizTotalQuestions} correct
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Taken: {format(new Date(attempt.timestamp), "MMM d, yyyy 'at' h:mm a")}
+                  </p>
+                  {attempt.choseToRelearn && (
+                    <p className="text-xs text-amber-700 dark:text-amber-500 mt-1 font-medium">Chose to relearn this topic.</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {activeChild.lessonAttempts.length > 3 && (
+              <div className="text-center mt-4">
+                <Button variant="link" asChild>
+                    <Link href="#">View all activity (coming soon)</Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <FeatureCard

@@ -1,7 +1,7 @@
 // src/hooks/use-child-profiles.ts
 "use client";
 
-import type { ChildProfile } from '@/types';
+import type { ChildProfile, LessonAttempt } from '@/types';
 import { useLocalStorage } from './use-local-storage';
 import { v4 as uuidv4 } from 'uuid';
 import { useCallback } from 'react';
@@ -11,15 +11,19 @@ const CHILD_PROFILES_STORAGE_KEY = 'learnforward-child-profiles';
 export function useChildProfiles() {
   const [profiles, setProfiles] = useLocalStorage<ChildProfile[]>(CHILD_PROFILES_STORAGE_KEY, []);
 
-  const addProfile = useCallback((profileData: Omit<ChildProfile, 'id'>) => {
-    const newProfile: ChildProfile = { ...profileData, id: uuidv4() };
+  const addProfile = useCallback((profileData: Omit<ChildProfile, 'id' | 'lessonAttempts'>) => {
+    const newProfile: ChildProfile = { 
+      ...profileData, 
+      id: uuidv4(),
+      lessonAttempts: [] 
+    };
     setProfiles(prevProfiles => [...prevProfiles, newProfile]);
     return newProfile;
   }, [setProfiles]);
 
   const updateProfile = useCallback((updatedProfile: ChildProfile) => {
     setProfiles(prevProfiles =>
-      prevProfiles.map(p => (p.id === updatedProfile.id ? updatedProfile : p))
+      prevProfiles.map(p => (p.id === updatedProfile.id ? { ...p, ...updatedProfile, lessonAttempts: updatedProfile.lessonAttempts || p.lessonAttempts || [] } : p))
     );
   }, [setProfiles]);
 
@@ -31,11 +35,28 @@ export function useChildProfiles() {
     return profiles.find(p => p.id === profileId);
   }, [profiles]);
 
+  const addLessonAttempt = useCallback((childId: string, attemptData: Omit<LessonAttempt, 'attemptId'>) => {
+    setProfiles(prevProfiles => 
+      prevProfiles.map(profile => {
+        if (profile.id === childId) {
+          const newAttempt: LessonAttempt = {
+            ...attemptData,
+            attemptId: uuidv4(),
+          };
+          const updatedAttempts = [...(profile.lessonAttempts || []), newAttempt];
+          return { ...profile, lessonAttempts: updatedAttempts };
+        }
+        return profile;
+      })
+    );
+  }, [setProfiles]);
+
   return {
     profiles,
     addProfile,
     updateProfile,
     deleteProfile,
     getProfileById,
+    addLessonAttempt,
   };
 }

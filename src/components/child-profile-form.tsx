@@ -23,9 +23,12 @@ const profileSchema = z.object({
   language: z.string().min(2, { message: "Language code required (e.g., en, es)." }),
   curriculum: z.string().min(3, { message: "Curriculum details required." }),
   interests: z.string().optional(),
+  // recentMood and lessonHistory are not part of this form, managed elsewhere or contextually
 });
 
-type ProfileFormData = z.infer<typeof profileSchema>;
+// This FormData is for creating/editing the core profile, not including attempts.
+type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'recentMood' | 'lessonHistory'>;
+
 
 interface ChildProfileFormProps {
   profile?: ChildProfile; // For editing
@@ -51,7 +54,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
 
   const handleFormSubmit: SubmitHandler<ProfileFormData> = (data) => {
     onSubmit(data);
-    if (!isEditing) { // Reset form only if creating new profile
+    if (!isEditing) { 
       form.reset();
     }
   };
