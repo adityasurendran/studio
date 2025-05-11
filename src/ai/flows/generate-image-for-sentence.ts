@@ -47,7 +47,7 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
       if (input.interests) {
         promptText += ` Consider incorporating elements related to these interests: ${input.interests}.`;
       }
-      promptText += ` Focus on a clear, imaginative, and engaging visual that complements the learning material without directly showing any written language.`;
+      promptText += ` Focus on a clear, imaginative, and engaging visual that complements the learning material without directly showing any written language. The final image must be purely pictorial and contain no form of letters, numbers, or symbols that constitute text. Absolutely no text.`;
 
 
       const { media } = await ai.generate({

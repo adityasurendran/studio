@@ -8,9 +8,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send } from 'lucide-react';
+import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface LessonDisplayProps {
   lesson: GeneratedLesson;
@@ -27,6 +27,21 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [quizScore, setQuizScore] = useState(0);
   const [answeredCorrectly, setAnsweredCorrectly] = useState(0);
+  const [showExplanationForQuestionIndex, setShowExplanationForQuestionIndex] = useState<number | null>(null);
+  const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(new Set());
+
+
+  useEffect(() => {
+    // Reset quiz state if lesson changes (e.g., new lesson generated)
+    setView('lesson');
+    setCurrentPageIndex(0);
+    setCurrentQuestionIndex(0);
+    setSelectedAnswers({});
+    setQuizScore(0);
+    setAnsweredCorrectly(0);
+    setShowExplanationForQuestionIndex(null);
+    setAttemptedQuestions(new Set());
+  }, [lesson]);
 
   const themeClass = childProfile?.theme === 'dark' ? 'dark-theme-lesson' : 
                      childProfile?.theme === 'colorful' ? 'colorful-theme-lesson' :
@@ -55,7 +70,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
             questionsAnsweredCorrectly: 0,
             timestamp: new Date().toISOString() 
         }); 
-        setView('results'); // Show a completion message even if no quiz
+        setView('results'); 
       }
     }
   };
@@ -68,17 +83,47 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
 
   const handleAnswerSelection = (questionIdx: number, optionIdx: number) => {
     setSelectedAnswers(prev => ({ ...prev, [questionIdx]: optionIdx }));
+    // If showing explanation, selecting an answer implies trying again, so hide explanation
+    if (showExplanationForQuestionIndex === questionIdx) {
+      setShowExplanationForQuestionIndex(null);
+    }
   };
 
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < totalQuizQuestions - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+  const handleSubmitAnswer = () => {
+    if (currentQuizQuestion === undefined || selectedAnswers[currentQuestionIndex] === undefined) return;
+
+    const isCorrect = selectedAnswers[currentQuestionIndex] === currentQuizQuestion.correctAnswerIndex;
+    
+    if (isCorrect) {
+      setShowExplanationForQuestionIndex(null); // Ensure no explanation shown for correct answers
+      setAttemptedQuestions(prev => new Set(prev).add(currentQuestionIndex)); // Mark as attempted (and correct)
+      advanceToNextQuestionOrSubmit();
     } else {
-      handleSubmitQuiz();
+      // Incorrect answer, show explanation
+      setShowExplanationForQuestionIndex(currentQuestionIndex);
+      // Don't advance, user needs to click "Try Again" or "Continue"
     }
   };
   
-  const handleSubmitQuiz = () => {
+  const handleTryAgainOrContinueFromExplanation = () => {
+    if (showExplanationForQuestionIndex !== null) {
+      // Clear selected answer for the current question to force re-selection
+      const { [showExplanationForQuestionIndex]: _, ...rest } = selectedAnswers;
+      setSelectedAnswers(rest);
+      setShowExplanationForQuestionIndex(null); // Hide explanation, user will re-attempt
+      // Question remains the same (currentQuestionIndex is not changed yet)
+    }
+  };
+
+  const advanceToNextQuestionOrSubmit = () => {
+    if (currentQuestionIndex < totalQuizQuestions - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      finalizeQuiz();
+    }
+  };
+  
+  const finalizeQuiz = () => {
     let correctAnswersCount = 0;
     lesson.quiz.forEach((q, idx) => {
       if (selectedAnswers[idx] === q.correctAnswerIndex) {
@@ -106,6 +151,8 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     setSelectedAnswers({});
     setQuizScore(0);
     setAnsweredCorrectly(0);
+    setShowExplanationForQuestionIndex(null);
+    setAttemptedQuestions(new Set());
     onRestartLesson(); 
   };
 
@@ -123,7 +170,6 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   }
 
   const handleUserChoseToSkipOrContinue = () => {
-    // Report quiz completion again, this time with choseToRelearn explicitly false if it wasn't set.
      onQuizComplete({ 
       lessonTitle: lesson.lessonTitle,
       lessonTopic: lessonTopic, 
@@ -133,13 +179,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
       timestamp: new Date().toISOString(),
       choseToRelearn: false, 
     });
-     // This should ideally navigate away or signal parent to clear lesson
-     // For now, reset to a neutral state, parent form can handle full clear
-    setView('lesson'); 
-    setCurrentPageIndex(0); 
-    setCurrentQuestionIndex(0);
-    setSelectedAnswers({});
-    onRestartLesson(); // Signal parent to reset its state (e.g. clear generatedLesson)
+    handleRestartLessonInternal();
   }
 
 
@@ -207,6 +247,9 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   }
 
   if (view === 'quiz' && currentQuizQuestion) {
+    const isExplanationVisible = showExplanationForQuestionIndex === currentQuestionIndex;
+    const hasSelectedAnswer = selectedAnswers[currentQuestionIndex] !== undefined;
+
     return (
       <Card className={cn("w-full shadow-xl", themeClass)}>
         <CardHeader>
@@ -220,28 +263,54 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
             value={selectedAnswers[currentQuestionIndex]?.toString()}
             onValueChange={(value) => handleAnswerSelection(currentQuestionIndex, parseInt(value))}
             className="space-y-2"
+            disabled={isExplanationVisible} // Disable options when showing explanation
           >
             {currentQuizQuestion.options.map((option, idx) => (
-              <div key={idx} className="flex items-center space-x-2 p-3 border rounded-md hover:bg-muted/50 transition-colors cursor-pointer has-[input:checked]:bg-secondary has-[input:checked]:border-primary">
-                <RadioGroupItem value={idx.toString()} id={`q${currentQuestionIndex}-opt${idx}`} />
+              <div 
+                key={idx} 
+                className={cn(
+                  "flex items-center space-x-2 p-3 border rounded-md hover:bg-muted/50 transition-colors cursor-pointer has-[input:checked]:bg-secondary has-[input:checked]:border-primary",
+                  isExplanationVisible && selectedAnswers[currentQuestionIndex] === idx && selectedAnswers[currentQuestionIndex] !== currentQuizQuestion.correctAnswerIndex && "bg-destructive/20 border-destructive", // Highlight incorrect selection
+                  isExplanationVisible && idx === currentQuizQuestion.correctAnswerIndex && "bg-green-500/20 border-green-600" // Highlight correct answer
+                )}
+              >
+                <RadioGroupItem value={idx.toString()} id={`q${currentQuestionIndex}-opt${idx}`} disabled={isExplanationVisible} />
                 <Label htmlFor={`q${currentQuestionIndex}-opt${idx}`} className="flex-1 cursor-pointer text-base">{option}</Label>
+                {isExplanationVisible && selectedAnswers[currentQuestionIndex] === idx && selectedAnswers[currentQuestionIndex] !== currentQuizQuestion.correctAnswerIndex && <X className="h-5 w-5 text-destructive" />}
+                {isExplanationVisible && idx === currentQuizQuestion.correctAnswerIndex && <Check className="h-5 w-5 text-green-600" />}
               </div>
             ))}
           </RadioGroup>
-          {currentQuizQuestion.explanation && selectedAnswers[currentQuestionIndex] !== undefined && view === 'results' && (
-            <p className="text-sm text-muted-foreground mt-2 p-2 bg-muted/30 rounded-md">
-                <strong>Explanation:</strong> {currentQuizQuestion.explanation}
-            </p>
+
+          {isExplanationVisible && (
+            <div className="mt-4 p-4 bg-blue-100 dark:bg-blue-900 border border-blue-300 dark:border-blue-700 rounded-md shadow">
+              <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-300 mb-2 flex items-center">
+                <HelpCircle className="h-5 w-5 mr-2"/> Let's understand this!
+              </h3>
+              <p className="text-sm text-blue-600 dark:text-blue-200 mb-1">
+                The correct answer is: <strong>{currentQuizQuestion.options[currentQuizQuestion.correctAnswerIndex]}</strong>
+              </p>
+              <p className="text-sm text-blue-600 dark:text-blue-200">
+                {currentQuizQuestion.explanation}
+              </p>
+            </div>
           )}
         </CardContent>
         <CardFooter className="flex justify-end p-4 border-t">
-          <Button onClick={handleNextQuestion} disabled={selectedAnswers[currentQuestionIndex] === undefined} size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-            {currentQuestionIndex === totalQuizQuestions - 1 ? 'Submit Quiz' : 'Next Question'} <Send className="ml-2 h-4 w-4" />
-          </Button>
+          {isExplanationVisible ? (
+             <Button onClick={handleTryAgainOrContinueFromExplanation} size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                Try Again <RotateCcw className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button onClick={handleSubmitAnswer} disabled={!hasSelectedAnswer} size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
+              {currentQuestionIndex === totalQuizQuestions - 1 && attemptedQuestions.size === totalQuizQuestions -1 ? 'Submit Quiz' : 'Check Answer'} <Send className="ml-2 h-4 w-4" />
+            </Button>
+          )}
         </CardFooter>
       </Card>
     );
   }
+
 
   if (view === 'results') {
     const isSuccess = quizScore >= 60;
@@ -281,7 +350,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
           )}
           {(isSuccess || totalQuizQuestions === 0) && (
              <Button onClick={handleUserChoseToSkipOrContinue} variant="default" size="lg" className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90">
-                Continue to Next
+                Finish Lesson
             </Button>
           )}
         </CardContent>

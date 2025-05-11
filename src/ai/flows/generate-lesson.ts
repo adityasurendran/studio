@@ -17,7 +17,7 @@ const QuizQuestionSchema = z.object({
   questionText: z.string().describe("The text of the quiz question."),
   options: z.array(z.string()).min(2).max(4).describe("An array of 2 to 4 answer options."),
   correctAnswerIndex: z.number().int().min(0).describe("The 0-based index of the correct answer in the 'options' array."),
-  explanation: z.string().optional().describe("A brief explanation for why the correct answer is right, especially if the question is tricky."),
+  explanation: z.string().describe("A brief, child-friendly explanation for why the correct answer is right, and potentially why other common distractors are wrong. This explanation will be shown if the child answers incorrectly."),
 });
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
 
@@ -55,7 +55,7 @@ const generateLessonPrompt = ai.definePrompt({
     lessonContent: z.array(z.string()).describe('The content of the generated lesson, as an array of individual, concise sentences. Each sentence will be displayed on a separate screen or in pairs.'),
     lessonFormat: z.string().describe('The format of the lesson (e.g., story, quiz, activity, informational).'),
     subject: z.string().describe('The subject of the lesson (e.g. Math, English, Science).'),
-    quiz: z.array(QuizQuestionSchema).describe('An array of 3-5 multiple-choice quiz questions, with 2-4 options each, based on the lesson content. Ensure questions are appropriate for the child\'s age and curriculum.'),
+    quiz: z.array(QuizQuestionSchema).describe('An array of 3-5 multiple-choice quiz questions, with 2-4 options each, based on the lesson content. Ensure questions are appropriate for the child\'s age and curriculum. Each question MUST include a child-friendly explanation.'),
   })},
   prompt: `You are an AI assistant specializing in creating educational content for children, including those with learning difficulties. Your task is to generate a detailed and informative lesson AND a short quiz based on that lesson.
 
@@ -74,20 +74,21 @@ const generateLessonPrompt = ai.definePrompt({
     - "questionText": string (The question itself)
     - "options": string[] (An array of 2 to 4 answer choices)
     - "correctAnswerIndex": number (The 0-based index of the correct answer within the "options" array)
-    - "explanation": string (Optional: A brief explanation for the correct answer, especially for complex questions)
+    - "explanation": string (MANDATORY: A brief, child-friendly explanation for why the correct answer is right and, if applicable, why common distractors might be incorrect. This explanation will be shown to the child if they answer incorrectly.)
 
   IMPORTANT:
-  1.  Educational Depth: The lesson must be sufficiently informative and educational for a child of {{{childAge}}} following the {{{curriculum}}} curriculum. It should not be overly simplistic if the age and curriculum suggest more complex understanding. The quiz should reflect this depth.
+  1.  Educational Depth & Curriculum Alignment: The lesson MUST be sufficiently informative and educational for a child of {{{childAge}}} following the {{{curriculum}}} curriculum for the specified {{{lessonTopic}}}. It should not be overly simplistic. The language, concepts, and examples used must be appropriate for the age and curriculum. The quiz questions must also reflect this depth and curriculum alignment.
   2.  Lesson Content: 'lessonContent' MUST be a JSON array of strings. Each string should be a single, complete, and concise sentence. These sentences will be paired with images.
-  3.  Sentence Count: Generate a substantial lesson with AT LEAST 25-35 sentences.
+  3.  Sentence Count: Generate a substantial lesson with AT LEAST 25-35 sentences to ensure comprehensive coverage of the {{{lessonTopic}}}. For a 10-year-old on a CBSE curriculum, this count is critical for adequate depth.
   4.  Quiz Quality:
       - Generate 3-5 unique multiple-choice questions.
       - Each question must have between 2 and 4 plausible answer options.
       - Ensure one option is clearly correct based on the lesson content.
       - Questions should directly assess understanding of the material taught in 'lessonContent'.
       - Vary question difficulty appropriately for the child's age and curriculum.
-  5.  Relevance: All content (lesson and quiz) MUST directly relate to teaching the 'Lesson Topic': {{{lessonTopic}}} in a manner consistent with the specified 'Curriculum Focus'.
-  6.  Tone: Maintain an encouraging and child-friendly tone throughout the lesson and quiz.
+      - EACH quiz question MUST have an "explanation" field, as described above.
+  5.  Relevance: All content (lesson and quiz) MUST directly relate to teaching the 'Lesson Topic': {{{lessonTopic}}} in a manner consistent with the specified 'Curriculum Focus' ({{{curriculum}}}) and 'Child Age' ({{{childAge}}}).
+  6.  Tone: Maintain an encouraging, positive, and child-friendly tone throughout the lesson and quiz.
 
   Example (If lesson topic is "The Water Cycle", age is 10, curriculum is "CBSE Grade 5 Environmental Science"):
   {
@@ -127,24 +128,24 @@ const generateLessonPrompt = ai.definePrompt({
         "questionText": "What are the three main states of water discussed in the lesson?",
         "options": ["Solid, Liquid, Air", "Ice, Rain, Cloud", "Solid, Liquid, Gas", "Vapor, Mist, Dew"],
         "correctAnswerIndex": 2,
-        "explanation": "Water exists as a solid (like ice), a liquid (like in rivers), and a gas (like water vapor)."
+        "explanation": "Water exists as a solid (like ice, snow), a liquid (like the water we drink or in rivers), and a gas (like water vapor, which is invisible steam in the air). These are the three fundamental states of matter water takes on Earth."
       },
       {
         "questionText": "What is the process called when the sun's heat turns water into water vapor?",
         "options": ["Condensation", "Precipitation", "Evaporation", "Infiltration"],
         "correctAnswerIndex": 2,
-        "explanation": "Evaporation is when liquid water heats up and becomes water vapor, rising into the atmosphere."
+        "explanation": "Evaporation is when liquid water gets enough energy, usually from the sun, to turn into a gas called water vapor and rise into the air. Think of a puddle drying up on a sunny day!"
       },
       {
         "questionText": "Which human activity can negatively impact the water cycle?",
         "options": ["Planting trees", "Conserving water", "Deforestation", "Building reservoirs"],
         "correctAnswerIndex": 2,
-        "explanation": "Deforestation, the cutting down of forests, can disrupt the water cycle by reducing transpiration and increasing runoff."
+        "explanation": "Deforestation, which is cutting down large numbers of trees, can harm the water cycle. Trees help release water vapor (transpiration) and their roots help water soak into the ground. Without them, there can be less rain and more runoff."
       }
     ]
   }
 
-  Please respond ONLY in JSON format matching this structure.
+  Please respond ONLY in JSON format matching this structure. Ensure all quiz questions have an explanation.
   `,
 });
 
@@ -218,9 +219,9 @@ const generateTailoredLessonsFlow = ai.defineFlow(
       const resolvedLessonPages = await Promise.all(imageGenerationPromises);
 
       let quiz = textAndQuizOutput.quiz;
-      if (!Array.isArray(quiz) || !quiz.every(q => q && typeof q.questionText === 'string' && Array.isArray(q.options) && typeof q.correctAnswerIndex === 'number')) {
-        console.warn("Generated quiz data is not in the expected format or is missing. Using an empty quiz. Received:", quiz);
-        quiz = [];
+      if (!Array.isArray(quiz) || !quiz.every(q => q && typeof q.questionText === 'string' && Array.isArray(q.options) && typeof q.correctAnswerIndex === 'number' && typeof q.explanation === 'string')) {
+        console.warn("Generated quiz data is not in the expected format or is missing explanations. Using an empty quiz. Received:", quiz);
+        quiz = []; // Default to empty quiz if format is incorrect or explanations are missing
       }
 
 
@@ -268,9 +269,11 @@ export async function generateTailoredLessons(input: GenerateTailoredLessonsInpu
 
 function cleanSentence(sentence: string): string {
     let cleaned = sentence.trim();
+    // Ensure sentence ends with punctuation, but don't add if it already has one of . ! ?
     if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
         cleaned += '.';
     }
+    // Capitalize first letter if it's not already
     if (cleaned.length > 0 && cleaned[0] !== cleaned[0].toUpperCase()) {
         cleaned = cleaned[0].toUpperCase() + cleaned.substring(1);
     }
