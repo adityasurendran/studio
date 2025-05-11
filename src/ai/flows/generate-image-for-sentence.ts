@@ -10,14 +10,14 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const GenerateImageInputSchema = z.object({
+const GenerateImageInputSchema = z.object({
   sentence: z.string().describe('The sentence to generate an image for.'),
   childAge: z.number().optional().describe('Optional age of the child to tailor image style.'),
   interests: z.string().optional().describe('Optional interests of the child to tailor image style.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
-export const GenerateImageOutputSchema = z.object({
+const GenerateImageOutputSchema = z.object({
   imageDataUri: z.string().describe("The generated image as a data URI. Format: 'data:image/png;base64,<encoded_data>'."),
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
@@ -67,3 +67,4 @@ const generateImageForSentenceFlow = ai.defineFlow(
     return { imageDataUri: media.url };
   }
 );
+
