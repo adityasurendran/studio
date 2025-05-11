@@ -1,3 +1,4 @@
+
 // src/ai/flows/generate-lesson.ts
 'use server';
 
@@ -5,6 +6,7 @@
  * @fileOverview This file contains the Genkit flow for generating tailored lessons for children.
  *
  * It takes child profile data, recent mood, and lesson history as input and uses the Gemini API to generate a lesson.
+ * The lesson content is provided as an array of sentences.
  * @fileOverview Defines the GenerateTailoredLessons flow for creating personalized lessons.
  * - generateTailoredLessons - A function that generates tailored lessons based on child's profile.
  * - GenerateTailoredLessonsInput - The input type for the generateTailoredLessons function.
@@ -26,8 +28,8 @@ export type GenerateTailoredLessonsInput = z.infer<typeof GenerateTailoredLesson
 
 const GenerateTailoredLessonsOutputSchema = z.object({
   lessonTitle: z.string().describe('The title of the generated lesson.'),
-  lessonContent: z.string().describe('The content of the generated lesson.'),
-  lessonFormat: z.string().describe('The format of the lesson (e.g., text, video, interactive).'),
+  lessonContent: z.array(z.string()).describe('The content of the generated lesson, as an array of individual, concise sentences. Each sentence will be displayed on a separate screen.'),
+  lessonFormat: z.string().describe('The format of the lesson (e.g., story, quiz, activity).'),
   subject: z.string().describe('The subject of the lesson (e.g. Math, English, Science).'),
 });
 export type GenerateTailoredLessonsOutput = z.infer<typeof GenerateTailoredLessonsOutputSchema>;
@@ -52,6 +54,10 @@ const generateLessonPrompt = ai.definePrompt({
   Lesson History: {{{lessonHistory}}}
 
   The lesson should have a title, content, format, and subject.
+  
+  IMPORTANT: The 'lessonContent' field MUST be a JSON array of strings, where each string is a single, complete sentence.
+  Ensure sentences are concise and short, suitable for display on a single screen with an accompanying image.
+  For example: "lessonContent": ["This is the first sentence.", "The cat sat on the mat.", "What color is the cat?"]
 
   Please respond in JSON format.
   `,
@@ -65,6 +71,21 @@ const generateTailoredLessonsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await generateLessonPrompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("Failed to generate lesson. Output was null.");
+    }
+    // Ensure lessonContent is an array, even if the AI messed up.
+    if (typeof output.lessonContent === 'string') {
+        // Attempt to split a string into sentences as a fallback, though the prompt requests an array.
+        // This is a basic split and might not be perfect for all languages or complex sentences.
+        const contentString = output.lessonContent as string;
+        output.lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
+    } else if (!Array.isArray(output.lessonContent)) {
+        // If it's not a string and not an array, this is unexpected.
+        console.warn("Lesson content was not a string or array, defaulting to single sentence:", output.lessonContent);
+        output.lessonContent = [String(output.lessonContent)];
+    }
+    return output;
   }
 );
+

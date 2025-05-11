@@ -1,3 +1,4 @@
+
 export interface ChildProfile {
   id: string; // UUID
   name: string;
@@ -14,7 +15,7 @@ export interface ChildProfile {
 
 export interface GeneratedLesson {
   lessonTitle: string;
-  lessonContent: string;
+  lessonContent: string[]; // Changed from string to string[]
   lessonFormat: string; 
   subject: string;
 }
@@ -25,3 +26,4 @@ export interface ParentProfile {
   username?: string;
   // Other parent-specific fields
 }
+
