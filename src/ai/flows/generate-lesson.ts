@@ -1,4 +1,3 @@
-
 // src/ai/flows/generate-lesson.ts
 'use server';
 
@@ -88,9 +87,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
       }
 
       let lessonContent = textOutput.lessonContent;
-      // Defensive parsing for lessonContent, though Zod schema should handle this.
       if (typeof lessonContent === 'string') {
-          // Attempt to split a string into sentences if accidentally returned as such.
           const contentString = lessonContent as string;
           lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
       } else if (!Array.isArray(lessonContent)) {
@@ -117,8 +114,6 @@ const generateTailoredLessonsFlow = ai.defineFlow(
           imageDataUri = imageResult.imageDataUri;
         } catch (imgErr: any) {
           console.error(`Failed to generate image for sentences: "${pageSentences.join(' ')}"`, imgErr);
-          // Image generation is not critical for the lesson to proceed; imageDataUri remains null.
-          // We don't re-throw here to allow the rest of the lesson to be generated.
         }
         lessonPages.push({ sentences: pageSentences, imageDataUri });
       }
@@ -132,15 +127,24 @@ const generateTailoredLessonsFlow = ai.defineFlow(
     } catch (error: any) {
       console.error("[generateTailoredLessonsFlow] Error during lesson generation:", error);
       let errorMessage = "Lesson generation failed due to an internal server error.";
-      if (error.message) {
-        errorMessage = error.message;
+
+      if (error && error.message) {
+        errorMessage = String(error.message);
+      } else if (error && error.details) { // Attempt to capture more specific error details
+        errorMessage = String(error.details);
       } else if (typeof error === 'string') {
         errorMessage = error;
+      } else {
+         try {
+          errorMessage = `Lesson generation failed with an unstringifiable error object. Raw error: ${JSON.stringify(error)}`;
+        } catch (e) {
+          errorMessage = "Lesson generation failed due to an unstringifiable error object and the error object itself could not be stringified.";
+        }
       }
-      // Check for specific API key related error messages from either text or image generation if it bubbles up
-      const errorString = String(error).toLowerCase();
-      if (errorString.includes("api key") || errorString.includes("permission denied") || errorString.includes("authentication")) {
-         errorMessage = "Lesson generation failed: There might be an issue with the Google AI API Key configuration. Please contact support or check server logs.";
+      
+      const errorString = errorMessage.toLowerCase();
+      if (errorString.includes("api key") || errorString.includes("permission denied") || errorString.includes("authentication") || errorString.includes("quota") || errorString.includes("billing")) {
+         errorMessage = `Lesson generation failed: There might be an issue with the Google AI API Key configuration, permissions, or billing. Please check server logs and your Google Cloud/AI Studio project. Original error: ${errorMessage}`;
       }
       throw new Error(errorMessage);
     }

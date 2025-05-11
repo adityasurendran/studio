@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Generates an image for a given sentence or pair of sentences using an AI model.
@@ -66,15 +65,24 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
     } catch (error: any) {
       console.error("[generateImageForSentenceFlowInternal] Error during image generation:", error);
       let errorMessage = "Image generation failed due to an internal server error.";
-      if (error.message) {
-        errorMessage = error.message;
+
+      if (error && error.message) {
+        errorMessage = String(error.message);
+      } else if (error && error.details) { // Attempt to capture more specific error details
+        errorMessage = String(error.details);
       } else if (typeof error === 'string') {
         errorMessage = error;
+      } else {
+        try {
+          errorMessage = `Image generation failed with an unstringifiable error object. Raw error: ${JSON.stringify(error)}`;
+        } catch (e) {
+          errorMessage = "Image generation failed due to an unstringifiable error object and the error object itself could not be stringified.";
+        }
       }
-      // Check for specific API key related error messages
-      const errorString = String(error).toLowerCase();
-      if (errorString.includes("api key") || errorString.includes("permission denied") || errorString.includes("authentication")) {
-         errorMessage = "Image generation failed: There might be an issue with the Google AI API Key configuration. Please contact support or check server logs.";
+      
+      const errorString = errorMessage.toLowerCase();
+      if (errorString.includes("api key") || errorString.includes("permission denied") || errorString.includes("authentication") || errorString.includes("quota") || errorString.includes("billing")) {
+         errorMessage = `Image generation failed: There might be an issue with the Google AI API Key configuration, permissions, or billing. Please check server logs and your Google Cloud/AI Studio project. Original error: ${errorMessage}`;
       }
       throw new Error(errorMessage);
     }
