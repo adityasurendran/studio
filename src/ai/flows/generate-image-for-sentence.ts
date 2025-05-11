@@ -25,7 +25,7 @@ export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 // This is the internal flow function. The exported wrapper will call this.
 const generateImageForSentenceFlowInternal = ai.defineFlow(
   {
-    name: 'generateImageForSentenceFlowInternal', // Renamed to avoid conflict if we keep the wrapper name same
+    name: 'generateImageForSentenceFlowInternal',
     inputSchema: GenerateImageInputSchema,
     outputSchema: GenerateImageOutputSchema,
     config: {
@@ -38,30 +38,46 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
     }
   },
   async (input) => {
-    const combinedSentences = input.sentences.join(' ');
-    let promptText = `Generate a child-friendly, simple, and colorful illustration suitable for a learning app. The illustration should visually represent the following text: "${combinedSentences}"`;
-    
-    if (input.childAge) {
-      promptText += ` The style should be appropriate for a ${input.childAge}-year-old child.`;
-    }
-    if (input.interests) {
-      promptText += ` Consider incorporating elements related to these interests: ${input.interests}.`;
-    }
+    try {
+      const combinedSentences = input.sentences.join(' ');
+      let promptText = `Generate a child-friendly, simple, and colorful illustration suitable for a learning app. The illustration should visually represent the following text: "${combinedSentences}"`;
+      
+      if (input.childAge) {
+        promptText += ` The style should be appropriate for a ${input.childAge}-year-old child.`;
+      }
+      if (input.interests) {
+        promptText += ` Consider incorporating elements related to these interests: ${input.interests}.`;
+      }
 
-    const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-exp', 
-      prompt: promptText,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-    });
+      const { media } = await ai.generate({
+        model: 'googleai/gemini-2.0-flash-exp', 
+        prompt: promptText,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      });
 
-    if (!media || !media.url) {
-      console.error('Image generation failed or no image URL was returned for sentences:', input.sentences.join(' '), 'Response media:', media);
-      throw new Error('Image generation failed: No image data received from the model.');
+      if (!media || !media.url) {
+        console.error('Image generation failed or no image URL was returned for sentences:', input.sentences.join(' '), 'Response media:', media);
+        throw new Error('Image generation failed: No image data received from the model.');
+      }
+      
+      return { imageDataUri: media.url };
+    } catch (error: any) {
+      console.error("[generateImageForSentenceFlowInternal] Error during image generation:", error);
+      let errorMessage = "Image generation failed due to an internal server error.";
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      // Check for specific API key related error messages
+      const errorString = String(error).toLowerCase();
+      if (errorString.includes("api key") || errorString.includes("permission denied") || errorString.includes("authentication")) {
+         errorMessage = "Image generation failed: There might be an issue with the Google AI API Key configuration. Please contact support or check server logs.";
+      }
+      throw new Error(errorMessage);
     }
-    
-    return { imageDataUri: media.url };
   }
 );
 

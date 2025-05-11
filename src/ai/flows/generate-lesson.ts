@@ -50,7 +50,7 @@ const generateLessonPrompt = ai.definePrompt({
   prompt: `You are an AI assistant designed to create tailored lessons for children with learning difficulties.
 
   Based on the following information about the child, generate a lesson that is engaging and effective.
-  The lesson should be primarily focused on the 'Lesson Topic' provided. If 'Lesson Topic' is general or not very specific, use 'Curriculum Focus' and 'Interests' to enrich the content and make it engaging.
+  The lesson should be primarily focused on the 'Lesson Topic' provided. Use 'Curriculum Focus', 'Interests', and 'Child Age' to make the content age-appropriate, engaging, and aligned with their learning path.
 
   Child Name: {{{childName}}}
   Child Age: {{{childAge}}}
@@ -65,8 +65,10 @@ const generateLessonPrompt = ai.definePrompt({
   
   IMPORTANT: The 'lessonContent' field MUST be a JSON array of strings, where each string is a single, complete, and concise sentence.
   These sentences will be grouped into pairs (or a single sentence if it's the last one and the total is odd) for display with an accompanying image.
-  Generate at least 20-30 sentences for a comprehensive lesson. Ensure sentences are short, simple, and appropriate for the child's age and learning difficulties.
-  For example: "lessonContent": ["The sun is a star.", "It is very big and hot.", "The sun gives us light.", "It also gives us warmth.", "Plants use sunlight to grow.", "Animals need the sun too.", "The Earth travels around the sun.", "This journey takes one year.", "Sunlight helps us see during the day.", "It makes shadows on the ground.", "Sometimes clouds cover the sun.", "But it is still there, high above.", "We should not look directly at the sun.", "It can hurt our eyes.", "Sunscreen protects our skin from the sun.", "The sun rises in the east.", "It sets in the west.", "Many stories are told about the sun.", "It is a very important star for us.", "Let's learn more about our amazing sun!"]
+  Generate AT LEAST 20-30 sentences to create a comprehensive lesson. Ensure sentences are short, simple, and appropriate for the child's age ({{{childAge}}}) and learning difficulties.
+  The lesson MUST directly address and teach the 'Lesson Topic': {{{lessonTopic}}}.
+
+  For example, if lesson topic is "The Water Cycle": "lessonContent": ["Water is all around us.", "It can be a liquid, like in a lake.", "It can be a solid, like ice.", "It can be a gas, like steam.", "This is called the water cycle.", "The sun heats up water in rivers and lakes.", "The water turns into vapor, an invisible gas.", "This is called evaporation.", "The vapor rises into the sky.", "Up high, the vapor cools down.", "It turns back into tiny water droplets.", "This is called condensation.", "These droplets form clouds.", "When clouds get heavy, water falls back to Earth.", "This can be rain, snow, or hail.", "This is called precipitation.", "The water collects in rivers, lakes, and oceans.", "Then the cycle starts all over again!", "The water cycle is very important for life.", "All plants and animals need water."]
 
   Please respond in JSON format.
   `,
@@ -79,52 +81,72 @@ const generateTailoredLessonsFlow = ai.defineFlow(
     outputSchema: GenerateTailoredLessonsOutputSchema,
   },
   async (input) => {
-    const { output: textOutput } = await generateLessonPrompt(input);
-    if (!textOutput) {
-      throw new Error("Failed to generate lesson text. Output was null.");
-    }
-
-    let lessonContent = textOutput.lessonContent;
-    if (typeof lessonContent === 'string') {
-        const contentString = lessonContent as string;
-        lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
-    } else if (!Array.isArray(lessonContent)) {
-        console.warn("Lesson content was not a string or array, defaulting to single sentence:", lessonContent);
-        lessonContent = [String(lessonContent)];
-    }
-     if (lessonContent.length === 0) {
-        lessonContent = ["Let's start our lesson! This is a default sentence."]; // Fallback
-    }
-
-
-    const lessonPages: Array<{ sentences: string[]; imageDataUri: string | null }> = [];
-    for (let i = 0; i < lessonContent.length; i += 2) {
-      const pageSentences = lessonContent.slice(i, i + 2);
-      let imageDataUri: string | null = null;
-      try {
-        const imageInput: GenerateImageInput = {
-          sentences: pageSentences,
-          childAge: input.childAge,
-          interests: input.interests,
-        };
-        const imageResult = await generateImageForSentence(imageInput);
-        imageDataUri = imageResult.imageDataUri;
-      } catch (imgErr) {
-        console.error(`Failed to generate image for sentences: "${pageSentences.join(' ')}"`, imgErr);
+    try {
+      const { output: textOutput } = await generateLessonPrompt(input);
+      if (!textOutput) {
+        throw new Error("Failed to generate lesson text. Output was null or undefined from the AI model.");
       }
-      lessonPages.push({ sentences: pageSentences, imageDataUri });
-    }
 
-    return {
-      lessonTitle: textOutput.lessonTitle,
-      lessonFormat: textOutput.lessonFormat,
-      subject: textOutput.subject,
-      lessonPages,
-    };
+      let lessonContent = textOutput.lessonContent;
+      // Defensive parsing for lessonContent, though Zod schema should handle this.
+      if (typeof lessonContent === 'string') {
+          // Attempt to split a string into sentences if accidentally returned as such.
+          const contentString = lessonContent as string;
+          lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
+      } else if (!Array.isArray(lessonContent)) {
+          console.warn("Lesson content was not a string or array, defaulting to single sentence. Received:", lessonContent);
+          lessonContent = [String(lessonContent || "Default lesson content.")];
+      }
+      if (lessonContent.length === 0) {
+          console.warn("Lesson content array was empty. Using fallback.");
+          lessonContent = ["Let's start our lesson! This is a default sentence because content generation was empty."]; 
+      }
+
+
+      const lessonPages: Array<{ sentences: string[]; imageDataUri: string | null }> = [];
+      for (let i = 0; i < lessonContent.length; i += 2) {
+        const pageSentences = lessonContent.slice(i, i + 2);
+        let imageDataUri: string | null = null;
+        try {
+          const imageInput: GenerateImageInput = {
+            sentences: pageSentences,
+            childAge: input.childAge,
+            interests: input.interests,
+          };
+          const imageResult = await generateImageForSentence(imageInput);
+          imageDataUri = imageResult.imageDataUri;
+        } catch (imgErr: any) {
+          console.error(`Failed to generate image for sentences: "${pageSentences.join(' ')}"`, imgErr);
+          // Image generation is not critical for the lesson to proceed; imageDataUri remains null.
+          // We don't re-throw here to allow the rest of the lesson to be generated.
+        }
+        lessonPages.push({ sentences: pageSentences, imageDataUri });
+      }
+
+      return {
+        lessonTitle: textOutput.lessonTitle || `Lesson on ${input.lessonTopic}`,
+        lessonFormat: textOutput.lessonFormat || "Informational",
+        subject: textOutput.subject || "General Knowledge",
+        lessonPages,
+      };
+    } catch (error: any) {
+      console.error("[generateTailoredLessonsFlow] Error during lesson generation:", error);
+      let errorMessage = "Lesson generation failed due to an internal server error.";
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      // Check for specific API key related error messages from either text or image generation if it bubbles up
+      const errorString = String(error).toLowerCase();
+      if (errorString.includes("api key") || errorString.includes("permission denied") || errorString.includes("authentication")) {
+         errorMessage = "Lesson generation failed: There might be an issue with the Google AI API Key configuration. Please contact support or check server logs.";
+      }
+      throw new Error(errorMessage);
+    }
   }
 );
 
 export async function generateTailoredLessons(input: GenerateTailoredLessonsInput): Promise<GenerateTailoredLessonsOutput> {
   return generateTailoredLessonsFlow(input);
 }
-
