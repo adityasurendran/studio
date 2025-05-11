@@ -39,7 +39,7 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
   async (input) => {
     try {
       const combinedSentences = input.sentences.join(' ');
-      let promptText = `Create a child-friendly, simple, and colorful illustration for a children's learning app. This illustration should visually depict the scene or concept described by the following text, but DO NOT include any text, letters, or words in the image itself: "${combinedSentences}"`;
+      let promptText = `Create a child-friendly, simple, and colorful illustration for a children's learning app. This illustration should visually depict the scene or concept described by the following text, but it is CRITICAL that you DO NOT include ANY text, letters, words, numbers, or symbols in the image itself: "${combinedSentences}"`;
       
       if (input.childAge) {
         promptText += ` The style should be appropriate for a ${input.childAge}-year-old child.`;
@@ -47,7 +47,7 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
       if (input.interests) {
         promptText += ` Consider incorporating elements related to these interests: ${input.interests}.`;
       }
-      promptText += ` Focus on a clear, imaginative, and engaging visual that complements the learning material without directly showing any written language. The final image must be purely pictorial and contain no form of letters, numbers, or symbols that constitute text. Absolutely no text.`;
+      promptText += ` Focus on a clear, imaginative, and engaging visual that complements the learning material without directly showing any written language. The final image MUST be purely pictorial and contain NO form of letters, numbers, or symbols that constitute text. ABSOLUTELY NO TEXT. The image must not contain any words or letters. Generate an image without any text.`;
 
 
       const { media } = await ai.generate({
