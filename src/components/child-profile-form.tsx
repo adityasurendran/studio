@@ -1,0 +1,188 @@
+// src/components/child-profile-form.tsx
+"use client";
+
+import type { ChildProfile } from '@/types';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Save, XCircle } from 'lucide-react';
+
+const profileSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  age: z.coerce.number().int().min(2, { message: "Age must be at least 2." }).max(18, { message: "Age must be 18 or younger." }),
+  learningDifficulties: z.string().optional(),
+  screenIssues: z.string().optional(),
+  theme: z.enum(['light', 'dark', 'system', 'colorful', 'simple']),
+  language: z.string().min(2, { message: "Language code required (e.g., en, es)." }),
+  curriculum: z.string().min(3, { message: "Curriculum details required." }),
+});
+
+type ProfileFormData = z.infer<typeof profileSchema>;
+
+interface ChildProfileFormProps {
+  profile?: ChildProfile; // For editing
+  onSubmit: (data: ProfileFormData) => void;
+  onCancel?: () => void;
+  isEditing?: boolean;
+}
+
+export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditing = false }: ChildProfileFormProps) {
+  const form = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: profile?.name || '',
+      age: profile?.age || 0,
+      learningDifficulties: profile?.learningDifficulties || '',
+      screenIssues: profile?.screenIssues || '',
+      theme: profile?.theme || 'system',
+      language: profile?.language || 'en',
+      curriculum: profile?.curriculum || '',
+    },
+  });
+
+  const handleFormSubmit: SubmitHandler<ProfileFormData> = (data) => {
+    onSubmit(data);
+    if (!isEditing) { // Reset form only if creating new profile
+      form.reset();
+    }
+  };
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto shadow-lg">
+      <CardHeader>
+        <CardTitle className="text-2xl text-primary">{isEditing ? 'Edit Child Profile' : 'Create New Child Profile'}</CardTitle>
+        <CardDescription>{isEditing ? 'Update the details for this profile.' : 'Fill in the details to create a new child profile.'}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Child&apos;s Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Alex Smith" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="age"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Age</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 7" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="learningDifficulties"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Learning Difficulties (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="e.g., Dyslexia, ADHD, difficulty with numbers" {...field} />
+                  </FormControl>
+                  <FormDescription>Describe any specific challenges. This helps tailor lessons.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="screenIssues"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Screen/Display Preferences (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="e.g., Prefers larger fonts, sensitive to bright colors" {...field} />
+                  </FormControl>
+                  <FormDescription>Any preferences for on-screen presentation.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="theme"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Preferred Theme</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a theme" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="system">System Default</SelectItem>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="colorful">Colorful</SelectItem>
+                      <SelectItem value="simple">Simple</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="language"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Language</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., en (English), es (Spanish)" {...field} />
+                  </FormControl>
+                  <FormDescription>Primary language for lessons (e.g., en, es, fr).</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="curriculum"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Curriculum Focus</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., US Grade 2 Math, Basic Phonics" {...field} />
+                  </FormControl>
+                  <FormDescription>What curriculum or subjects should lessons focus on?</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end space-x-3 pt-4">
+              {onCancel && (
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  <XCircle className="mr-2 h-4 w-4" /> Cancel
+                </Button>
+              )}
+              <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Save className="mr-2 h-4 w-4" />
+                {isEditing ? 'Save Changes' : 'Create Profile'}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}
