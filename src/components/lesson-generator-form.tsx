@@ -6,6 +6,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -13,10 +14,11 @@ import { useToast } from '@/hooks/use-toast';
 import { generateTailoredLessons, type GenerateTailoredLessonsInput } from '@/ai/flows/generate-lesson';
 import { useState } from 'react';
 import LessonDisplay from './lesson-display';
-import { Loader2, Wand2, Smile, History } from 'lucide-react';
+import { Loader2, Wand2, Smile, History, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
 const lessonGenerationSchema = z.object({
+  lessonTopic: z.string().min(3, "Please specify a lesson topic (min 3 characters).").max(100, "Topic too long (max 100 chars)."),
   recentMood: z.string().min(1, "Recent mood is required."),
   lessonHistory: z.string().optional(),
 });
@@ -31,6 +33,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
   const form = useForm<LessonGenerationFormData>({
     resolver: zodResolver(lessonGenerationSchema),
     defaultValues: {
+      lessonTopic: '',
       recentMood: childProfile.recentMood || 'neutral',
       lessonHistory: childProfile.lessonHistory || '',
     },
@@ -47,9 +50,11 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
         childName: childProfile.name,
         childAge: childProfile.age,
         learningDifficulties: childProfile.learningDifficulties,
-        interests: childProfile.interests || "general topics", // Use child's interests
+        interests: childProfile.interests || "general topics",
         recentMood: data.recentMood,
         lessonHistory: data.lessonHistory || "No specific recent history provided.",
+        lessonTopic: data.lessonTopic,
+        curriculum: childProfile.curriculum,
       };
       const lesson = await generateTailoredLessons(input);
       setGeneratedLesson(lesson);
@@ -77,12 +82,26 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
             <CardDescription>
                 Create a new AI-powered lesson for <strong>{childProfile.name}</strong> (Age: {childProfile.age}).
                 <br />
-                Provide some context about their recent mood and any relevant lesson history.
+                Specify the lesson topic and provide context about their recent mood and lesson history.
             </CardDescription>
         </CardHeader>
         <CardContent>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="lessonTopic"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2"><Target /> What should {childProfile.name} learn about today?</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Addition up to 10, The Solar System, Types of Dinosaurs" {...field} />
+                      </FormControl>
+                      <FormDescription>Be specific for the best results. This will guide the lesson content.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                 control={form.control}
                 name="recentMood"
@@ -103,7 +122,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
                         <SelectItem value="excited">🤩 Excited / Eager</SelectItem>
                         </SelectContent>
                     </Select>
-                    <FormDescription>How is {childProfile.name} feeling today? This helps tailor the lesson.</FormDescription>
+                    <FormDescription>How is {childProfile.name} feeling today? This helps tailor the lesson tone.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -116,7 +135,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
                     <FormLabel className="flex items-center gap-2"><History /> Brief Lesson History / Context (Optional)</FormLabel>
                     <FormControl>
                         <Textarea
-                        placeholder="e.g., Recently worked on addition. Struggled with counting by 2s. Enjoyed a story about animals."
+                        placeholder="e.g., Recently worked on subtraction. Struggled with counting by 5s. Enjoyed a story about space."
                         {...field}
                         rows={3}
                         />
@@ -147,7 +166,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
           <p className="mt-4 text-lg text-muted-foreground">
             Our AI is crafting a special lesson and illustrating it for {childProfile.name}...
-            <br/>This may take a minute or two, depending on the lesson length. Please wait.
+            <br/>This may take a minute or two, especially for longer lessons. Please wait.
           </p>
         </div>
       )}
@@ -161,3 +180,4 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
     </div>
   );
 }
+
