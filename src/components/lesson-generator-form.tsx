@@ -12,9 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { generateTailoredLessons, type GenerateTailoredLessonsInput } from '@/ai/flows/generate-lesson';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import LessonDisplay from './lesson-display';
-import { Loader2, Wand2, Smile, History, Target } from 'lucide-react';
+import { Loader2, Wand2, Smile, History, Target, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 
@@ -42,26 +42,29 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
   const { toast } = useToast();
   const [generatedLesson, setGeneratedLesson] = useState<GeneratedLesson | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { addLessonAttempt } = useChildProfilesContext();
+  const [lastSuccessfulInput, setLastSuccessfulInput] = useState<GenerateTailoredLessonsInput | null>(null);
+  const { addLessonAttempt, addSavedLesson } = useChildProfilesContext();
 
-  const handleFormSubmit: SubmitHandler<LessonGenerationFormData> = async (data) => {
-    setIsLoading(true);
+  useEffect(() => {
+    form.reset({
+      lessonTopic: '',
+      recentMood: childProfile.recentMood || 'neutral',
+      lessonHistory: childProfile.lessonHistory || '',
+    });
     setGeneratedLesson(null);
+    setLastSuccessfulInput(null);
+  }, [childProfile, form]);
+
+  const processLessonGeneration = async (input: GenerateTailoredLessonsInput, isRegeneration: boolean = false) => {
+    setIsLoading(true);
+    setGeneratedLesson(null); // Clear previous lesson before new one is generated
     try {
-      const input: GenerateTailoredLessonsInput = {
-        childName: childProfile.name,
-        childAge: childProfile.age,
-        learningDifficulties: childProfile.learningDifficulties,
-        interests: childProfile.interests || "general topics",
-        recentMood: data.recentMood,
-        lessonHistory: data.lessonHistory || "No specific recent history provided.",
-        lessonTopic: data.lessonTopic,
-        curriculum: childProfile.curriculum,
-      };
       const lesson = await generateTailoredLessons(input);
       setGeneratedLesson(lesson);
+      addSavedLesson(childProfile.id, lesson);
+      setLastSuccessfulInput(input); // Save input for potential regeneration
       toast({
-        title: "Lesson Generated!",
+        title: isRegeneration ? "Lesson Regenerated!" : "Lesson Generated!",
         description: `A new lesson titled "${lesson.lessonTitle}" is ready.`,
       });
     } catch (error) {
@@ -71,9 +74,37 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
         description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
         variant: "destructive",
       });
+      // If regeneration fails, keep the last successful input available
+      // If initial generation fails, lastSuccessfulInput will remain null
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFormSubmit: SubmitHandler<LessonGenerationFormData> = async (data) => {
+    const input: GenerateTailoredLessonsInput = {
+      childName: childProfile.name,
+      childAge: childProfile.age,
+      learningDifficulties: childProfile.learningDifficulties,
+      interests: childProfile.interests || "general topics",
+      recentMood: data.recentMood,
+      lessonHistory: data.lessonHistory || "No specific recent history provided.",
+      lessonTopic: data.lessonTopic,
+      curriculum: childProfile.curriculum,
+    };
+    await processLessonGeneration(input);
+  };
+
+  const handleRegenerateLastLesson = async () => {
+    if (!lastSuccessfulInput) {
+      toast({
+        title: "Cannot Regenerate",
+        description: "No previous lesson input found to regenerate from.",
+        variant: "destructive",
+      });
+      return;
+    }
+    await processLessonGeneration(lastSuccessfulInput, true);
   };
 
   const handleQuizComplete = (attemptData: Omit<LessonAttempt, 'attemptId'>) => {
@@ -84,15 +115,11 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
         description: `Score: ${attemptData.quizScore}%. Results saved.`,
       });
     }
-    // If user chose "Skip" or "Continue", we might want to clear the lesson
-    // This is now handled by onRestartLesson which is called by LessonDisplay on skip/continue
   };
 
   const handleRestartLesson = () => {
     setGeneratedLesson(null); 
     setIsLoading(false); 
-    // Optionally reset form fields if needed, or show a message
-    // form.resetField("lessonTopic"); // Example if you want to clear topic too
     toast({
         title: "Ready for a new Lesson",
         description: "The previous lesson view has been cleared. Generate a new one or select a different topic."
@@ -171,17 +198,38 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
                     </FormItem>
                 )}
                 />
-                <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-6" disabled={isLoading}>
-                {isLoading ? (
-                    <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generating Lesson...
-                    </>
-                ) : (
-                    <>
-                    <Wand2 className="mr-2 h-5 w-5" /> Generate Lesson
-                    </>
-                )}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-6" disabled={isLoading}>
+                    {isLoading && !lastSuccessfulInput ? ( // Show loading only if it's not a regeneration
+                        <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generating Lesson...
+                        </>
+                    ) : (
+                        <>
+                        <Wand2 className="mr-2 h-5 w-5" /> Generate Lesson
+                        </>
+                    )}
+                    </Button>
+                    {lastSuccessfulInput && (
+                        <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={handleRegenerateLastLesson} 
+                            className="w-full text-lg py-6" 
+                            disabled={isLoading}
+                        >
+                            {isLoading && lastSuccessfulInput ? (
+                                <>
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Regenerating...
+                                </>
+                            ) : (
+                                <>
+                                <RefreshCw className="mr-2 h-5 w-5" /> Regenerate Last Lesson
+                                </>
+                            )}
+                        </Button>
+                    )}
+                </div>
             </form>
             </Form>
         </CardContent>
@@ -197,13 +245,13 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
         </div>
       )}
 
-      {generatedLesson && !isLoading && ( // Ensure not loading when displaying lesson
+      {generatedLesson && !isLoading && ( 
         <div className="mt-10">
             <h2 className="text-2xl font-semibold mb-4 text-center text-primary">Generated Lesson Preview</h2>
             <LessonDisplay 
                 lesson={generatedLesson} 
                 childProfile={childProfile}
-                lessonTopic={form.getValues("lessonTopic")}
+                lessonTopic={lastSuccessfulInput?.lessonTopic || form.getValues("lessonTopic")} // Use topic from last input or current form
                 onQuizComplete={handleQuizComplete}
                 onRestartLesson={handleRestartLesson}
             />

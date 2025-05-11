@@ -44,6 +44,7 @@ export interface ChildProfile {
   recentMood?: string;
   lessonHistory?: string; // General lesson history notes
   lessonAttempts?: LessonAttempt[]; // Array of specific lesson/quiz attempts
+  savedLessons?: GeneratedLesson[]; // Array of all generated lessons
 }
 
 export interface ParentProfile {
@@ -52,3 +53,4 @@ export interface ParentProfile {
   username?: string;
   // Other parent-specific fields
 }
+

@@ -1,7 +1,7 @@
 // src/hooks/use-child-profiles.ts
 "use client";
 
-import type { ChildProfile, LessonAttempt } from '@/types';
+import type { ChildProfile, LessonAttempt, GeneratedLesson } from '@/types';
 import { useLocalStorage } from './use-local-storage';
 import { v4 as uuidv4 } from 'uuid';
 import { useCallback } from 'react';
@@ -11,11 +11,12 @@ const CHILD_PROFILES_STORAGE_KEY = 'learnforward-child-profiles';
 export function useChildProfiles() {
   const [profiles, setProfiles] = useLocalStorage<ChildProfile[]>(CHILD_PROFILES_STORAGE_KEY, []);
 
-  const addProfile = useCallback((profileData: Omit<ChildProfile, 'id' | 'lessonAttempts'>) => {
+  const addProfile = useCallback((profileData: Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons'>) => {
     const newProfile: ChildProfile = { 
       ...profileData, 
       id: uuidv4(),
-      lessonAttempts: [] 
+      lessonAttempts: [],
+      savedLessons: [] 
     };
     setProfiles(prevProfiles => [...prevProfiles, newProfile]);
     return newProfile;
@@ -23,7 +24,16 @@ export function useChildProfiles() {
 
   const updateProfile = useCallback((updatedProfile: ChildProfile) => {
     setProfiles(prevProfiles =>
-      prevProfiles.map(p => (p.id === updatedProfile.id ? { ...p, ...updatedProfile, lessonAttempts: updatedProfile.lessonAttempts || p.lessonAttempts || [] } : p))
+      prevProfiles.map(p => (
+        p.id === updatedProfile.id 
+        ? { 
+            ...p, 
+            ...updatedProfile, 
+            lessonAttempts: updatedProfile.lessonAttempts || p.lessonAttempts || [],
+            savedLessons: updatedProfile.savedLessons || p.savedLessons || [] 
+          } 
+        : p
+      ))
     );
   }, [setProfiles]);
 
@@ -51,6 +61,18 @@ export function useChildProfiles() {
     );
   }, [setProfiles]);
 
+  const addSavedLesson = useCallback((childId: string, lesson: GeneratedLesson) => {
+    setProfiles(prevProfiles =>
+      prevProfiles.map(profile => {
+        if (profile.id === childId) {
+          const updatedSavedLessons = [...(profile.savedLessons || []), lesson];
+          return { ...profile, savedLessons: updatedSavedLessons };
+        }
+        return profile;
+      })
+    );
+  }, [setProfiles]);
+
   return {
     profiles,
     addProfile,
@@ -58,5 +80,6 @@ export function useChildProfiles() {
     deleteProfile,
     getProfileById,
     addLessonAttempt,
+    addSavedLesson,
   };
 }
