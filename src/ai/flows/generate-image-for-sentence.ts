@@ -39,7 +39,7 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
   async (input) => {
     try {
       const combinedSentences = input.sentences.join(' ');
-      let promptText = `Generate a child-friendly, simple, and colorful illustration suitable for a learning app. The illustration should visually represent the following text: "${combinedSentences}"`;
+      let promptText = `Create a child-friendly, simple, and colorful illustration for a children's learning app. This illustration should visually depict the scene or concept described by the following text, but DO NOT include any text, letters, or words in the image itself: "${combinedSentences}"`;
       
       if (input.childAge) {
         promptText += ` The style should be appropriate for a ${input.childAge}-year-old child.`;
@@ -47,6 +47,8 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
       if (input.interests) {
         promptText += ` Consider incorporating elements related to these interests: ${input.interests}.`;
       }
+      promptText += ` Focus on a clear, imaginative, and engaging visual that complements the learning material without directly showing any written language.`;
+
 
       const { media } = await ai.generate({
         model: 'googleai/gemini-2.0-flash-exp', 
