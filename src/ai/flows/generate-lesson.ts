@@ -88,6 +88,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
 
       let lessonContent = textOutput.lessonContent;
       if (typeof lessonContent === 'string') {
+          // Attempt to split string into sentences if it's not already an array
           const contentString = lessonContent as string;
           lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
       } else if (!Array.isArray(lessonContent)) {
@@ -98,31 +99,39 @@ const generateTailoredLessonsFlow = ai.defineFlow(
           console.warn("Lesson content array was empty. Using fallback.");
           lessonContent = ["Let's start our lesson! This is a default sentence because content generation was empty."]; 
       }
+      
+      const imageGenerationPromises: Promise<{ sentences: string[]; imageDataUri: string | null }>[] = [];
 
-
-      const lessonPages: Array<{ sentences: string[]; imageDataUri: string | null }> = [];
       for (let i = 0; i < lessonContent.length; i += 2) {
         const pageSentences = lessonContent.slice(i, i + 2);
-        let imageDataUri: string | null = null;
-        try {
-          const imageInput: GenerateImageInput = {
-            sentences: pageSentences,
-            childAge: input.childAge,
-            interests: input.interests,
-          };
-          const imageResult = await generateImageForSentence(imageInput);
-          imageDataUri = imageResult.imageDataUri;
-        } catch (imgErr: any) {
-          console.error(`Failed to generate image for sentences: "${pageSentences.join(' ')}"`, imgErr);
-        }
-        lessonPages.push({ sentences: pageSentences, imageDataUri });
+        
+        imageGenerationPromises.push(
+          (async () => {
+            let imageDataUri: string | null = null;
+            try {
+              const imageInput: GenerateImageInput = {
+                sentences: pageSentences,
+                childAge: input.childAge,
+                interests: input.interests,
+              };
+              const imageResult = await generateImageForSentence(imageInput);
+              imageDataUri = imageResult.imageDataUri;
+            } catch (imgErr: any) {
+              console.error(`[generateTailoredLessonsFlow] Failed to generate image for sentences: "${pageSentences.join(' ')}"`, imgErr.message ? imgErr.message : imgErr);
+              // imageDataUri remains null, which is acceptable
+            }
+            return { sentences: pageSentences, imageDataUri };
+          })()
+        );
       }
+
+      const resolvedLessonPages = await Promise.all(imageGenerationPromises);
 
       return {
         lessonTitle: textOutput.lessonTitle || `Lesson on ${input.lessonTopic}`,
         lessonFormat: textOutput.lessonFormat || "Informational",
         subject: textOutput.subject || "General Knowledge",
-        lessonPages,
+        lessonPages: resolvedLessonPages,
       };
     } catch (error: any) {
       console.error("[generateTailoredLessonsFlow] Error during lesson generation:", error);
@@ -130,7 +139,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
 
       if (error && error.message) {
         errorMessage = String(error.message);
-      } else if (error && error.details) { // Attempt to capture more specific error details
+      } else if (error && error.details) { 
         errorMessage = String(error.details);
       } else if (typeof error === 'string') {
         errorMessage = error;
@@ -154,3 +163,4 @@ const generateTailoredLessonsFlow = ai.defineFlow(
 export async function generateTailoredLessons(input: GenerateTailoredLessonsInput): Promise<GenerateTailoredLessonsOutput> {
   return generateTailoredLessonsFlow(input);
 }
+
