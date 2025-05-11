@@ -22,6 +22,7 @@ const profileSchema = z.object({
   theme: z.enum(['light', 'dark', 'system', 'colorful', 'simple']),
   language: z.string().min(2, { message: "Language code required (e.g., en, es)." }),
   curriculum: z.string().min(3, { message: "Curriculum details required." }),
+  interests: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -44,6 +45,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       theme: profile?.theme || 'system',
       language: profile?.language || 'en',
       curriculum: profile?.curriculum || '',
+      interests: profile?.interests || '',
     },
   });
 
@@ -99,6 +101,20 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                     <Textarea placeholder="e.g., Dyslexia, ADHD, difficulty with numbers" {...field} />
                   </FormControl>
                   <FormDescription>Describe any specific challenges. This helps tailor lessons.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="interests"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Interests (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="e.g., Dinosaurs, space, drawing, animals, music" {...field} />
+                  </FormControl>
+                  <FormDescription>List some of the child&apos;s interests to help personalize lessons.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

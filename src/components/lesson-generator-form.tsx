@@ -47,7 +47,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
         childName: childProfile.name,
         childAge: childProfile.age,
         learningDifficulties: childProfile.learningDifficulties,
-        interests: "Loves dinosaurs, space, and drawing.", // Example, could be part of profile
+        interests: childProfile.interests || "general topics", // Use child's interests
         recentMood: data.recentMood,
         lessonHistory: data.lessonHistory || "No specific recent history provided.",
       };
@@ -61,7 +61,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
       console.error("Lesson generation error:", error);
       toast({
         title: "Error Generating Lesson",
-        description: "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -145,7 +145,10 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
       {isLoading && (
         <div className="text-center py-10">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="mt-4 text-lg text-muted-foreground">Our AI is crafting a special lesson for {childProfile.name}...</p>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Our AI is crafting a special lesson and illustrating it for {childProfile.name}...
+            <br/>This may take a minute or two, depending on the lesson length. Please wait.
+          </p>
         </div>
       )}
 

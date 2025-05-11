@@ -1,17 +1,14 @@
-
 // src/components/lesson-display.tsx
 "use client";
 
-import type { GeneratedLesson, ChildProfile } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import type { GeneratedLesson, ChildProfile, LessonPage } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, AlertTriangle, ImageOff, Loader2 } from 'lucide-react';
+import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff } from 'lucide-react';
 import Image from 'next/image';
-import { useState, useEffect, useCallback } from 'react';
-import { generateImageForSentence, type GenerateImageInput } from '@/ai/flows/generate-image-for-sentence';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 interface LessonDisplayProps {
   lesson: GeneratedLesson;
@@ -19,11 +16,7 @@ interface LessonDisplayProps {
 }
 
 export default function LessonDisplay({ lesson, childProfile }: LessonDisplayProps) {
-  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
-  const [sentenceImages, setSentenceImages] = useState<Record<number, string>>({});
-  const [isImageLoading, setIsImageLoading] = useState(false);
-  const [imageError, setImageError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   const themeClass = childProfile?.theme === 'dark' ? 'dark-theme-lesson' : 
                      childProfile?.theme === 'colorful' ? 'colorful-theme-lesson' :
@@ -31,58 +24,33 @@ export default function LessonDisplay({ lesson, childProfile }: LessonDisplayPro
                      '';
   const fontClass = childProfile?.screenIssues?.includes('larger fonts') ? 'text-lg md:text-xl' : 'text-base md:text-lg';
 
-  const totalSentences = lesson.lessonContent.length;
-  const currentSentence = lesson.lessonContent[currentSentenceIndex];
+  const totalPages = lesson.lessonPages.length;
+  const currentPage: LessonPage | undefined = lesson.lessonPages[currentPageIndex];
 
-  const loadAndSetImage = useCallback(async (index: number, sentence: string) => {
-    if (!sentence || sentenceImages[index]) {
-      setImageError(null); // Clear previous error if image already loaded or sentence is empty
-      setIsImageLoading(false);
-      return;
-    }
-
-    setIsImageLoading(true);
-    setImageError(null);
-    try {
-      const imageInput: GenerateImageInput = { 
-        sentence,
-        childAge: childProfile?.age,
-        // Assuming interests are part of the profile, this needs to be added to ChildProfile type and form
-        // interests: childProfile?.interests 
-      };
-      const result = await generateImageForSentence(imageInput);
-      setSentenceImages(prev => ({ ...prev, [index]: result.imageDataUri }));
-    } catch (err) {
-      console.error("Error generating image for sentence:", err);
-      setImageError(err instanceof Error ? err.message : "Failed to load image.");
-      toast({
-        title: "Image Generation Failed",
-        description: `Could not generate an image for the sentence. Please try again or skip.`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsImageLoading(false);
-    }
-  }, [sentenceImages, childProfile, toast]);
-
-  useEffect(() => {
-    if (currentSentence) {
-      loadAndSetImage(currentSentenceIndex, currentSentence);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSentenceIndex, lesson.lessonContent]); // loadAndSetImage is memoized
-
-  const handleNextSentence = () => {
-    if (currentSentenceIndex < totalSentences - 1) {
-      setCurrentSentenceIndex(prev => prev + 1);
+  const handleNextPage = () => {
+    if (currentPageIndex < totalPages - 1) {
+      setCurrentPageIndex(prev => prev + 1);
     }
   };
 
-  const handlePreviousSentence = () => {
-    if (currentSentenceIndex > 0) {
-      setCurrentSentenceIndex(prev => prev - 1);
+  const handlePreviousPage = () => {
+    if (currentPageIndex > 0) {
+      setCurrentPageIndex(prev => prev - 1);
     }
   };
+
+  if (!currentPage) {
+    return (
+        <Card className={cn("w-full shadow-xl", themeClass)}>
+            <CardHeader>
+                <CardTitle className="text-2xl text-destructive">Error</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p>Could not load lesson page. Please try generating the lesson again.</p>
+            </CardContent>
+        </Card>
+    );
+  }
 
   return (
     <Card className={cn("w-full shadow-xl transition-all duration-300 flex flex-col", themeClass)}>
@@ -111,50 +79,47 @@ export default function LessonDisplay({ lesson, childProfile }: LessonDisplayPro
       
       <CardContent className={cn("flex-grow flex flex-col items-center justify-center p-4 md:p-6 space-y-4", fontClass)}>
         <div className="w-full aspect-video bg-muted/50 rounded-lg overflow-hidden flex items-center justify-center mb-4 shadow-inner max-h-[400px]">
-          {isImageLoading && <Loader2 className="h-16 w-16 animate-spin text-primary" />}
-          {!isImageLoading && imageError && (
-            <div className="text-center text-destructive p-4">
-              <ImageOff className="h-16 w-16 mx-auto mb-2" />
-              <p className="text-sm">Could not load image.</p>
-              <p className="text-xs">{imageError.substring(0,100)}</p>
-            </div>
-          )}
-          {!isImageLoading && !imageError && sentenceImages[currentSentenceIndex] && (
+          {currentPage.imageDataUri ? (
             <Image 
-              src={sentenceImages[currentSentenceIndex]} 
-              alt={`Illustration for: ${currentSentence}`} 
+              src={currentPage.imageDataUri} 
+              alt={`Illustration for lesson page ${currentPageIndex + 1}`}
               width={500} 
               height={281} // 16:9 aspect ratio for 500 width
               className="object-contain w-full h-full"
               priority={true} // Prioritize loading current image
             />
+          ) : (
+            <div className="text-center text-destructive p-4">
+              <ImageOff className="h-16 w-16 mx-auto mb-2" />
+              <p className="text-sm">Image not available for this page.</p>
+            </div>
           )}
-           {!isImageLoading && !imageError && !sentenceImages[currentSentenceIndex] && (
-             <Skeleton className="w-full h-full" /> // Fallback skeleton if no image, no error, not loading
-           )}
         </div>
         
-        <p className={cn("text-center min-h-[3em]", fontClass, themeClass === 'dark-theme-lesson' ? 'text-slate-200' : 'text-foreground')}>
-          {currentSentence || "Loading sentence..."}
-        </p>
+        <div className={cn("text-center min-h-[4em]", fontClass, themeClass === 'dark-theme-lesson' ? 'text-slate-200' : 'text-foreground')}>
+          {currentPage.sentences.map((sentence, sIdx) => (
+            <p key={sIdx} className={sIdx > 0 ? "mt-1" : ""}>{sentence}</p>
+          ))}
+           {currentPage.sentences.length === 0 && <p>Loading content...</p>}
+        </div>
       </CardContent>
 
       <CardFooter className="flex flex-col sm:flex-row items-center justify-between p-4 border-t">
         <p className="text-sm text-muted-foreground mb-2 sm:mb-0">
-          Sentence {currentSentenceIndex + 1} of {totalSentences}
+          Page {currentPageIndex + 1} of {totalPages}
         </p>
         <div className="flex gap-2">
           <Button 
-            onClick={handlePreviousSentence} 
-            disabled={currentSentenceIndex === 0 || isImageLoading}
+            onClick={handlePreviousPage} 
+            disabled={currentPageIndex === 0}
             variant="outline"
             size="lg"
           >
             <ChevronLeft className="mr-2 h-5 w-5" /> Previous
           </Button>
           <Button 
-            onClick={handleNextSentence} 
-            disabled={currentSentenceIndex === totalSentences - 1 || isImageLoading}
+            onClick={handleNextPage} 
+            disabled={currentPageIndex === totalPages - 1}
             variant="default"
             size="lg"
             className="bg-accent text-accent-foreground hover:bg-accent/90"
