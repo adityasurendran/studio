@@ -6,11 +6,14 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
 import type { ParentProfile } from '@/types'; 
 
+const getSubscriptionKey = (uid: string) => `shannon-subscription-status-${uid}`;
+
 interface AuthContextType {
   currentUser: User | null;
   parentProfile: ParentProfile | null; 
   loading: boolean;
   error: Error | null;
+  updateSubscriptionStatus: (isSubscribed: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,15 +41,16 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
       async (user) => {
         setCurrentUser(user);
         if (user) {
-          // In a real app, isSubscribed would be fetched from a backend/database.
-          // For demonstration, we'll default it to false.
-          // You could set this to true for specific test UIDs:
-          // const testUserSubscribed = user.uid === "your-test-user-uid";
+          let isUserSubscribed = false;
+          if (typeof window !== 'undefined') {
+            const storedStatus = window.localStorage.getItem(getSubscriptionKey(user.uid));
+            isUserSubscribed = storedStatus === 'true';
+          }
           setParentProfile({
             uid: user.uid,
             email: user.email,
             // username: user.displayName || undefined, 
-            isSubscribed: false, // Default to false for paywall. Set to true to bypass for testing.
+            isSubscribed: isUserSubscribed, 
           });
         } else {
           setParentProfile(null);
@@ -62,7 +66,19 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
     return () => unsubscribe();
   }, []);
 
-  const value = { currentUser, parentProfile, loading, error };
+  const updateSubscriptionStatus = (isSubscribed: boolean) => {
+    if (currentUser) {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(getSubscriptionKey(currentUser.uid), String(isSubscribed));
+      }
+      setParentProfile(prevProfile => {
+        if (!prevProfile) return null; // Should ideally not happen if currentUser exists
+        return { ...prevProfile, isSubscribed };
+      });
+    }
+  };
+
+  const value = { currentUser, parentProfile, loading, error, updateSubscriptionStatus };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

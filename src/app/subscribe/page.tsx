@@ -4,16 +4,20 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Lock, CreditCard, Sparkles, LogIn } from "lucide-react";
+import { Lock, CreditCard, Sparkles, LogIn, Loader2 as Loader2Icon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function SubscribePage() {
-  const { currentUser, parentProfile, loading } = useAuth();
+  const { currentUser, parentProfile, loading: authLoading, updateSubscriptionStatus } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-[calc(100vh-var(--header-height,4rem)-3rem)] text-center p-4">
         <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
@@ -43,7 +47,7 @@ export default function SubscribePage() {
             </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 p-0">
-            <Link href="/signin" passHref>
+            <Link href="/signin?redirect=/subscribe" passHref>
                 <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-6" size="lg">
                     <LogIn className="mr-2 h-5 w-5" /> Sign In
                 </Button>
@@ -61,6 +65,29 @@ export default function SubscribePage() {
         </div>
     );
   }
+
+  const handleSubscribe = async () => {
+    if (!currentUser) { 
+      toast({ title: "Error", description: "You must be logged in to subscribe.", variant: "destructive" });
+      router.push("/signin?redirect=/subscribe");
+      return;
+    }
+
+    setIsSubscribing(true);
+    // Simulate API call / payment processing
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+    updateSubscriptionStatus(true);
+    setIsSubscribing(false);
+
+    toast({
+      title: "Subscription Successful!",
+      description: "Welcome to Shannon Premium! Redirecting to your dashboard...",
+      duration: 3000,
+    });
+    router.push('/dashboard');
+  };
+
 
   // If logged in but not subscribed:
   return (
@@ -97,9 +124,15 @@ export default function SubscribePage() {
           <Button 
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-xl py-7 shadow-lg hover:shadow-xl transition-all transform hover:scale-105" 
             size="lg"
-            onClick={() => alert("Payment integration is not yet implemented. This is a placeholder.")} 
+            onClick={handleSubscribe}
+            disabled={isSubscribing || authLoading}
           >
-            <CreditCard className="mr-3 h-6 w-6" /> Subscribe Now
+            {isSubscribing ? (
+              <Loader2Icon className="mr-3 h-6 w-6 animate-spin" />
+            ) : (
+              <CreditCard className="mr-3 h-6 w-6" />
+            )}
+            {isSubscribing ? "Processing..." : "Subscribe Now"}
           </Button>
           
           <p className="text-xs text-muted-foreground mt-4">
