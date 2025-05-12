@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Edit3, Trash2, CheckCircle, Users, Eye, Sparkle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-type ProfileFormData = Omit<ChildProfile, 'id'>;
+type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory' >;
 
 export default function ManageProfilesPage() {
   const { profiles, addProfile, updateProfile, deleteProfile } = useChildProfilesContext();
@@ -123,7 +123,7 @@ export default function ManageProfilesPage() {
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-4">
                         <Avatar className={`h-16 w-16 border-2 ${activeChild?.id === profile.id ? 'border-primary' : 'border-muted'}`}>
-                            <AvatarImage src={`https://avatar.vercel.sh/${profile.name}.png?size=64`} alt={profile.name} data-ai-hint="child avatar" />
+                            <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(profile.avatarSeed || profile.name)}.png?size=64`} alt={profile.name} />
                             <AvatarFallback className="text-2xl">{profile.name[0].toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -192,3 +192,4 @@ export default function ManageProfilesPage() {
     </div>
   );
 }
+

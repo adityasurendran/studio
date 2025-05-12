@@ -11,12 +11,13 @@ const CHILD_PROFILES_STORAGE_KEY = 'shannon-child-profiles';
 export function useChildProfiles() {
   const [profiles, setProfiles] = useLocalStorage<ChildProfile[]>(CHILD_PROFILES_STORAGE_KEY, []);
 
-  const addProfile = useCallback((profileData: Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons'>) => {
+  const addProfile = useCallback((profileData: Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory'>) => {
     const newProfile: ChildProfile = { 
       ...profileData, 
       id: uuidv4(),
       lessonAttempts: [],
-      savedLessons: [] 
+      savedLessons: [],
+      avatarSeed: profileData.avatarSeed || '', // Ensure avatarSeed is initialized
     };
     setProfiles(prevProfiles => [...prevProfiles, newProfile]);
     return newProfile;
@@ -30,7 +31,8 @@ export function useChildProfiles() {
             ...p, 
             ...updatedProfile, 
             lessonAttempts: updatedProfile.lessonAttempts || p.lessonAttempts || [],
-            savedLessons: updatedProfile.savedLessons || p.savedLessons || [] 
+            savedLessons: updatedProfile.savedLessons || p.savedLessons || [],
+            avatarSeed: updatedProfile.avatarSeed // Ensure avatarSeed is updated
           } 
         : p
       ))

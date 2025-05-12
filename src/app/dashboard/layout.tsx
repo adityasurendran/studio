@@ -68,7 +68,7 @@ export default function DashboardLayout({
               <p className="text-xs text-muted-foreground mb-1">Active Profile:</p>
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={`https://avatar.vercel.sh/${activeChild.name}.png?size=32`} alt={activeChild.name} />
+                  <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(activeChild.avatarSeed || activeChild.name)}.png?size=32`} alt={activeChild.name} />
                   <AvatarFallback>{activeChild.name[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Save, XCircle } from 'lucide-react';
+import { Save, XCircle, Image as ImageIcon } from 'lucide-react';
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -23,11 +23,12 @@ const profileSchema = z.object({
   language: z.string().min(2, { message: "Language code required (e.g., en, es)." }),
   curriculum: z.string().min(3, { message: "Curriculum details required." }),
   interests: z.string().optional(),
+  avatarSeed: z.string().optional().describe("A word or phrase to generate a unique avatar. Leave blank to use name."),
   // recentMood and lessonHistory are not part of this form, managed elsewhere or contextually
 });
 
 // This FormData is for creating/editing the core profile, not including attempts.
-type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'recentMood' | 'lessonHistory'>;
+type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'recentMood' | 'lessonHistory' | 'savedLessons'>;
 
 
 interface ChildProfileFormProps {
@@ -49,6 +50,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       language: profile?.language || 'en',
       curriculum: profile?.curriculum || '',
       interests: profile?.interests || '',
+      avatarSeed: profile?.avatarSeed || '',
     },
   });
 
@@ -90,6 +92,20 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                   <FormControl>
                     <Input type="number" placeholder="e.g., 7" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="avatarSeed"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5"><ImageIcon className="h-4 w-4 text-muted-foreground" /> Avatar Customization</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., happy bear, blue star, child's name" {...field} />
+                  </FormControl>
+                  <FormDescription>Enter a word or short phrase to create a unique avatar. If left blank, the child&apos;s name will be used.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -205,3 +221,4 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
     </Card>
   );
 }
+

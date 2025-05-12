@@ -41,6 +41,7 @@ export interface ChildProfile {
   language: string; // e.g., "en", "es"
   curriculum: string; // e.g., "US Grade 2 Math", "Basic Phonics"
   interests: string; // Comma-separated or descriptive text, e.g., "Dinosaurs, space, drawing"
+  avatarSeed?: string; // Optional seed string for generating avatar
   recentMood?: string;
   lessonHistory?: string; // General lesson history notes
   lessonAttempts?: LessonAttempt[]; // Array of specific lesson/quiz attempts
