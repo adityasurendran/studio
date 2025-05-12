@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogIn, LogOut, UserPlus, LayoutDashboard } from 'lucide-react';
+import { LogIn, LogOut, UserPlus, LayoutDashboard, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Logo from '@/components/logo'; // Import the new Logo component
 
@@ -34,7 +34,12 @@ export default function Header() {
           <Logo className="h-8 w-auto" /> 
           <span className="hidden sm:inline">Shannon</span>
         </Link>
-        <nav className="flex items-center gap-2 sm:gap-4">
+        <nav className="flex items-center gap-2 sm:gap-3">
+          <Link href="/faq" passHref>
+            <Button variant="ghost" className="text-foreground hover:text-primary">
+              <HelpCircle className="mr-2 h-4 w-4 hidden sm:inline" /> FAQ
+            </Button>
+          </Link>
           {currentUser ? (
             <>
               <Link href="/dashboard" passHref>
