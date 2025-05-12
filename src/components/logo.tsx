@@ -27,7 +27,7 @@ export default function Logo(props: SVGProps<SVGSVGElement>) {
       <circle cx="50" cy="50" r="45" fill="hsl(var(--primary))" />
       
       {/* Accent color part - This circle is drawn on top but clipped by the S-curve path */}
-      <circle cx="50" cy="50" r="45" fill="hsl(var(--accent))" clip-path="url(#shannonLogoScurveClip)" />
+      <circle cx="50" cy="50" r="45" fill="hsl(var(--accent))" clipPath="url(#shannonLogoScurveClip)" />
 
       {/* The S-curve line itself, drawn on top of the two colored sections */}
       {/* This creates the visual separation and the 'S' shape */}
