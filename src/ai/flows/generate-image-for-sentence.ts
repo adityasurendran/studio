@@ -37,19 +37,17 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
     }
   },
   async (input) => {
+    let promptText = `Create a child-friendly, simple, and colorful illustration for a children's learning app. This illustration should visually depict the scene or concept described by the following text, but it is CRITICAL that you DO NOT include ANY text, letters, words, numbers, or symbols in the image itself: "${input.sentences.join(' ')}"`;
+    
+    if (input.childAge) {
+      promptText += ` The style should be appropriate for a ${input.childAge}-year-old child.`;
+    }
+    if (input.interests) {
+      promptText += ` Consider incorporating elements related to these interests: ${input.interests}.`;
+    }
+    promptText += ` Focus on a clear, imaginative, and engaging visual that complements the learning material without directly showing any written language. The final image MUST be purely pictorial and contain NO form of letters, numbers, or symbols that constitute text. ABSOLUTELY NO TEXT. The image must not contain any words or letters. Generate an image without any text. The image must be purely visual, with no words, letters, or numbers at all.`;
+
     try {
-      const combinedSentences = input.sentences.join(' ');
-      let promptText = `Create a child-friendly, simple, and colorful illustration for a children's learning app. This illustration should visually depict the scene or concept described by the following text, but it is CRITICAL that you DO NOT include ANY text, letters, words, numbers, or symbols in the image itself: "${combinedSentences}"`;
-      
-      if (input.childAge) {
-        promptText += ` The style should be appropriate for a ${input.childAge}-year-old child.`;
-      }
-      if (input.interests) {
-        promptText += ` Consider incorporating elements related to these interests: ${input.interests}.`;
-      }
-      promptText += ` Focus on a clear, imaginative, and engaging visual that complements the learning material without directly showing any written language. The final image MUST be purely pictorial and contain NO form of letters, numbers, or symbols that constitute text. ABSOLUTELY NO TEXT. The image must not contain any words or letters. Generate an image without any text.`;
-
-
       const { media } = await ai.generate({
         model: 'googleai/gemini-2.0-flash-exp', 
         prompt: promptText,
@@ -59,33 +57,60 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
       });
 
       if (!media || !media.url) {
-        console.error('Image generation failed or no image URL was returned for sentences:', input.sentences.join(' '), 'Response media:', media);
-        throw new Error('Image generation failed: No image data received from the model.');
+        console.error('Image generation failed: No image URL returned by the model. Sentences:', input.sentences.join(' '), 'Full Prompt Sent:', promptText, 'Response media object:', JSON.stringify(media));
+        throw new Error('Image generation failed: No image data received from the model. This might be due to content restrictions, an issue with the AI model, or the generated prompt.');
       }
       
       return { imageDataUri: media.url };
     } catch (error: any) {
-      console.error("[generateImageForSentenceFlowInternal] Error during image generation:", error);
+      console.error("[generateImageForSentenceFlowInternal] Error during image generation for sentences:", input.sentences.join(' '), "Prompt:", promptText, "Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      
       let errorMessage = "Image generation failed due to an internal server error.";
+      let isSafetyRelated = false;
 
+      const checkSafetyKeywords = (obj: any): boolean => {
+        if (!obj) return false;
+        const S = JSON.stringify(obj).toLowerCase();
+        return S.includes("safety") || S.includes("filtered") || S.includes("blocked") || S.includes("prohibited");
+      };
+
+      if (checkSafetyKeywords(error) || checkSafetyKeywords(error.details) || checkSafetyKeywords(error.cause)) {
+        isSafetyRelated = true;
+      }
+      if (error?.response?.candidates?.[0]?.finishReason === 'SAFETY' || 
+          error?.details?.finishReason === 'SAFETY' || 
+          (error?.cause as any)?.finishReason === 'SAFETY' || // Check error.cause.finishReason
+          error?.finishReason === 'SAFETY') {
+        isSafetyRelated = true;
+      }
+      
       if (error && error.message) {
         errorMessage = String(error.message);
-      } else if (error && error.details) { // Attempt to capture more specific error details
-        errorMessage = String(error.details);
+      } else if (error && error.details && typeof error.details === 'string') {
+        errorMessage = error.details;
+      } else if (error && error.details && error.details.message && typeof error.details.message === 'string') {
+        errorMessage = error.details.message;
       } else if (typeof error === 'string') {
         errorMessage = error;
       } else {
         try {
-          errorMessage = `Image generation failed with an unstringifiable error object. Raw error: ${JSON.stringify(error)}`;
+          errorMessage = `Image generation failed. Raw error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`;
         } catch (e) {
-          errorMessage = "Image generation failed due to an unstringifiable error object and the error object itself could not be stringified.";
+          errorMessage = "Image generation failed due to an unstringifiable error object.";
         }
       }
       
-      const errorString = errorMessage.toLowerCase();
-      if (errorString.includes("api key") || errorString.includes("permission denied") || errorString.includes("authentication") || errorString.includes("quota") || errorString.includes("billing")) {
+      const errorStringLower = errorMessage.toLowerCase();
+      if (errorStringLower.includes("api key") || errorStringLower.includes("permission denied") || errorStringLower.includes("authentication") || errorStringLower.includes("quota") || errorStringLower.includes("billing")) {
          errorMessage = `Image generation failed: There might be an issue with the Google AI API Key configuration, permissions, or billing. Please check server logs and your Google Cloud/AI Studio project. Original error: ${errorMessage}`;
+      } else if (isSafetyRelated) {
+        errorMessage = `Image generation was blocked due to content safety filters for the provided text: "${input.sentences.join(' ')}". Please try different wording or a different topic. Original error: ${errorMessage}`;
       }
+      // Add check for model related errors if identifiable
+      else if (errorStringLower.includes("model") && (errorStringLower.includes("error") || errorStringLower.includes("failed") || errorStringLower.includes("unavailable"))) {
+        errorMessage = `Image generation failed: There seems to be an issue with the AI model itself. Please try again later. Original error: ${errorMessage}`;
+      }
+      
       throw new Error(errorMessage);
     }
   }
