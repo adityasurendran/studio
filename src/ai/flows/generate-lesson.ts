@@ -64,7 +64,7 @@ const generateLessonPrompt = ai.definePrompt({
     Child Age: {{{childAge}}} (Ensure the complexity of language, concepts, and quiz questions are appropriate for this age.)
     Learning Difficulties: {{{learningDifficulties}}} (Simplify explanations and use clear, direct language for both lesson and quiz if difficulties are specified.)
     Interests: {{{interests}}} (Incorporate these interests to make the lesson and quiz more engaging, if relevant to the topic.)
-    Recent Mood: {{{recentMood}}} (Adjust the tone of the lesson and quiz slightly to be sensitive to the child's mood.)
+    Recent Mood: {{{recentMood}}} (This is an important instruction. You MUST adjust the tone of the lesson content and quiz questions to be appropriately sensitive to the child's mood. For example, if the mood is 'sad' or 'anxious', the tone should be gentler, more patient, and reassuring. If the mood is 'happy' or 'excited', the tone can be more upbeat and enthusiastic while still maintaining educational focus.)
     Lesson History: {{{lessonHistory}}} (Avoid repetition if possible, build upon previous knowledge if relevant.)
     Curriculum Focus: {{{curriculum}}} (This is a CRITICAL guideline. The lesson content, depth, terminology, and quiz questions must align with this curriculum standard. For example, if 'CBSE Grade 5 Science', 'US Grade 2 Math', or 'Irish Junior Cycle Maths' is specified, ensure the lesson and quiz reflect the appropriate level of detail and topics typically covered in that curriculum for the given 'Lesson Topic'.)
     Lesson Topic: {{{lessonTopic}}} (The lesson MUST comprehensively teach this specific topic, and the quiz MUST test understanding of this topic.)
@@ -94,9 +94,9 @@ const generateLessonPrompt = ai.definePrompt({
       - Vary question difficulty appropriately for the child's age and curriculum.
       - EACH quiz question MUST have an "explanation" field, as described above.
   5.  Relevance: All content (lesson and quiz) MUST directly relate to teaching the 'Lesson Topic': {{{lessonTopic}}} in a manner consistent with the specified 'Curriculum Focus' ({{{curriculum}}}) and 'Child Age' ({{{childAge}}}).
-  6.  Tone: Maintain an encouraging, positive, and child-friendly tone throughout the lesson and quiz.
+  6.  Tone: Maintain an encouraging, positive, and child-friendly tone throughout the lesson and quiz, further modulated by the 'Recent Mood' instruction.
 
-  Example (If lesson topic is "The Water Cycle", age is 10, curriculum is "CBSE Grade 5 Environmental Science"):
+  Example (If lesson topic is "The Water Cycle", age is 10, curriculum is "CBSE Grade 5 Environmental Science", mood is "neutral"):
   {
     "lessonTitle": "The Amazing Journey of Water: The Water Cycle",
     "lessonContent": [
@@ -151,7 +151,7 @@ const generateLessonPrompt = ai.definePrompt({
     ]
   }
 
-  Please respond ONLY in JSON format matching this structure. Ensure all quiz questions have an explanation and all content is appropriate for the specified age and curriculum.
+  Please respond ONLY in JSON format matching this structure. Ensure all quiz questions have an explanation and all content is appropriate for the specified age, curriculum, and mood.
   `,
 });
 
@@ -285,3 +285,5 @@ function cleanSentence(sentence: string): string {
     }
     return cleaned;
 }
+
+    
