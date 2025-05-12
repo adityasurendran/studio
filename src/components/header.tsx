@@ -9,10 +9,10 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { LogIn, LogOut, UserPlus, LayoutDashboard, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import Logo from '@/components/logo'; // Import the new Logo component
+import Logo from '@/components/logo'; 
 
 export default function Header() {
-  const { currentUser } = useAuth();
+  const { currentUser, parentProfile } = useAuth(); // Added parentProfile
   const router = useRouter();
   const { toast } = useToast();
 
@@ -26,6 +26,8 @@ export default function Header() {
       toast({ title: "Error", description: "Failed to sign out. Please try again.", variant: "destructive" });
     }
   };
+
+  const dashboardLink = currentUser && parentProfile?.isSubscribed ? "/dashboard" : "/subscribe";
 
   return (
     <header className="bg-card shadow-md sticky top-0 z-50 h-[var(--header-height,4rem)] flex items-center">
@@ -42,7 +44,7 @@ export default function Header() {
           </Link>
           {currentUser ? (
             <>
-              <Link href="/dashboard" passHref>
+              <Link href={dashboardLink} passHref>
                 <Button variant="ghost" className="text-foreground hover:text-primary">
                   <LayoutDashboard className="mr-2 h-4 w-4 hidden sm:inline" /> Dashboard
                 </Button>

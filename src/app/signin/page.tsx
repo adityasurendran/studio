@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'; // Added useSearchParams
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams(); // Added to get query params
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,9 +30,10 @@ export default function SignInPage() {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Sign In Successful",
-        description: "Welcome back! Redirecting to your dashboard...",
+        description: "Welcome back! Redirecting...",
       });
-      router.push('/dashboard');
+      const redirectPath = searchParams.get('redirect');
+      router.push(redirectPath || '/dashboard'); // Use redirectPath or default to /dashboard
     } catch (err: any) {
       let friendlyMessage = "Please check your credentials and try again.";
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {

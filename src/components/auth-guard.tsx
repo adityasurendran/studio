@@ -1,7 +1,7 @@
 // src/components/auth-guard.tsx
 "use client";
 
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
@@ -11,14 +11,25 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, parentProfile, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !currentUser) {
-      router.push('/signin');
+    if (!loading) {
+      if (!currentUser) {
+        // If not logged in, redirect to signin, appending current path as redirect query
+        router.push(`/signin?redirect=${encodeURIComponent(pathname)}`);
+      } else if (parentProfile && !parentProfile.isSubscribed) {
+        // If logged in but not subscribed, redirect to subscribe page.
+        // This guard is used for routes like /dashboard/*
+        // Ensure not already on /subscribe page to prevent loops (though /subscribe won't use this guard)
+        if (pathname !== '/subscribe') {
+          router.push('/subscribe');
+        }
+      }
     }
-  }, [currentUser, loading, router]);
+  }, [currentUser, parentProfile, loading, router, pathname]);
 
   if (loading) {
     return (
@@ -28,11 +39,12 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  if (!currentUser) {
-    // This will be brief as the useEffect will redirect.
-    // Alternatively, you can return null or a redirect component here too.
+  // If user is not authenticated OR is authenticated but not subscribed,
+  // useEffect above will handle redirection. Return null to prevent rendering children.
+  if (!currentUser || (parentProfile && !parentProfile.isSubscribed)) {
     return null; 
   }
 
+  // User is authenticated and (implicitly, due to the check above) subscribed.
   return <>{children}</>;
 }
