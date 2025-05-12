@@ -7,8 +7,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { BookHeart, LogIn, LogOut, UserPlus, LayoutDashboard } from 'lucide-react';
+import { LogIn, LogOut, UserPlus, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Logo from '@/components/logo'; // Import the new Logo component
 
 export default function Header() {
   const { currentUser } = useAuth();
@@ -27,11 +28,11 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-card shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+    <header className="bg-card shadow-md sticky top-0 z-50 h-[var(--header-height,4rem)] flex items-center">
+      <div className="container mx-auto px-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
-          <BookHeart className="h-8 w-8" />
-          <span>Shannon</span>
+          <Logo className="h-8 w-auto" /> 
+          <span className="hidden sm:inline">Shannon</span>
         </Link>
         <nav className="flex items-center gap-2 sm:gap-4">
           {currentUser ? (

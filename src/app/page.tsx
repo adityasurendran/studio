@@ -2,13 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
-import { BookHeart, ArrowRight, Users, ShieldCheck } from "lucide-react";
+import { ArrowRight, Users, ShieldCheck } from "lucide-react";
+import Logo from "@/components/logo"; // Import the new Logo component
 
 export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center">
       <div className="mb-8">
-        <BookHeart className="h-24 w-24 text-primary animate-pulse" />
+        <Logo className="h-24 w-24 text-primary animate-pulse" />
       </div>
       <h1 className="text-5xl md:text-6xl font-extrabold mb-6 text-primary tracking-tight">
         Welcome to Shannon!
