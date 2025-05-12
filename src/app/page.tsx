@@ -26,7 +26,7 @@ export default function HomePage() {
           </CardHeader>
           <CardContent className="p-6">
             <Image 
-              src="https://picsum.photos/seed/parentdashboard/400/250" 
+              src="https://picsum.photos/seed/parent-dashboard/400/250" 
               alt="Parent Dashboard Preview" 
               width={400} 
               height={250} 
@@ -52,7 +52,7 @@ export default function HomePage() {
           </CardHeader>
           <CardContent className="p-6">
              <Image 
-              src="https://picsum.photos/seed/childlearning/400/250" 
+              src="https://picsum.photos/seed/child-learning-fun/400/250" 
               alt="Child Learning Preview" 
               width={400} 
               height={250} 
