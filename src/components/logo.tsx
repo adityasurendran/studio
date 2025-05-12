@@ -18,7 +18,7 @@ export default function Logo(props: SVGProps<SVGSVGElement>) {
       {/* Book Shape - Open Book */}
       <path
         d="M25 80C25 75 30 70 35 70H65C70 70 75 75 75 80V20H25V80Z"
-        fill="hsl(var(--primary))" // Irish Green
+        fill="hsl(var(--primary))" // Irish Green for book
         stroke="hsl(var(--primary-foreground))"
         strokeWidth="3"
       />
@@ -42,25 +42,32 @@ export default function Logo(props: SVGProps<SVGSVGElement>) {
         strokeWidth="1.5"
       />
 
-      {/* Heart Shape - representing care, incorporated subtly or overlaid */}
+      {/* River Shannon element - flowing across the book */}
       <path
-        d="M50 35C40 25 30 30 30 40C30 55 50 65 50 65C50 65 70 55 70 40C70 30 60 25 50 35Z"
-        fill="hsl(var(--accent))" // Irish Orange
-        stroke="hsl(var(--accent-foreground))"
-        strokeWidth="2.5"
-        transform="translate(0, 5)" // Move heart slightly down
+        d="M 30 45 Q 50 38, 70 45 L 70 53 Q 50 62, 30 53 L 30 45 Z"
+        fill="hsl(var(--accent))" // Irish Orange for river
+        stroke="hsl(var(--accent-foreground))" // White/Light stroke for river outline
+        strokeWidth="1.5"
+        strokeLinejoin="round"
       />
       
-      {/* Optional shine/highlight on the heart */}
-      <path 
-        d="M45 42 Q 50 38, 55 42" 
-        stroke="hsl(var(--accent-foreground) / 0.7)" 
-        strokeWidth="1.5" 
+      {/* Optional subtle wave highlights on the river */}
+      <path
+        d="M35 48 Q 45 45, 50 48 T 65 48"
+        stroke="hsl(var(--accent-foreground) / 0.6)"
+        strokeWidth="1"
         fill="none"
         strokeLinecap="round"
-        transform="translate(0,5)"
+      />
+       <path
+        d="M38 50 Q 48 47, 53 50 T 68 50"
+        stroke="hsl(var(--accent-foreground) / 0.5)"
+        strokeWidth="1"
+        fill="none"
+        strokeLinecap="round"
       />
 
     </svg>
   );
 }
+
