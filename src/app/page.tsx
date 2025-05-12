@@ -2,79 +2,81 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
+import { BookHeart, ArrowRight, Users, ShieldCheck } from "lucide-react";
 
 export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center">
-      <Image 
-        src="https://picsum.photos/seed/shannonlogo/150/150" 
-        alt="Shannon Logo" 
-        width={150} 
-        height={150} 
-        className="rounded-full mb-6 shadow-lg"
-        data-ai-hint="educational logo"
-      />
-      <h1 className="text-5xl font-bold mb-6 text-primary">
+      <div className="mb-8">
+        <BookHeart className="h-24 w-24 text-primary animate-pulse" />
+      </div>
+      <h1 className="text-5xl md:text-6xl font-extrabold mb-6 text-primary tracking-tight">
         Welcome to Shannon!
       </h1>
-      <p className="text-xl text-foreground mb-10 max-w-2xl">
-        Your partner in empowering children with learning difficulties through personalized and engaging lessons.
+      <p className="text-xl text-foreground mb-12 max-w-3xl leading-relaxed">
+        Your dedicated partner in empowering children with learning difficulties through <span className="text-accent font-semibold">personalized</span> and <span className="text-accent font-semibold">engaging</span> AI-driven lessons.
       </p>
       
-      <div className="grid md:grid-cols-2 gap-8 w-full max-w-4xl mb-12">
-        <Card className="shadow-xl hover:shadow-2xl transition-shadow">
-          <CardHeader>
-            <CardTitle className="text-2xl text-accent">For Parents</CardTitle>
-            <CardDescription>Manage profiles, track progress, and support your child's learning journey.</CardDescription>
+      <div className="grid md:grid-cols-2 gap-8 w-full max-w-5xl mb-16">
+        <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 group border border-transparent hover:border-primary/30 rounded-lg overflow-hidden">
+          <CardHeader className="bg-gradient-to-br from-primary/10 via-card to-card pb-4">
+            <Users className="h-12 w-12 text-accent mx-auto mb-3"/>
+            <CardTitle className="text-3xl font-semibold text-primary group-hover:text-accent transition-colors">For Parents</CardTitle>
+            <CardDescription className="text-base">Manage profiles, track progress, and support your child&apos;s unique learning journey.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <Image 
               src="https://picsum.photos/seed/parentdashboard/400/250" 
               alt="Parent Dashboard Preview" 
               width={400} 
               height={250} 
-              className="rounded-md mb-4 w-full object-cover"
+              className="rounded-md mb-6 w-full object-cover shadow-lg border-2 border-muted group-hover:border-accent/50 transition-all"
               data-ai-hint="parent child computer"
             />
             <Link href="/signin" passHref>
-              <Button className="w-full" variant="default" size="lg">Parent Sign In</Button>
+              <Button className="w-full text-lg py-6 bg-primary text-primary-foreground hover:bg-primary/90 group-hover:bg-accent group-hover:text-accent-foreground transition-colors shadow-md hover:shadow-lg" size="lg">
+                Parent Sign In <ArrowRight className="ml-2 h-5 w-5"/>
+              </Button>
             </Link>
-            <p className="text-sm mt-2 text-muted-foreground">
-              New here? <Link href="/signup" className="text-primary hover:underline">Create an account</Link>
+            <p className="text-sm mt-4 text-muted-foreground">
+              New here? <Link href="/signup" className="font-medium text-primary hover:text-accent hover:underline">Create an account</Link>
             </p>
           </CardContent>
         </Card>
-        <Card className="shadow-xl hover:shadow-2xl transition-shadow">
-          <CardHeader>
-            <CardTitle className="text-2xl text-accent">For Children</CardTitle>
-            <CardDescription>Explore fun lessons tailored just for you and earn exciting rewards!</CardDescription>
+
+        <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 group border border-transparent hover:border-accent/30 rounded-lg overflow-hidden">
+          <CardHeader className="bg-gradient-to-br from-accent/10 via-card to-card pb-4">
+            <ShieldCheck className="h-12 w-12 text-primary mx-auto mb-3"/>
+            <CardTitle className="text-3xl font-semibold text-accent group-hover:text-primary transition-colors">For Children</CardTitle>
+            <CardDescription className="text-base">Explore fun lessons tailored just for you! (Parents, please sign in first).</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
              <Image 
               src="https://picsum.photos/seed/childlearning/400/250" 
               alt="Child Learning Preview" 
               width={400} 
               height={250} 
-              className="rounded-md mb-4 w-full object-cover"
+              className="rounded-md mb-6 w-full object-cover shadow-lg border-2 border-muted group-hover:border-primary/50 transition-all"
               data-ai-hint="child learning fun"
             />
             <Link href="/dashboard" passHref>
-              <Button className="w-full" variant="secondary" size="lg">Go to Dashboard</Button>
+              <Button className="w-full text-lg py-6 bg-secondary text-secondary-foreground hover:bg-secondary/80 group-hover:bg-primary group-hover:text-primary-foreground transition-colors shadow-md hover:shadow-lg" size="lg">
+                Go to Dashboard <ArrowRight className="ml-2 h-5 w-5"/>
+              </Button>
             </Link>
-             <p className="text-sm mt-2 text-muted-foreground">
-              (Parents, please sign in to access and set up child profiles)
+             <p className="text-sm mt-4 text-muted-foreground">
+              (Access enabled after parent sign-in & profile setup)
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="mt-10 p-6 bg-card rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold text-primary mb-3">Our Mission</h2>
-        <p className="text-foreground max-w-xl">
-          Shannon is dedicated to providing 100% free, high-quality educational resources for children facing learning challenges. We believe every child deserves the chance to succeed.
+      <div className="mt-10 p-8 bg-card rounded-xl shadow-2xl border-t-4 border-primary max-w-3xl">
+        <h2 className="text-3xl font-bold text-primary mb-4">Our Mission</h2>
+        <p className="text-lg text-foreground leading-relaxed">
+          Shannon is dedicated to providing <span className="font-semibold">100% free, high-quality</span> educational resources for children facing learning challenges. We believe every child deserves the chance to learn, grow, and succeed at their own pace.
         </p>
       </div>
     </div>
   );
 }
-

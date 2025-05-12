@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, LogIn } from 'lucide-react';
+import { Loader2, LogIn, KeyRound } from 'lucide-react';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -29,14 +29,22 @@ export default function SignInPage() {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Sign In Successful",
-        description: "Welcome back!",
+        description: "Welcome back! Redirecting to your dashboard...",
       });
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message);
+      let friendlyMessage = "Please check your credentials and try again.";
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        friendlyMessage = "Invalid email or password. Please try again.";
+      } else if (err.code === 'auth/too-many-requests') {
+        friendlyMessage = "Access to this account has been temporarily disabled due to many failed login attempts. You can immediately restore it by resetting your password or you can try again later.";
+      } else {
+        friendlyMessage = err.message || friendlyMessage;
+      }
+      setError(friendlyMessage);
       toast({
         title: "Sign In Failed",
-        description: err.message || "Please check your credentials and try again.",
+        description: friendlyMessage,
         variant: "destructive",
       });
     } finally {
@@ -45,16 +53,19 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-var(--header-height,4rem))] py-12 px-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center">
+    <div className="flex items-center justify-center min-h-[calc(100vh-var(--header-height,4rem)-2rem)] py-12 px-4 bg-gradient-to-br from-background to-secondary/30">
+      <Card className="w-full max-w-md shadow-xl border-t-4 border-primary rounded-lg">
+        <CardHeader className="text-center p-6 space-y-2">
+          <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit">
+            <KeyRound className="h-10 w-10 text-primary" />
+          </div>
           <CardTitle className="text-3xl font-bold text-primary">Parent Sign In</CardTitle>
-          <CardDescription>Access your Shannon dashboard.</CardDescription>
+          <CardDescription className="text-base">Access your Shannon dashboard.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email" className="text-base">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -62,11 +73,12 @@ export default function SignInPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="text-base"
+                className="text-base h-12"
+                aria-label="Email Address"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-base">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -74,21 +86,22 @@ export default function SignInPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="text-base"
+                className="text-base h-12"
+                aria-label="Password"
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
+            {error && <p className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-md">{error}</p>}
+            <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-lg py-6 shadow-md hover:shadow-lg transition-shadow" disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <LogIn className="mr-2 h-5 w-5" />}
               Sign In
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="text-center flex-col">
-          <p className="text-sm text-muted-foreground">
+        <CardFooter className="text-center flex-col p-6 border-t mt-4">
+          <p className="text-base text-muted-foreground">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="font-medium text-primary hover:underline">
-              Sign up
+            <Link href="/signup" className="font-semibold text-primary hover:text-accent hover:underline">
+              Sign up here
             </Link>
           </p>
         </CardFooter>
@@ -96,4 +109,3 @@ export default function SignInPage() {
     </div>
   );
 }
-

@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateTailoredLessons, type GenerateTailoredLessonsInput } from '@/ai/flows/generate-lesson';
 import { useState, useEffect } from 'react';
 import LessonDisplay from './lesson-display';
-import { Loader2, Wand2, Smile, History, Target, RefreshCw } from 'lucide-react';
+import { Loader2, Wand2, Smile, History, Target, RefreshCw, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 
@@ -57,25 +57,23 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
 
   const processLessonGeneration = async (input: GenerateTailoredLessonsInput, isRegeneration: boolean = false) => {
     setIsLoading(true);
-    setGeneratedLesson(null); // Clear previous lesson before new one is generated
+    setGeneratedLesson(null); 
     try {
       const lesson = await generateTailoredLessons(input);
       setGeneratedLesson(lesson);
       addSavedLesson(childProfile.id, lesson);
-      setLastSuccessfulInput(input); // Save input for potential regeneration
+      setLastSuccessfulInput(input); 
       toast({
         title: isRegeneration ? "Lesson Regenerated!" : "Lesson Generated!",
-        description: `A new lesson titled "${lesson.lessonTitle}" is ready.`,
+        description: `A new lesson titled "${lesson.lessonTitle}" is ready for ${childProfile.name}.`,
       });
     } catch (error) {
       console.error("Lesson generation error:", error);
       toast({
         title: "Error Generating Lesson",
-        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again or adjust the topic.",
         variant: "destructive",
       });
-      // If regeneration fails, keep the last successful input available
-      // If initial generation fails, lastSuccessfulInput will remain null
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +110,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
       addLessonAttempt(childProfile.id, attemptData);
       toast({
         title: "Quiz Finished!",
-        description: `Score: ${attemptData.quizScore}%. Results saved.`,
+        description: `Score: ${attemptData.quizScore}%. Results saved for ${childProfile.name}.`,
       });
     }
   };
@@ -120,23 +118,28 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
   const handleRestartLesson = () => {
     setGeneratedLesson(null); 
     setIsLoading(false); 
+    // Reset form to allow new topic input if desired, or keep current topic for easy regeneration
+    // form.resetField("lessonTopic"); // Optional: clear topic
     toast({
-        title: "Ready for a new Lesson",
-        description: "The previous lesson view has been cleared. Generate a new one or select a different topic."
+        title: "Ready for a New Lesson",
+        description: "The previous lesson view has been cleared. Feel free to generate a new lesson or adjust the topic."
     });
   };
 
 
   return (
     <div className="space-y-8">
-      <Card className="w-full max-w-3xl mx-auto shadow-lg">
-        <CardHeader>
-            <CardTitle className="text-3xl text-primary flex items-center gap-2"><Wand2 className="h-8 w-8" /> Lesson Generator</CardTitle>
-            <CardDescription>
-                Create a new AI-powered lesson for <strong>{childProfile.name}</strong> (Age: {childProfile.age}).
-                <br />
-                Specify the lesson topic and provide context about their recent mood and lesson history.
-            </CardDescription>
+      <Card className="w-full max-w-3xl mx-auto shadow-xl border-t-4 border-primary">
+        <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+                <Wand2 className="h-10 w-10 text-primary" />
+                <div>
+                    <CardTitle className="text-3xl font-bold text-primary">Lesson Generator</CardTitle>
+                    <CardDescription className="text-lg text-muted-foreground mt-1">
+                        Craft a new AI-powered lesson for <strong className="text-accent">{childProfile.name}</strong> (Age: {childProfile.age}).
+                    </CardDescription>
+                </div>
+            </div>
         </CardHeader>
         <CardContent>
             <Form {...form}>
@@ -146,9 +149,9 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
                   name="lessonTopic"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Target /> What should {childProfile.name} learn about today?</FormLabel>
+                      <FormLabel className="flex items-center gap-2 text-lg"><Target className="text-primary"/> What should {childProfile.name} learn about today?</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Addition up to 10, The Solar System, Types of Dinosaurs" {...field} />
+                        <Input placeholder="e.g., Addition up to 10, The Solar System, Types of Dinosaurs" {...field} className="h-12 text-base"/>
                       </FormControl>
                       <FormDescription>Be specific for the best results. This will guide the lesson content.</FormDescription>
                       <FormMessage />
@@ -160,10 +163,10 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
                 name="recentMood"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Smile /> Recent Mood</FormLabel>
+                    <FormLabel className="flex items-center gap-2 text-lg"><Smile className="text-primary"/> Recent Mood</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-12 text-base">
                             <SelectValue placeholder="Select child's current mood" />
                         </SelectTrigger>
                         </FormControl>
@@ -185,12 +188,13 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
                 name="lessonHistory"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel className="flex items-center gap-2"><History /> Brief Lesson History / Context (Optional)</FormLabel>
+                    <FormLabel className="flex items-center gap-2 text-lg"><History className="text-primary"/> Brief Lesson History / Context (Optional)</FormLabel>
                     <FormControl>
                         <Textarea
                         placeholder="e.g., Recently worked on subtraction. Struggled with counting by 5s. Enjoyed a story about space."
                         {...field}
                         rows={3}
+                        className="text-base"
                         />
                     </FormControl>
                     <FormDescription>Any specific topics covered recently, or areas to focus on/avoid?</FormDescription>
@@ -198,15 +202,15 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
                     </FormItem>
                 )}
                 />
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-6" disabled={isLoading}>
-                    {isLoading && !lastSuccessfulInput ? ( // Show loading only if it's not a regeneration
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                    <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-3 shadow-md hover:shadow-lg transition-all transform hover:scale-105" size="lg" disabled={isLoading}>
+                    {isLoading && !lastSuccessfulInput ? ( 
                         <>
                         <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generating Lesson...
                         </>
                     ) : (
                         <>
-                        <Wand2 className="mr-2 h-5 w-5" /> Generate Lesson
+                        <Sparkles className="mr-2 h-5 w-5" /> Generate Lesson
                         </>
                     )}
                     </Button>
@@ -215,7 +219,8 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
                             type="button" 
                             variant="outline" 
                             onClick={handleRegenerateLastLesson} 
-                            className="w-full text-lg py-6" 
+                            className="w-full text-lg py-3 shadow-sm hover:shadow-md hover:border-primary hover:text-primary" 
+                            size="lg"
                             disabled={isLoading}
                         >
                             {isLoading && lastSuccessfulInput ? (
@@ -224,7 +229,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
                                 </>
                             ) : (
                                 <>
-                                <RefreshCw className="mr-2 h-5 w-5" /> Regenerate Last Lesson
+                                <RefreshCw className="mr-2 h-5 w-5" /> Regenerate Last
                                 </>
                             )}
                         </Button>
@@ -236,25 +241,35 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
       </Card>
 
       {isLoading && (
-        <div className="text-center py-10">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="mt-4 text-lg text-muted-foreground">
-            Our AI is crafting a special lesson and illustrating it for {childProfile.name}...
-            <br/>This may take a minute or two, especially for longer lessons. Please wait.
+        <div className="text-center py-10 px-4 my-8 bg-card rounded-lg shadow-lg border">
+          <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto mb-6" />
+          <p className="mt-4 text-xl text-muted-foreground leading-relaxed">
+            <span className="font-semibold text-primary block text-2xl mb-2">Hang tight!</span> Our AI is crafting a special lesson
+            <br />
+            and illustrating it for <strong className="text-accent">{childProfile.name}</strong>.
+            <br />
+            This may take a moment or two, especially for the images. Good things take time!
           </p>
         </div>
       )}
 
       {generatedLesson && !isLoading && ( 
         <div className="mt-10">
-            <h2 className="text-2xl font-semibold mb-4 text-center text-primary">Generated Lesson Preview</h2>
-            <LessonDisplay 
-                lesson={generatedLesson} 
-                childProfile={childProfile}
-                lessonTopic={lastSuccessfulInput?.lessonTopic || form.getValues("lessonTopic")} // Use topic from last input or current form
-                onQuizComplete={handleQuizComplete}
-                onRestartLesson={handleRestartLesson}
-            />
+            <Card className="shadow-xl">
+                <CardHeader>
+                    <CardTitle className="text-2xl font-semibold text-center text-primary">Generated Lesson Preview</CardTitle>
+                    <CardDescription className="text-center text-muted-foreground">Review the lesson below. You can restart if needed.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <LessonDisplay 
+                        lesson={generatedLesson} 
+                        childProfile={childProfile}
+                        lessonTopic={lastSuccessfulInput?.lessonTopic || form.getValues("lessonTopic")} 
+                        onQuizComplete={handleQuizComplete}
+                        onRestartLesson={handleRestartLesson}
+                    />
+                </CardContent>
+            </Card>
         </div>
       )}
     </div>

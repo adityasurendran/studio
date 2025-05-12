@@ -8,23 +8,23 @@ body {
 
 @layer base {
   :root {
-    --background: 60 100% 97%; /* Very pale yellow, almost white */
-    --foreground: 120 60% 15%; /* Dark green for text */
+    --background: 40 30% 98%; /* Softer, very light beige/off-white */
+    --foreground: 215 25% 25%; /* Dark, slightly desaturated blue-grey for text */
 
     --card: 0 0% 100%; /* White for cards */
-    --card-foreground: 120 60% 15%; /* Dark green text on cards */
+    --card-foreground: 215 25% 25%; /* Dark text on cards */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 120 60% 15%;
+    --popover-foreground: 215 25% 25%;
 
     --primary: 145 63% 37%; /* Irish Green */
     --primary-foreground: 0 0% 100%; /* White text on primary */
 
-    --secondary: 30 100% 80%; /* Light Orange for hover/secondary elements */
-    --secondary-foreground: 30 70% 30%; /* Darker orange text on light orange secondary */
+    --secondary: 145 40% 90%; /* Light, muted green for secondary elements */
+    --secondary-foreground: 145 63% 25%; /* Darker green text on light green secondary */
 
-    --muted: 120 20% 90%; /* Very light green/grey */
-    --muted-foreground: 120 25% 35%; /* Muted green text */
+    --muted: 210 30% 95%; /* Very light cool grey */
+    --muted-foreground: 215 20% 45%; /* Muted grey text */
 
     --accent: 28 87% 58%; /* Irish Orange */
     --accent-foreground: 0 0% 100%; /* White text on orange */
@@ -32,8 +32,8 @@ body {
     --destructive: 0 70% 55%; 
     --destructive-foreground: 0 0% 100%;
 
-    --border: 120 25% 75%; /* Light green-grey border */
-    --input: 120 15% 95%;    /* Very light green-grey for inputs */
+    --border: 210 20% 88%; /* Light grey border */
+    --input: 210 30% 97%;    /* Very light grey for inputs */
     --ring: 145 63% 42%;   /* Primary green for focus rings */
 
     --chart-1: 145 63% 45%; /* Green */
@@ -43,34 +43,34 @@ body {
     --chart-5: 0 0% 60%;    /* Grey */
     --radius: 0.5rem;
 
-    --sidebar-background: 120 30% 96%; /* Very light green for sidebar */
-    --sidebar-foreground: 120 40% 25%; /* Darker green text */
+    --sidebar-background: 0 0% 100%; /* White sidebar */
+    --sidebar-foreground: 215 25% 30%; /* Darker grey text in sidebar */
     --sidebar-primary: 145 63% 37%; /* Main Green for active items */
     --sidebar-primary-foreground: 0 0% 100%; /* White */
-    --sidebar-accent: 120 30% 90%; /* Lighter green for hover */
-    --sidebar-accent-foreground: 120 40% 20%; /* Darker green for hover text */
-    --sidebar-border: 120 25% 80%;
+    --sidebar-accent: 145 30% 94%; /* Lighter green for hover */
+    --sidebar-accent-foreground: 145 63% 30%; /* Darker green for hover text */
+    --sidebar-border: 210 20% 88%;
     --sidebar-ring: 145 63% 42%;
   }
 
   .dark {
-    --background: 120 15% 10%; /* Very dark green/black */
-    --foreground: 120 30% 90%; /* Light green/grey text */
+    --background: 215 20% 12%; /* Dark desaturated blue */
+    --foreground: 210 30% 90%; /* Light grey text */
 
-    --card: 120 10% 15%; 
-    --card-foreground: 120 30% 90%;
+    --card: 215 15% 18%; 
+    --card-foreground: 210 30% 90%;
 
-    --popover: 120 10% 15%;
-    --popover-foreground: 120 30% 90%;
+    --popover: 215 15% 18%;
+    --popover-foreground: 210 30% 90%;
 
     --primary: 145 55% 45%; /* Slightly brighter Green for dark mode */
     --primary-foreground: 0 0% 100%; 
 
-    --secondary: 30 70% 40%; /* Darker, muted Orange for secondary elements */
-    --secondary-foreground: 30 90% 85%; /* Lighter orange text */
+    --secondary: 145 40% 30%; /* Darker, muted Green for secondary elements */
+    --secondary-foreground: 145 50% 85%; /* Lighter green text */
 
-    --muted: 120 10% 25%; /* Muted dark green-grey */
-    --muted-foreground: 120 20% 65%; 
+    --muted: 215 15% 25%; /* Muted dark grey-blue */
+    --muted-foreground: 210 25% 65%; 
 
     --accent: 28 90% 65%; /* Brighter Orange for dark mode */
     --accent-foreground: 0 0% 10%; /* Dark text on orange accent */
@@ -78,8 +78,8 @@ body {
     --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 120 10% 30%; 
-    --input: 120 10% 20%;    
+    --border: 215 15% 30%; 
+    --input: 215 15% 22%;    
     --ring: 145 55% 50%;   
 
     --chart-1: 145 55% 50%; /* Green */
@@ -88,13 +88,13 @@ body {
     --chart-4: 40 70% 60%;  /* Soft Gold/Yellow */
     --chart-5: 0 0% 70%;    /* Light Grey */
 
-    --sidebar-background: 120 12% 12%; 
-    --sidebar-foreground: 120 25% 85%; 
+    --sidebar-background: 215 20% 10%; 
+    --sidebar-foreground: 210 25% 85%; 
     --sidebar-primary: 145 55% 45%; 
     --sidebar-primary-foreground: 0 0% 100%; 
-    --sidebar-accent: 120 10% 20%; 
+    --sidebar-accent: 145 30% 20%; 
     --sidebar-accent-foreground: 145 50% 75%;
-    --sidebar-border: 120 10% 30%;
+    --sidebar-border: 215 15% 28%;
     --sidebar-ring: 145 55% 50%;
   }
 }

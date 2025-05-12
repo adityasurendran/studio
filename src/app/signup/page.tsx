@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UserPlus } from 'lucide-react';
+import { Loader2, UserPlus, ShieldCheck } from 'lucide-react';
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
@@ -26,6 +26,16 @@ export default function SignUpPage() {
     e.preventDefault();
     setError(null);
 
+    if (password.length < 6) {
+      setError("Password should be at least 6 characters long.");
+      toast({
+        title: "Sign Up Error",
+        description: "Password should be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       toast({
@@ -39,16 +49,25 @@ export default function SignUpPage() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       toast({
-        title: "Sign Up Successful",
-        description: "Your account has been created. Welcome!",
+        title: "Sign Up Successful!",
+        description: "Your account has been created. Welcome to Shannon!",
       });
-      // Potentially send verification email here
-      router.push('/dashboard'); // Or to a profile setup page
+      router.push('/dashboard'); 
     } catch (err: any) {
-      setError(err.message);
+      let friendlyMessage = "Could not create account. Please try again.";
+      if (err.code === 'auth/email-already-in-use') {
+        friendlyMessage = "This email address is already in use. Try signing in instead.";
+      } else if (err.code === 'auth/invalid-email') {
+        friendlyMessage = "The email address is not valid.";
+      } else if (err.code === 'auth/weak-password') {
+        friendlyMessage = "The password is too weak. Please choose a stronger password.";
+      } else {
+        friendlyMessage = err.message || friendlyMessage;
+      }
+      setError(friendlyMessage);
       toast({
         title: "Sign Up Failed",
-        description: err.message || "Could not create account. Please try again.",
+        description: friendlyMessage,
         variant: "destructive",
       });
     } finally {
@@ -57,16 +76,19 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-var(--header-height,4rem))] py-12 px-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary">Create Parent Account</CardTitle>
-          <CardDescription>Join Shannon to support your child&apos;s learning.</CardDescription>
+    <div className="flex items-center justify-center min-h-[calc(100vh-var(--header-height,4rem)-2rem)] py-12 px-4 bg-gradient-to-br from-background to-accent/20">
+      <Card className="w-full max-w-md shadow-xl border-t-4 border-accent rounded-lg">
+        <CardHeader className="text-center p-6 space-y-2">
+           <div className="mx-auto bg-accent/10 p-3 rounded-full w-fit">
+            <ShieldCheck className="h-10 w-10 text-accent" />
+          </div>
+          <CardTitle className="text-3xl font-bold text-accent">Create Parent Account</CardTitle>
+          <CardDescription className="text-base">Join Shannon to support your child&apos;s learning journey.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email" className="text-base">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -74,45 +96,48 @@ export default function SignUpPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="text-base"
+                className="text-base h-12"
+                aria-label="Email Address"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-base">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="•••••••• (min. 6 characters)"
+                placeholder="Min. 6 characters"
                 required
-                className="text-base"
+                className="text-base h-12"
+                aria-label="Password"
               />
             </div>
              <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-base">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Re-enter your password"
                 required
-                className="text-base"
+                className="text-base h-12"
+                aria-label="Confirm Password"
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4"/>}
+            {error && <p className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-md">{error}</p>}
+            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-6 shadow-md hover:shadow-lg transition-shadow" disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UserPlus className="mr-2 h-5 w-5"/>}
               Sign Up
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="text-center">
-          <p className="text-sm text-muted-foreground">
+        <CardFooter className="text-center p-6 border-t mt-4">
+          <p className="text-base text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/signin" className="font-medium text-primary hover:underline">
-              Sign in
+            <Link href="/signin" className="font-semibold text-accent hover:text-primary hover:underline">
+              Sign in here
             </Link>
           </p>
         </CardFooter>
@@ -120,4 +145,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-

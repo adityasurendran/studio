@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X } from 'lucide-react';
+import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
@@ -32,7 +32,6 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
 
 
   useEffect(() => {
-    // Reset quiz state if lesson changes (e.g., new lesson generated)
     setView('lesson');
     setCurrentPageIndex(0);
     setCurrentQuestionIndex(0);
@@ -83,7 +82,6 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
 
   const handleAnswerSelection = (questionIdx: number, optionIdx: number) => {
     setSelectedAnswers(prev => ({ ...prev, [questionIdx]: optionIdx }));
-    // If showing explanation, selecting an answer implies trying again, so hide explanation
     if (showExplanationForQuestionIndex === questionIdx) {
       setShowExplanationForQuestionIndex(null);
     }
@@ -95,23 +93,19 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     const isCorrect = selectedAnswers[currentQuestionIndex] === currentQuizQuestion.correctAnswerIndex;
     
     if (isCorrect) {
-      setShowExplanationForQuestionIndex(null); // Ensure no explanation shown for correct answers
-      setAttemptedQuestions(prev => new Set(prev).add(currentQuestionIndex)); // Mark as attempted (and correct)
+      setShowExplanationForQuestionIndex(null); 
+      setAttemptedQuestions(prev => new Set(prev).add(currentQuestionIndex)); 
       advanceToNextQuestionOrSubmit();
     } else {
-      // Incorrect answer, show explanation
       setShowExplanationForQuestionIndex(currentQuestionIndex);
-      // Don't advance, user needs to click "Try Again" or "Continue"
     }
   };
   
   const handleTryAgainOrContinueFromExplanation = () => {
     if (showExplanationForQuestionIndex !== null) {
-      // Clear selected answer for the current question to force re-selection
       const { [showExplanationForQuestionIndex]: _, ...rest } = selectedAnswers;
       setSelectedAnswers(rest);
-      setShowExplanationForQuestionIndex(null); // Hide explanation, user will re-attempt
-      // Question remains the same (currentQuestionIndex is not changed yet)
+      setShowExplanationForQuestionIndex(null); 
     }
   };
 
@@ -186,61 +180,62 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   if (view === 'lesson') {
     if (!currentLessonPage) {
         return (
-            <Card className={cn("w-full shadow-xl", themeClass)}>
-                <CardHeader><CardTitle className="text-2xl text-destructive">Error</CardTitle></CardHeader>
-                <CardContent><p>Could not load lesson page. Please try generating the lesson again.</p></CardContent>
+            <Card className={cn("w-full shadow-xl border-t-4 border-destructive", themeClass)}>
+                <CardHeader><CardTitle className="text-2xl text-destructive">Error Loading Page</CardTitle></CardHeader>
+                <CardContent><p>Could not load this lesson page. Please try generating the lesson again or contact support.</p></CardContent>
             </Card>
         );
     }
     return (
-      <Card className={cn("w-full shadow-xl transition-all duration-300 flex flex-col", themeClass)}>
-        <CardHeader>
+      <Card className={cn("w-full shadow-xl transition-all duration-300 flex flex-col border-t-4 border-primary", themeClass)}>
+        <CardHeader className="pb-3">
             <div className="flex items-center gap-3 mb-2">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <CardTitle className="text-3xl text-primary">{lesson.lessonTitle}</CardTitle>
+              <BookOpen className="h-10 w-10 text-primary" />
+              <CardTitle className="text-3xl md:text-4xl font-bold text-primary">{lesson.lessonTitle}</CardTitle>
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1"><Layers className="h-4 w-4" /><span>Subject: <strong>{lesson.subject}</strong></span></div>
-                <div className="flex items-center gap-1"><Type className="h-4 w-4" /><span>Format: <strong>{lesson.lessonFormat}</strong></span></div>
-                {childProfile?.theme && (<div className="flex items-center gap-1"><Palette className="h-4 w-4" /><span>Theme: <strong>{childProfile.theme}</strong></span></div>)}
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground border-t pt-3 mt-2">
+                <div className="flex items-center gap-1.5"><Layers className="h-4 w-4 text-primary/80" /><span>Subject: <strong>{lesson.subject}</strong></span></div>
+                <div className="flex items-center gap-1.5"><Type className="h-4 w-4 text-primary/80" /><span>Format: <strong>{lesson.lessonFormat}</strong></span></div>
+                {childProfile?.theme && (<div className="flex items-center gap-1.5"><Palette className="h-4 w-4 text-primary/80" /><span>Theme: <strong className="capitalize">{childProfile.theme}</strong></span></div>)}
             </div>
         </CardHeader>
         
-        <CardContent className={cn("flex-grow flex flex-col items-center justify-center p-4 md:p-6 space-y-4", fontClass)}>
-            <div className="w-full aspect-video bg-muted/50 rounded-lg overflow-hidden flex items-center justify-center mb-4 shadow-inner max-h-[400px]">
+        <CardContent className={cn("flex-grow flex flex-col items-center justify-start p-4 md:p-6 space-y-4", fontClass)}>
+            <div className="w-full aspect-[16/10] bg-muted/30 rounded-lg overflow-hidden flex items-center justify-center mb-4 shadow-inner border max-h-[450px]">
             {currentLessonPage.imageDataUri ? (
-                <Image src={currentLessonPage.imageDataUri} alt={`Illustration page ${currentPageIndex + 1}`} width={500} height={281} className="object-contain w-full h-full" priority={true}/>
+                <Image src={currentLessonPage.imageDataUri} alt={`Illustration for page ${currentPageIndex + 1}`} width={600} height={375} className="object-contain w-full h-full" priority={currentPageIndex < 2}/>
             ) : (
-                <div className="text-center text-destructive p-4"><ImageOff className="h-16 w-16 mx-auto mb-2" /><p className="text-sm">Image not available.</p></div>
+                <div className="text-center text-destructive p-4 flex flex-col items-center justify-center h-full">
+                    <ImageOff className="h-20 w-20 mx-auto mb-2" />
+                    <p className="text-lg font-medium">Image not available for this page.</p>
+                    <p className="text-sm">This might be due to content filters or a generation issue.</p>
+                </div>
             )}
             </div>
             
-            <div className={cn("text-center min-h-[4em]", fontClass, themeClass === 'dark-theme-lesson' ? 'text-slate-200' : 'text-foreground')}>
-            {currentLessonPage.sentences.map((sentence, sIdx) => (<p key={sIdx} className={sIdx > 0 ? "mt-1" : ""}>{sentence}</p>))}
+            <div className={cn("text-center min-h-[5em] w-full bg-card p-4 rounded-md shadow", fontClass, themeClass === 'dark-theme-lesson' ? 'text-slate-100' : 'text-foreground')}>
+            {currentLessonPage.sentences.map((sentence, sIdx) => (<p key={sIdx} className={cn("leading-relaxed", sIdx > 0 ? "mt-2" : "")}>{sentence}</p>))}
             {currentLessonPage.sentences.length === 0 && <p>Loading content...</p>}
             </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col sm:flex-row items-center justify-between p-4 border-t">
-            <p className="text-sm text-muted-foreground mb-2 sm:mb-0">Page {currentPageIndex + 1} of {totalLessonPages}</p>
-            <div className="flex gap-2">
-            <Button onClick={handlePreviousPage} disabled={currentPageIndex === 0} variant="outline" size="lg"><ChevronLeft className="mr-2 h-5 w-5" /> Previous</Button>
-            <Button onClick={handleNextPage} variant="default" size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                {currentPageIndex === totalLessonPages - 1 ? (totalQuizQuestions > 0 ? 'Start Quiz' : 'Finish Lesson') : 'Next'}
+        <CardFooter className="flex flex-col sm:flex-row items-center justify-between p-4 border-t gap-3">
+            <p className="text-sm text-muted-foreground">Page {currentPageIndex + 1} of {totalLessonPages}</p>
+            <div className="flex gap-3">
+            <Button onClick={handlePreviousPage} disabled={currentPageIndex === 0} variant="outline" size="lg" className="shadow-sm hover:shadow-md transition-shadow"><ChevronLeft className="mr-2 h-5 w-5" /> Previous</Button>
+            <Button onClick={handleNextPage} variant="default" size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all transform hover:scale-105">
+                {currentPageIndex === totalLessonPages - 1 ? (totalQuizQuestions > 0 ? 'Start Quiz' : 'Finish Lesson') : 'Next Page'}
                 {currentPageIndex < totalLessonPages - 1 && <ChevronRight className="ml-2 h-5 w-5" />}
             </Button>
             </div>
         </CardFooter>
         <style jsx global>{`
-        .dark-theme-lesson { background-color: #2d3748; color: #e2e8f0; }
-        .dark-theme-lesson .text-primary { color: var(--primary); }
-        .dark-theme-lesson .text-muted-foreground { color: #a0aec0; }
-        .colorful-theme-lesson { background: linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--accent) / 0.2)); color: #333; }
+        .dark-theme-lesson { background-color: hsl(var(--background)); color: hsl(var(--foreground)); } /* Use theme vars */
+        .dark-theme-lesson .text-primary { color: hsl(var(--primary)); }
+        .dark-theme-lesson .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+        .colorful-theme-lesson { background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1)); color: hsl(var(--foreground)); }
         .colorful-theme-lesson .text-primary { color: hsl(var(--primary)); }
-        .colorful-theme-lesson .text-muted-foreground { color: hsl(var(--foreground) / 0.7); }
-        .simple-theme-lesson { background-color: #fff; color: #1a202c; border: 1px solid #e2e8f0; }
-        .simple-theme-lesson .text-primary { color: hsl(var(--primary)); }
-        .simple-theme-lesson .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+        .simple-theme-lesson { background-color: hsl(var(--card)); color: hsl(var(--card-foreground)); border-color: hsl(var(--border)); }
       `}</style>
       </Card>
     );
@@ -251,59 +246,67 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     const hasSelectedAnswer = selectedAnswers[currentQuestionIndex] !== undefined;
 
     return (
-      <Card className={cn("w-full shadow-xl", themeClass)}>
-        <CardHeader>
-          <CardTitle className="text-2xl text-primary">Quiz Time: {lesson.lessonTitle}</CardTitle>
-          <p className="text-muted-foreground">Question {currentQuestionIndex + 1} of {totalQuizQuestions}</p>
-          <Progress value={((currentQuestionIndex + 1) / totalQuizQuestions) * 100} className="w-full mt-2" />
+      <Card className={cn("w-full shadow-xl border-t-4 border-accent", themeClass)}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-3">
+            <Brain className="h-10 w-10 text-accent" />
+            <CardTitle className="text-3xl md:text-4xl font-bold text-accent">Quiz Time: {lesson.lessonTitle}</CardTitle>
+          </div>
+          <p className="text-muted-foreground mt-2">Question {currentQuestionIndex + 1} of {totalQuizQuestions}</p>
+          <Progress value={((currentQuestionIndex + 1) / totalQuizQuestions) * 100} className="w-full mt-3 h-3" />
         </CardHeader>
         <CardContent className={cn("p-4 md:p-6 space-y-6", fontClass)}>
-          <p className="font-semibold text-lg">{currentQuizQuestion.questionText}</p>
+          <p className="font-semibold text-xl md:text-2xl leading-tight">{currentQuizQuestion.questionText}</p>
           <RadioGroup
             value={selectedAnswers[currentQuestionIndex]?.toString()}
             onValueChange={(value) => handleAnswerSelection(currentQuestionIndex, parseInt(value))}
-            className="space-y-2"
-            disabled={isExplanationVisible} // Disable options when showing explanation
+            className="space-y-3"
+            disabled={isExplanationVisible}
           >
             {currentQuizQuestion.options.map((option, idx) => (
-              <div 
+              <Label
                 key={idx} 
+                htmlFor={`q${currentQuestionIndex}-opt${idx}`}
                 className={cn(
-                  "flex items-center space-x-2 p-3 border rounded-md hover:bg-muted/50 transition-colors cursor-pointer has-[input:checked]:bg-secondary has-[input:checked]:border-primary",
-                  isExplanationVisible && selectedAnswers[currentQuestionIndex] === idx && selectedAnswers[currentQuestionIndex] !== currentQuizQuestion.correctAnswerIndex && "bg-destructive/20 border-destructive", // Highlight incorrect selection
-                  isExplanationVisible && idx === currentQuizQuestion.correctAnswerIndex && "bg-green-500/20 border-green-600" // Highlight correct answer
+                  "flex items-center space-x-3 p-4 border-2 rounded-lg hover:border-primary/70 transition-all cursor-pointer text-base md:text-lg",
+                  selectedAnswers[currentQuestionIndex] === idx ? "border-primary bg-primary/10" : "border-input bg-card",
+                  isExplanationVisible && selectedAnswers[currentQuestionIndex] === idx && selectedAnswers[currentQuestionIndex] !== currentQuizQuestion.correctAnswerIndex && "border-destructive bg-destructive/10 text-destructive", 
+                  isExplanationVisible && idx === currentQuizQuestion.correctAnswerIndex && "border-green-600 bg-green-500/10 text-green-700 dark:text-green-400",
+                  isExplanationVisible && "cursor-default opacity-80"
                 )}
               >
-                <RadioGroupItem value={idx.toString()} id={`q${currentQuestionIndex}-opt${idx}`} disabled={isExplanationVisible} />
-                <Label htmlFor={`q${currentQuestionIndex}-opt${idx}`} className="flex-1 cursor-pointer text-base">{option}</Label>
-                {isExplanationVisible && selectedAnswers[currentQuestionIndex] === idx && selectedAnswers[currentQuestionIndex] !== currentQuizQuestion.correctAnswerIndex && <X className="h-5 w-5 text-destructive" />}
-                {isExplanationVisible && idx === currentQuizQuestion.correctAnswerIndex && <Check className="h-5 w-5 text-green-600" />}
-              </div>
+                <RadioGroupItem value={idx.toString()} id={`q${currentQuestionIndex}-opt${idx}`} disabled={isExplanationVisible} className="h-5 w-5"/>
+                <span className="flex-1">{option}</span>
+                {isExplanationVisible && selectedAnswers[currentQuestionIndex] === idx && selectedAnswers[currentQuestionIndex] !== currentQuizQuestion.correctAnswerIndex && <X className="h-6 w-6 text-destructive flex-shrink-0" />}
+                {isExplanationVisible && idx === currentQuizQuestion.correctAnswerIndex && <Check className="h-6 w-6 text-green-600 flex-shrink-0" />}
+              </Label>
             ))}
           </RadioGroup>
 
           {isExplanationVisible && (
-            <div className="mt-4 p-4 bg-blue-100 dark:bg-blue-900 border border-blue-300 dark:border-blue-700 rounded-md shadow">
-              <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-300 mb-2 flex items-center">
-                <HelpCircle className="h-5 w-5 mr-2"/> Let's understand this!
-              </h3>
-              <p className="text-sm text-blue-600 dark:text-blue-200 mb-1">
-                The correct answer is: <strong>{currentQuizQuestion.options[currentQuizQuestion.correctAnswerIndex]}</strong>
-              </p>
-              <p className="text-sm text-blue-600 dark:text-blue-200">
-                {currentQuizQuestion.explanation}
-              </p>
-            </div>
+            <Card className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-400 dark:border-blue-600 rounded-lg shadow-md">
+              <CardHeader className="p-0 pb-2 mb-2 border-b border-blue-300 dark:border-blue-700">
+                <CardTitle className="text-xl font-semibold text-blue-700 dark:text-blue-300 flex items-center">
+                  <HelpCircle className="h-6 w-6 mr-2"/> Let&apos;s understand this!
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 text-sm md:text-base text-blue-600 dark:text-blue-200 space-y-2">
+                <p>
+                  The correct answer is: <strong className="font-semibold">{currentQuizQuestion.options[currentQuizQuestion.correctAnswerIndex]}</strong>
+                </p>
+                <p className="leading-relaxed">{currentQuizQuestion.explanation}</p>
+              </CardContent>
+            </Card>
           )}
         </CardContent>
         <CardFooter className="flex justify-end p-4 border-t">
           {isExplanationVisible ? (
-             <Button onClick={handleTryAgainOrContinueFromExplanation} size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                Try Again <RotateCcw className="ml-2 h-4 w-4" />
+             <Button onClick={handleTryAgainOrContinueFromExplanation} size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all transform hover:scale-105">
+                Try Again <RotateCcw className="ml-2 h-5 w-5" />
             </Button>
           ) : (
-            <Button onClick={handleSubmitAnswer} disabled={!hasSelectedAnswer} size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-              {currentQuestionIndex === totalQuizQuestions - 1 && attemptedQuestions.size === totalQuizQuestions -1 ? 'Submit Quiz' : 'Check Answer'} <Send className="ml-2 h-4 w-4" />
+            <Button onClick={handleSubmitAnswer} disabled={!hasSelectedAnswer} size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all transform hover:scale-105">
+              {currentQuestionIndex === totalQuizQuestions - 1 && attemptedQuestions.size === totalQuizQuestions -1 ? 'Submit Quiz' : 'Check Answer'} <Send className="ml-2 h-5 w-5" />
             </Button>
           )}
         </CardFooter>
@@ -315,42 +318,59 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   if (view === 'results') {
     const isSuccess = quizScore >= 60;
     return (
-      <Card className={cn("w-full shadow-xl text-center", themeClass)}>
-        <CardHeader>
-          <CardTitle className="text-3xl text-primary">Quiz Results!</CardTitle>
+      <Card className={cn("w-full shadow-xl text-center border-t-4", themeClass, isSuccess ? "border-green-500" : "border-destructive")}>
+        <CardHeader className="pb-2 pt-8">
+          <CardTitle className="text-4xl md:text-5xl font-bold text-primary">
+            {totalQuizQuestions > 0 ? "Quiz Results!" : "Lesson Complete!"}
+          </CardTitle>
         </CardHeader>
-        <CardContent className={cn("p-6 space-y-4", fontClass)}>
+        <CardContent className={cn("p-6 space-y-6", fontClass)}>
           {totalQuizQuestions > 0 ? (
-            isSuccess ? <CheckCircle className="h-20 w-20 text-green-500 mx-auto" /> : <AlertTriangle className="h-20 w-20 text-destructive mx-auto" />
-          ) : <BookOpen className="h-20 w-20 text-primary mx-auto" /> }
-
+            isSuccess ? (
+              <div className="flex flex-col items-center text-green-500">
+                <Award className="h-28 w-28 animate-bounce" /> {/* Changed icon and added animation */}
+                <p className="text-3xl font-semibold mt-4">Great Job, {childProfile?.name || 'Learner'}!</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center text-destructive">
+                <AlertTriangle className="h-28 w-28" />
+                <p className="text-3xl font-semibold mt-4">Keep Practicing!</p>
+              </div>
+            )
+          ) : (
+            <div className="flex flex-col items-center text-primary">
+              <PartyPopper className="h-28 w-28 text-accent animate-pulse" /> {/* Changed icon and added animation */}
+              <p className="text-3xl font-semibold mt-4">Lesson Finished!</p>
+            </div>
+          )}
+          
           {totalQuizQuestions > 0 && (
-            <>
-                <p className="text-4xl font-bold">Your Score: {quizScore}%</p>
-                <p className="text-muted-foreground">You answered {answeredCorrectly} out of {totalQuizQuestions} questions correctly.</p>
-            </>
+            <div className="py-4 px-6 bg-card border rounded-lg shadow-inner max-w-sm mx-auto">
+                <p className="text-5xl font-bold text-primary">{quizScore}%</p>
+                <p className="text-muted-foreground mt-1">You answered {answeredCorrectly} out of {totalQuizQuestions} questions correctly.</p>
+            </div>
           )}
           {totalQuizQuestions === 0 && (
-             <p className="text-xl text-green-600 mt-4">Lesson completed!</p>
+             <p className="text-xl text-green-600 mt-4 font-medium">Well done on completing the lesson!</p>
           )}
           
           {!isSuccess && totalQuizQuestions > 0 && (
-            <div className="mt-6 p-4 bg-muted/50 rounded-md">
-              <p className="mb-3 text-lg">It looks like this topic was a bit tricky!</p>
-              <p className="mb-3">Would you like to try learning this topic again?</p>
-              <div className="flex gap-4 justify-center">
-                <Button onClick={handleUserChoseToRelearn} variant="default" size="lg" className="bg-primary text-primary-foreground">
+            <div className="mt-8 p-6 bg-secondary/50 rounded-lg shadow-md border">
+              <p className="mb-3 text-xl text-foreground">This topic might need a little more review.</p>
+              <p className="mb-4 text-muted-foreground">Would you like to try learning this topic again, or move on?</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button onClick={handleUserChoseToRelearn} variant="default" size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg">
                   <RotateCcw className="mr-2 h-5 w-5"/> Learn Again
                 </Button>
-                <Button onClick={handleUserChoseToSkipOrContinue} variant="outline" size="lg">
+                <Button onClick={handleUserChoseToSkipOrContinue} variant="outline" size="lg" className="shadow-sm hover:shadow-md">
                   Skip for Now
                 </Button>
               </div>
             </div>
           )}
           {(isSuccess || totalQuizQuestions === 0) && (
-             <Button onClick={handleUserChoseToSkipOrContinue} variant="default" size="lg" className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90">
-                Finish Lesson
+             <Button onClick={handleUserChoseToSkipOrContinue} variant="default" size="lg" className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:scale-105 transition-transform py-3 px-8 text-lg">
+                {totalQuizQuestions > 0 ? 'Continue Learning' : 'Back to Dashboard'} <ChevronRight className="ml-2 h-5 w-5"/>
             </Button>
           )}
         </CardContent>
@@ -358,5 +378,5 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     );
   }
   
-  return <Card><CardContent>Loading lesson display...</CardContent></Card>;
+  return <Card className="border-t-4 border-muted"><CardContent className="p-6 text-center text-muted-foreground">Loading lesson display... Please wait.</CardContent></Card>;
 }
