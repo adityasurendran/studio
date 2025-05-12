@@ -16,13 +16,13 @@ const firebaseConfig = {
 // Check if the API key is the placeholder or missing and log a specific message.
 if (firebaseConfig.apiKey === "YOUR_API_KEY") {
   console.warn(
-    "LearnForward Setup: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) in your .env or .env.local file appears to be the placeholder 'YOUR_API_KEY'. " +
+    "Shannon Setup: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) in your .env or .env.local file appears to be the placeholder 'YOUR_API_KEY'. " +
     "Firebase will not initialize correctly. Please replace it with your actual Firebase API key. " +
     "Refer to README.md for setup instructions."
   );
 } else if (!firebaseConfig.apiKey) {
   console.error(
-    "LearnForward Setup: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) is missing or empty in your .env or .env.local file. " +
+    "Shannon Setup: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) is missing or empty in your .env or .env.local file. " +
     "Firebase initialization will fail. Please set it with your actual Firebase API key. " +
     "Refer to README.md for setup instructions."
   );
@@ -42,3 +42,4 @@ const auth: Auth = getAuth(app);
 // const db: Firestore = getFirestore(app); // If you need Firestore client-side
 
 export { app, auth /*, db */ };
+

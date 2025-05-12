@@ -7,7 +7,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useChildProfilesContext } from './child-profiles-context';
 
 
-const ACTIVE_CHILD_ID_KEY = 'learnforward-active-child-id';
+const ACTIVE_CHILD_ID_KEY = 'shannon-active-child-id';
 
 interface ActiveChildProfileContextType {
   activeChild: ChildProfile | null;
@@ -55,3 +55,4 @@ export const ActiveChildProfileProvider = ({ children }: { children: ReactNode }
     </ActiveChildProfileContext.Provider>
   );
 };
+

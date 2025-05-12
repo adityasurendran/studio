@@ -6,7 +6,7 @@ import { useLocalStorage } from './use-local-storage';
 import { v4 as uuidv4 } from 'uuid';
 import { useCallback } from 'react';
 
-const CHILD_PROFILES_STORAGE_KEY = 'learnforward-child-profiles';
+const CHILD_PROFILES_STORAGE_KEY = 'shannon-child-profiles';
 
 export function useChildProfiles() {
   const [profiles, setProfiles] = useLocalStorage<ChildProfile[]>(CHILD_PROFILES_STORAGE_KEY, []);
@@ -83,3 +83,4 @@ export function useChildProfiles() {
     addSavedLesson,
   };
 }
+

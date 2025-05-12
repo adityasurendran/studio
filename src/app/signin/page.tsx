@@ -49,7 +49,7 @@ export default function SignInPage() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary">Parent Sign In</CardTitle>
-          <CardDescription>Access your LearnForward dashboard.</CardDescription>
+          <CardDescription>Access your Shannon dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -96,3 +96,4 @@ export default function SignInPage() {
     </div>
   );
 }
+

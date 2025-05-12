@@ -31,7 +31,7 @@ export default function Header() {
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
           <BookHeart className="h-8 w-8" />
-          <span>LearnForward</span>
+          <span>Shannon</span>
         </Link>
         <nav className="flex items-center gap-2 sm:gap-4">
           {currentUser ? (
@@ -64,3 +64,4 @@ export default function Header() {
     </header>
   );
 }
+

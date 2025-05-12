@@ -61,7 +61,7 @@ export default function SignUpPage() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-primary">Create Parent Account</CardTitle>
-          <CardDescription>Join LearnForward to support your child&apos;s learning.</CardDescription>
+          <CardDescription>Join Shannon to support your child&apos;s learning.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -120,3 +120,4 @@ export default function SignUpPage() {
     </div>
   );
 }
+

@@ -4,8 +4,8 @@ import {googleAI} from '@genkit-ai/googleai';
 // Check for GOOGLE_API_KEY
 if (!process.env.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY === "YOUR_GOOGLE_AI_API_KEY") {
   const message = !process.env.GOOGLE_API_KEY
-    ? "LearnForward Genkit Setup: GOOGLE_API_KEY is not set in your environment variables. "
-    : "LearnForward Genkit Setup: GOOGLE_API_KEY appears to be the placeholder 'YOUR_GOOGLE_AI_API_KEY'. ";
+    ? "Shannon Genkit Setup: GOOGLE_API_KEY is not set in your environment variables. "
+    : "Shannon Genkit Setup: GOOGLE_API_KEY appears to be the placeholder 'YOUR_GOOGLE_AI_API_KEY'. ";
   
   console.warn(
     message +
@@ -20,3 +20,4 @@ export const ai = genkit({
   plugins: [googleAI()], // This will use GOOGLE_API_KEY from environment variables
   model: 'googleai/gemini-2.0-flash', // Default model for text generation
 });
+

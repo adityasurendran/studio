@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'LearnForward',
+  title: 'Shannon',
   description: 'A free learning app for children with learning difficulties.',
 };
 
@@ -49,3 +49,4 @@ export default function RootLayout({
     </html>
   );
 }
+

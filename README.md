@@ -1,6 +1,7 @@
-# LearnForward
+md
+# Shannon
 
-This is a NextJS application for LearnForward, a learning app for children with learning difficulties.
+This is a NextJS application for Shannon, a learning app for children with learning difficulties.
 
 ## Getting Started
 
@@ -59,3 +60,4 @@ The main application code can be found in `src/app/`.
 - AI-Powered Lesson Generation: Generates a lesson using Gemini API based on structured JSON prompt incorporating child profile, recent mood, and lesson history.
 - Adaptive Lesson Display: Displays lessons in a format optimized for children, taking into account potential screen issues or preferred themes from their profiles.
 - Profile Persistence: Uses localStorage to store all the children profiles locally.
+

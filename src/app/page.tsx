@@ -7,15 +7,15 @@ export default function HomePage() {
   return (
     <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center">
       <Image 
-        src="https://picsum.photos/seed/learnforwardlogo/150/150" 
-        alt="LearnForward Logo" 
+        src="https://picsum.photos/seed/shannonlogo/150/150" 
+        alt="Shannon Logo" 
         width={150} 
         height={150} 
         className="rounded-full mb-6 shadow-lg"
         data-ai-hint="educational logo"
       />
       <h1 className="text-5xl font-bold mb-6 text-primary">
-        Welcome to LearnForward!
+        Welcome to Shannon!
       </h1>
       <p className="text-xl text-foreground mb-10 max-w-2xl">
         Your partner in empowering children with learning difficulties through personalized and engaging lessons.
@@ -71,9 +71,10 @@ export default function HomePage() {
       <div className="mt-10 p-6 bg-card rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold text-primary mb-3">Our Mission</h2>
         <p className="text-foreground max-w-xl">
-          LearnForward is dedicated to providing 100% free, high-quality educational resources for children facing learning challenges. We believe every child deserves the chance to succeed.
+          Shannon is dedicated to providing 100% free, high-quality educational resources for children facing learning challenges. We believe every child deserves the chance to succeed.
         </p>
       </div>
     </div>
   );
 }
+
