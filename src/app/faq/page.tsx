@@ -8,7 +8,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { HelpCircle, BookOpen, Users, Zap, ShieldCheck } from "lucide-react";
+import { HelpCircle, BookOpen, Users, Zap, ShieldCheck, Brain, Palette } from "lucide-react";
 
 const faqs = [
   {
@@ -91,7 +91,3 @@ export default function FAQPage() {
     </div>
   );
 }
-
-// Added icons for the new FAQs
-const Brain = HelpCircle; // Placeholder if Brain not available, or choose specific
-const Palette = HelpCircle; // Placeholder if Palette not available, or choose specific
