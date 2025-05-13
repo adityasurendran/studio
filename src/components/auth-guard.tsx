@@ -4,8 +4,9 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { Loader2 } from 'lucide-react';
-import { isCompetitionModeEnabled } from '@/config'; // Import the configuration
+import { Loader2, ShieldCheck } from 'lucide-react'; // Added ShieldCheck for visual flair
+import { isCompetitionModeEnabled } from '@/config'; 
+import Logo from '@/components/logo';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -19,16 +20,14 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   useEffect(() => {
     if (!loading) {
       if (!currentUser) {
-        // If not logged in, redirect to signin, appending current path as redirect query
         router.push(`/signin?redirect=${encodeURIComponent(pathname)}`);
       } else if (
         !isCompetitionModeEnabled &&
         parentProfile &&
         !parentProfile.isSubscribed &&
-        pathname !== '/subscribe' && // Allow access to /subscribe itself
-        pathname !== '/dashboard/parent-settings' // Allow access to parent settings page
+        pathname !== '/subscribe' && 
+        pathname !== '/dashboard/parent-settings'
       ) {
-        // If logged in, competition mode OFF, not subscribed, AND not on an allowed page, redirect to subscribe.
         router.push('/subscribe');
       }
     }
@@ -36,25 +35,33 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-background via-secondary/10 to-background text-center p-6">
+        <div className="mb-8 animate-pulse">
+            <Logo className="h-24 w-24 text-primary" />
+        </div>
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-6" />
+        <h1 className="text-3xl font-semibold text-primary mb-3 tracking-tight">
+          Loading Your Shannon Dashboard
+        </h1>
+        <p className="text-lg text-muted-foreground max-w-md leading-relaxed">
+          Please wait a moment while we securely prepare your personalized learning environment...
+        </p>
+        <div className="mt-8 flex items-center text-sm text-muted-foreground">
+            <ShieldCheck className="h-5 w-5 mr-2 text-green-500"/>
+            <span>Ensuring a safe & tailored experience.</span>
+        </div>
       </div>
     );
   }
 
-  // If competition mode is enabled, allow access even if not subscribed (as long as logged in).
   if (isCompetitionModeEnabled && currentUser) {
     return <>{children}</>;
   }
 
-  // If user is not authenticated:
   if (!currentUser) {
-    // useEffect above will handle redirection. Return null to prevent rendering children.
     return null; 
   }
   
-  // If user is authenticated, but competition mode is OFF AND user is not subscribed,
-  // AND they are trying to access a page other than /subscribe or /dashboard/parent-settings:
   if (
     !isCompetitionModeEnabled &&
     parentProfile &&
@@ -62,11 +69,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     pathname !== '/subscribe' &&
     pathname !== '/dashboard/parent-settings'
   ) {
-    // useEffect above will handle redirection. Return null.
     return null;
   }
   
-  // User is authenticated and either subscribed, or competition mode is on, or on an allowed page.
   return <>{children}</>;
 }
 
