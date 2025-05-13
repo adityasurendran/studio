@@ -4,6 +4,7 @@
  * - suggestLessonTopic - A function that takes child details and returns a suggested topic and reasoning.
  * - SuggestLessonTopicInput - The input type for the suggestLessonTopic function.
  * - SuggestLessonTopicOutput - The return type for the suggestLessonTopic function.
+ * - SuggestLessonTopicInputSchema - The Zod schema for the input.
  */
 
 import { ai } from '@/ai/genkit';
@@ -19,7 +20,7 @@ export const SuggestLessonTopicInputSchema = z.object({
 });
 export type SuggestLessonTopicInput = z.infer<typeof SuggestLessonTopicInputSchema>;
 
-export const SuggestLessonTopicOutputSchema = z.object({
+const SuggestLessonTopicOutputSchema = z.object({
   suggestedTopic: z.string().describe('A concise and specific lesson topic suggestion appropriate for the child.'),
   reasoning: z.string().describe('A brief explanation of why this topic is suggested, considering the child\'s profile and curriculum.'),
 });
@@ -87,4 +88,3 @@ const suggestLessonTopicFlow = ai.defineFlow(
 export async function suggestLessonTopic(input: SuggestLessonTopicInput): Promise<SuggestLessonTopicOutput> {
   return suggestLessonTopicFlow(input);
 }
-

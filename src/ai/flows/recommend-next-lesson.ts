@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const RecommendNextLessonInputSchema = z.object({
+const RecommendNextLessonInputSchema = z.object({
   childAge: z.number().describe('The age of the child.'),
   interests: z.string().optional().describe('The interests of the child.'),
   learningDifficulties: z.string().optional().describe('The learning difficulties of the child.'),
@@ -20,7 +20,7 @@ export const RecommendNextLessonInputSchema = z.object({
 });
 export type RecommendNextLessonInput = z.infer<typeof RecommendNextLessonInputSchema>;
 
-export const RecommendNextLessonOutputSchema = z.object({
+const RecommendNextLessonOutputSchema = z.object({
   recommendedTopic: z.string().describe('A concise and specific lesson topic recommendation representing a logical next step in learning.'),
   reasoning: z.string().describe('A detailed explanation of why this topic is recommended, linking to the child\'s history, curriculum, and potential areas for growth or reinforcement.'),
   confidence: z.number().optional().min(0).max(1).describe('An optional confidence score (0-1) for the recommendation.'),
