@@ -10,8 +10,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { functions } from "@/lib/firebase"; // Import Firebase functions
-import { httpsCallable } from 'firebase/functions'; // Import httpsCallable
+import { functions } from "@/lib/firebase"; 
+import { httpsCallable } from 'firebase/functions'; 
 
 export default function SubscribePage() {
   const { currentUser, parentProfile, loading: authLoading } = useAuth();
@@ -20,7 +20,6 @@ export default function SubscribePage() {
   const { toast } = useToast();
   const [isSubscribing, setIsSubscribing] = useState(false);
 
-  // Check for Stripe success/cancel query params
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const canceled = searchParams.get('canceled');
@@ -31,7 +30,6 @@ export default function SubscribePage() {
         description: "Welcome to Shannon Premium! Your dashboard is loading.",
         variant: "default",
       });
-      // Redirect to dashboard, AuthGuard will handle access based on updated profile
       router.push('/dashboard');
     }
 
@@ -41,7 +39,6 @@ export default function SubscribePage() {
         description: "You have canceled the subscription process. You can try again anytime.",
         variant: "destructive",
       });
-       // Optionally, clear the query params from URL
       router.replace('/subscribe', undefined);
     }
   }, [searchParams, router, toast]);
@@ -56,9 +53,8 @@ export default function SubscribePage() {
     );
   }
 
-  // If user is already subscribed (checked from parentProfile which should reflect Firestore state)
   if (currentUser && parentProfile?.isSubscribed) {
-    router.replace('/dashboard'); // Redirect to dashboard if already subscribed
+    router.replace('/dashboard'); 
     return null; 
   }
   
@@ -106,10 +102,9 @@ export default function SubscribePage() {
     try {
       const createStripeCheckout = httpsCallable(functions, 'createStripeCheckoutSession');
       const result = await createStripeCheckout();
-      const { sessionUrl, sessionId } = result.data as { sessionUrl: string, sessionId: string };
+      const { sessionUrl } = result.data as { sessionUrl: string, sessionId: string }; 
 
       if (sessionUrl) {
-        // Redirect to Stripe Checkout
         window.location.href = sessionUrl;
       } else {
         throw new Error("Could not create Stripe session.");
@@ -123,10 +118,9 @@ export default function SubscribePage() {
       });
       setIsSubscribing(false);
     }
-    // setIsSubscribing(false) will not be hit if redirect happens.
   };
 
-  return (
+  const pageContent = (
     <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center min-h-[calc(100vh-var(--header-height,4rem)-2rem)] justify-center">
       <Card className="w-full max-w-lg shadow-xl border-t-4 border-accent p-6 md:p-8">
         <CardHeader className="p-0 mb-6">
@@ -179,3 +173,8 @@ export default function SubscribePage() {
           </Link>
         </CardContent>
       </Card>
+    </div>
+  );
+
+  return pageContent;
+}
