@@ -5,7 +5,7 @@ import AuthGuard from '@/components/auth-guard';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, PlusSquare, BookOpen, Settings, LogOut, Palette, Sparkles, Brain, History } from 'lucide-react';
+import { Home, Users, PlusSquare, BookOpen, Settings, LogOut, Palette, Sparkles, Brain, History, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
@@ -43,6 +43,7 @@ export default function DashboardLayout({
     { href: '/dashboard/profiles', label: 'Child Profiles', icon: Users },
     { href: '/dashboard/lessons/new', label: 'New Lesson', icon: PlusSquare, disabled: !activeChild },
     { href: '/dashboard/lessons', label: 'Lesson History', icon: History, disabled: !activeChild },
+    { href: '/dashboard/discover', label: 'Explore Topics', icon: Search, disabled: !activeChild },
     // { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ];
 

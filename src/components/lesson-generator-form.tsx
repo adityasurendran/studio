@@ -28,13 +28,14 @@ type LessonGenerationFormData = z.infer<typeof lessonGenerationSchema>;
 
 interface LessonGeneratorFormProps {
   childProfile: ChildProfile;
+  initialTopic?: string; // Added to prefill topic
 }
 
-export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFormProps) {
+export default function LessonGeneratorForm({ childProfile, initialTopic }: LessonGeneratorFormProps) {
   const form = useForm<LessonGenerationFormData>({
     resolver: zodResolver(lessonGenerationSchema),
     defaultValues: {
-      lessonTopic: '',
+      lessonTopic: initialTopic || '',
       recentMood: childProfile.recentMood || 'neutral',
       lessonHistory: childProfile.lessonHistory || '',
     },
@@ -43,17 +44,18 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
   const [generatedLesson, setGeneratedLesson] = useState<GeneratedLesson | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [lastSuccessfulInput, setLastSuccessfulInput] = useState<GenerateTailoredLessonsInput | null>(null);
-  const { addLessonAttempt, addSavedLesson } = useChildProfilesContext();
+  const { addLessonAttempt, addSavedLesson, updateProfile } = useChildProfilesContext();
 
   useEffect(() => {
+    // Reset form when childProfile changes or initialTopic changes
     form.reset({
-      lessonTopic: '',
+      lessonTopic: initialTopic || '',
       recentMood: childProfile.recentMood || 'neutral',
       lessonHistory: childProfile.lessonHistory || '',
     });
     setGeneratedLesson(null);
     setLastSuccessfulInput(null);
-  }, [childProfile, form]);
+  }, [childProfile, initialTopic, form]);
 
   const processLessonGeneration = async (input: GenerateTailoredLessonsInput, isRegeneration: boolean = false) => {
     setIsLoading(true);
@@ -89,7 +91,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
       lessonHistory: data.lessonHistory || "No specific recent history provided.",
       lessonTopic: data.lessonTopic,
       curriculum: childProfile.curriculum,
-      learningStyle: childProfile.learningStyle || 'balanced_mixed', // Pass learning style
+      learningStyle: childProfile.learningStyle || 'balanced_mixed',
     };
     await processLessonGeneration(input);
   };
@@ -103,7 +105,6 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
       });
       return;
     }
-    // Ensure learningStyle is included if it was part of the original successful input or profile
     const inputToRegenerate: GenerateTailoredLessonsInput = {
         ...lastSuccessfulInput,
         learningStyle: childProfile.learningStyle || lastSuccessfulInput.learningStyle || 'balanced_mixed',
@@ -113,7 +114,19 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
 
   const handleQuizComplete = (attemptData: Omit<LessonAttempt, 'attemptId'>) => {
     if (childProfile) {
-      addLessonAttempt(childProfile.id, attemptData);
+      addLessonAttempt(childProfile.id, attemptData); // This now also updates lessonHistory in the hook
+      
+      // Also update recentMood in the profile based on quiz outcome or a general assumption
+      let newMood = childProfile.recentMood;
+      if (attemptData.quizScore >= 80) newMood = 'happy';
+      else if (attemptData.quizScore < 50) newMood = 'sad'; // or 'neutral' depending on philosophy
+      
+      updateProfile({
+        ...childProfile,
+        recentMood: newMood,
+        // lessonHistory is updated by addLessonAttempt hook
+      });
+
       toast({
         title: "Quiz Finished!",
         description: `Score: ${attemptData.quizScore}%. Results saved for ${childProfile.name}.`,
@@ -124,8 +137,11 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
   const handleRestartLesson = () => {
     setGeneratedLesson(null); 
     setIsLoading(false); 
-    // Reset form to allow new topic input if desired, or keep current topic for easy regeneration
-    // form.resetField("lessonTopic"); // Optional: clear topic
+    form.reset({ // Reset form fully, including topic
+      lessonTopic: '',
+      recentMood: childProfile.recentMood || 'neutral',
+      lessonHistory: childProfile.lessonHistory || '',
+    });
     toast({
         title: "Ready for a New Lesson",
         description: "The previous lesson view has been cleared. Feel free to generate a new lesson or adjust the topic."
@@ -203,7 +219,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
                         className="text-base"
                         />
                     </FormControl>
-                    <FormDescription>Any specific topics covered recently, or areas to focus on/avoid?</FormDescription>
+                    <FormDescription>Any specific topics covered recently, or areas to focus on/avoid? Updated automatically after lessons.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -281,4 +297,3 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
     </div>
   );
 }
-

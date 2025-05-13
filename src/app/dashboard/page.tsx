@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
-import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2 } from 'lucide-react';
+import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,6 +23,35 @@ export default function DashboardOverviewPage() {
       </div>
     );
   }
+  
+  const getProgressStats = () => {
+    if (!activeChild || !activeChild.lessonAttempts || activeChild.lessonAttempts.length === 0) {
+      return {
+        totalLessonsAttempted: 0,
+        averageQuizScore: 0,
+        subjectsCovered: new Set<string>(),
+        totalCorrectAnswers: 0,
+        totalQuestionsAttempted: 0,
+      };
+    }
+    const attempts = activeChild.lessonAttempts;
+    const totalLessonsAttempted = attempts.length;
+    const totalQuizScoreSum = attempts.reduce((sum, attempt) => sum + attempt.quizScore, 0);
+    const averageQuizScore = totalLessonsAttempted > 0 ? Math.round(totalQuizScoreSum / totalLessonsAttempted) : 0;
+    const subjectsCovered = new Set(attempts.map(attempt => attempt.lessonTopic || 'General Topic'));
+    const totalCorrectAnswers = attempts.reduce((sum, attempt) => sum + attempt.questionsAnsweredCorrectly, 0);
+    const totalQuestionsAttempted = attempts.reduce((sum, attempt) => sum + attempt.quizTotalQuestions, 0);
+
+    return {
+      totalLessonsAttempted,
+      averageQuizScore,
+      subjectsCovered,
+      totalCorrectAnswers,
+      totalQuestionsAttempted,
+    };
+  };
+
+  const progressStats = getProgressStats();
 
   return (
     <div className="space-y-8">
@@ -51,12 +80,20 @@ export default function DashboardOverviewPage() {
                   <p><span className="font-medium text-primary/80">Age:</span> {activeChild.age}</p>
                   <p><span className="font-medium text-primary/80">Curriculum:</span> {activeChild.curriculum}</p>
                    {activeChild.learningStyle && <p><span className="font-medium text-primary/80">Learning Style:</span> <span className="capitalize">{activeChild.learningStyle.replace(/_/g, ' ')}</span></p>}
+                   {activeChild.fontSizePreference && <p><span className="font-medium text-primary/80">Font Size:</span> <span className="capitalize">{activeChild.fontSizePreference}</span></p>}
               </div>
-              <Link href="/dashboard/lessons/new" passHref>
-                <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-8 py-6 text-lg">
-                  <BookOpen className="mr-2 h-6 w-6" /> Generate New Lesson
-                </Button>
-              </Link>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Link href="/dashboard/lessons/new" passHref>
+                  <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-8 py-6 text-lg">
+                    <BookOpen className="mr-2 h-6 w-6" /> Generate New Lesson
+                  </Button>
+                </Link>
+                <Link href="/dashboard/discover" passHref>
+                  <Button size="lg" variant="outline" className="text-primary border-primary hover:bg-primary/10 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-8 py-6 text-lg">
+                    <Sparkles className="mr-2 h-6 w-6" /> Explore Topics
+                  </Button>
+                </Link>
+              </div>
             </div>
           ) : profiles.length > 0 ? (
             <div className="text-center p-8 bg-card rounded-lg border border-dashed border-primary/50">
@@ -81,6 +118,43 @@ export default function DashboardOverviewPage() {
           )}
         </CardContent>
       </Card>
+
+      {activeChild && (
+        <Card className="shadow-lg">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-8 w-8 text-primary" />
+              <CardTitle className="text-2xl text-primary">Progress Overview for {activeChild.name}</CardTitle>
+            </div>
+            <CardDescription>A snapshot of {activeChild.name}&apos;s learning journey so far.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
+            <StatCard icon={<TrendingUp className="text-accent"/>} label="Lessons Attempted" value={progressStats.totalLessonsAttempted.toString()} />
+            <StatCard icon={<Percent className="text-green-500"/>} label="Average Quiz Score" value={`${progressStats.averageQuizScore}%`} />
+            <StatCard 
+              icon={<CheckCircle className="text-blue-500"/>} 
+              label="Total Correct Answers" 
+              value={`${progressStats.totalCorrectAnswers} / ${progressStats.totalQuestionsAttempted}`} 
+              description={progressStats.totalQuestionsAttempted > 0 ? `(${(Math.round(progressStats.totalCorrectAnswers / progressStats.totalQuestionsAttempted * 100) || 0)}% Accuracy)` : ""}
+            />
+            <div className="md:col-span-2 lg:col-span-3">
+              <h4 className="text-lg font-semibold text-left mb-2 text-primary flex items-center gap-2"> <BookCopy className="h-5 w-5"/> Subjects Covered:</h4>
+              {progressStats.subjectsCovered.size > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(progressStats.subjectsCovered).map(subject => (
+                    <span key={subject} className="bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-sm font-medium shadow-sm">
+                      {subject}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-left">No specific subjects recorded in lesson attempts yet.</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
 
       {activeChild && activeChild.lessonAttempts && activeChild.lessonAttempts.length > 0 && (
         <Card className="shadow-lg">
@@ -153,11 +227,12 @@ export default function DashboardOverviewPage() {
           disabled={!activeChild}
         />
         <FeatureCard
-          icon={<Award className="h-10 w-10 text-primary" />}
-          title="Adaptive Learning"
-          description="Lessons adapt to screen preferences and learning styles."
-          link="/dashboard/profiles"
-          linkLabel="Adjust in Profiles"
+          icon={<Sparkles className="h-10 w-10 text-primary" />}
+          title="Explore Topics"
+          description="Get AI suggestions for new lesson topics tailored to your child."
+          link="/dashboard/discover" // Link to the new discover page
+          linkLabel="Discover Topics"
+          disabled={!activeChild}
         />
       </div>
 
@@ -229,3 +304,22 @@ function FeatureCard({ icon, title, description, link, linkLabel, disabled }: Fe
   );
 }
 
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  description?: string;
+}
+
+function StatCard({ icon, label, value, description }: StatCardProps) {
+  return (
+    <Card className="p-4 bg-card hover:shadow-lg transition-shadow">
+      <div className="flex items-center justify-center text-muted-foreground mb-2">
+        {icon}
+        <h3 className="ml-2 text-base font-medium">{label}</h3>
+      </div>
+      <p className="text-3xl font-bold text-primary">{value}</p>
+      {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+    </Card>
+  );
+}

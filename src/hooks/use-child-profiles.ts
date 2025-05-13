@@ -19,6 +19,7 @@ export function useChildProfiles() {
       savedLessons: [],
       avatarSeed: profileData.avatarSeed || '', // Ensure avatarSeed is initialized
       learningStyle: profileData.learningStyle || 'balanced_mixed', // Initialize learningStyle
+      fontSizePreference: profileData.fontSizePreference || 'medium', // Initialize fontSizePreference
     };
     setProfiles(prevProfiles => [...prevProfiles, newProfile]);
     return newProfile;
@@ -33,8 +34,9 @@ export function useChildProfiles() {
             ...updatedProfile, 
             lessonAttempts: updatedProfile.lessonAttempts || p.lessonAttempts || [],
             savedLessons: updatedProfile.savedLessons || p.savedLessons || [],
-            avatarSeed: updatedProfile.avatarSeed, // Ensure avatarSeed is updated
-            learningStyle: updatedProfile.learningStyle || p.learningStyle || 'balanced_mixed', // Ensure learningStyle is updated
+            avatarSeed: updatedProfile.avatarSeed, 
+            learningStyle: updatedProfile.learningStyle || p.learningStyle || 'balanced_mixed',
+            fontSizePreference: updatedProfile.fontSizePreference || p.fontSizePreference || 'medium', // Ensure fontSizePreference is updated
           } 
         : p
       ))
@@ -58,7 +60,13 @@ export function useChildProfiles() {
             attemptId: uuidv4(),
           };
           const updatedAttempts = [...(profile.lessonAttempts || []), newAttempt];
-          return { ...profile, lessonAttempts: updatedAttempts };
+          // Update lessonHistory with the topic of the new attempt
+          const newLessonHistoryEntry = `Completed lesson: ${attemptData.lessonTopic} (Score: ${attemptData.quizScore}%)`;
+          const updatedLessonHistory = profile.lessonHistory 
+            ? `${profile.lessonHistory}\n${newLessonHistoryEntry}` 
+            : newLessonHistoryEntry;
+          
+          return { ...profile, lessonAttempts: updatedAttempts, lessonHistory: updatedLessonHistory };
         }
         return profile;
       })
@@ -70,11 +78,6 @@ export function useChildProfiles() {
       prevProfiles.map(profile => {
         if (profile.id === childId) {
           const updatedSavedLessons = [...(profile.savedLessons || []), lesson];
-          // Keep only the last N saved lessons if needed, e.g., 20
-          // const MAX_SAVED_LESSONS = 20;
-          // if (updatedSavedLessons.length > MAX_SAVED_LESSONS) {
-          //  updatedSavedLessons.splice(0, updatedSavedLessons.length - MAX_SAVED_LESSONS);
-          // }
           return { ...profile, savedLessons: updatedSavedLessons };
         }
         return profile;
@@ -92,4 +95,3 @@ export function useChildProfiles() {
     addSavedLesson,
   };
 }
-

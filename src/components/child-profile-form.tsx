@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Save, XCircle, Image as ImageIcon, Users } from 'lucide-react';
+import { Save, XCircle, Image as ImageIcon, Users, FontSize } from 'lucide-react';
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -24,7 +24,8 @@ const profileSchema = z.object({
   curriculum: z.string().min(3, { message: "Curriculum details required." }),
   interests: z.string().optional(),
   avatarSeed: z.string().optional().describe("A word or phrase to generate a unique avatar. Leave blank to use name."),
-  learningStyle: z.string().optional(),
+  learningStyle: z.enum(['visual', 'auditory', 'reading_writing', 'kinesthetic', 'balanced_mixed']).optional(),
+  fontSizePreference: z.enum(['small', 'medium', 'large']).optional(),
 });
 
 // This FormData is for creating/editing the core profile, not including attempts.
@@ -52,6 +53,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       interests: profile?.interests || '',
       avatarSeed: profile?.avatarSeed || '',
       learningStyle: profile?.learningStyle || 'balanced_mixed',
+      fontSizePreference: profile?.fontSizePreference || 'medium',
     },
   });
 
@@ -145,7 +147,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-1.5"><Users className="h-4 w-4 text-muted-foreground" /> Preferred Learning Style</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || 'balanced_mixed'}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a learning style" />
@@ -164,16 +166,39 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                 </FormItem>
               )}
             />
+             <FormField
+              control={form.control}
+              name="fontSizePreference"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5"><FontSize className="h-4 w-4 text-muted-foreground" /> Font Size Preference</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || 'medium'}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select preferred font size" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="small">Small</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="large">Large</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>Choose the font size for lesson content.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="screenIssues"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Screen/Display Preferences (Optional)</FormLabel>
+                  <FormLabel>Other Display Preferences (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="e.g., Prefers larger fonts, sensitive to bright colors" {...field} />
+                    <Textarea placeholder="e.g., Sensitive to bright colors, prefers specific contrasts" {...field} />
                   </FormControl>
-                  <FormDescription>Any preferences for on-screen presentation.</FormDescription>
+                  <FormDescription>Any other preferences for on-screen presentation.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -247,5 +272,3 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
     </Card>
   );
 }
-
-

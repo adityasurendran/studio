@@ -7,10 +7,22 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Loader2, Users, Compass } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 
 export default function NewLessonPage() {
   const { activeChild, isLoading } = useActiveChildProfile();
+  const searchParams = useSearchParams();
+  const [initialTopic, setInitialTopic] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const topicFromQuery = searchParams.get('topic');
+    if (topicFromQuery) {
+      setInitialTopic(topicFromQuery);
+    }
+  }, [searchParams]);
+
 
   if (isLoading) {
     return (
@@ -51,7 +63,7 @@ export default function NewLessonPage() {
 
   return (
     <div className="container mx-auto py-6 md:py-8">
-      <LessonGeneratorForm childProfile={activeChild} />
+      <LessonGeneratorForm childProfile={activeChild} initialTopic={initialTopic} />
     </div>
   );
 }
