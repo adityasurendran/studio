@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile } from 'lucide-react'; // Added Smile for mood
+import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile, ToyBrick } from 'lucide-react'; // Added ToyBrick for activities
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -26,8 +26,9 @@ const profileSchema = z.object({
   avatarSeed: z.string().optional().describe("A word or phrase to generate a unique avatar. Leave blank to use name."),
   learningStyle: z.enum(['visual', 'auditory', 'reading_writing', 'kinesthetic', 'balanced_mixed']).optional(),
   fontSizePreference: z.enum(['small', 'medium', 'large']).optional(),
-  recentMood: z.string().optional(), // Added recentMood
-  lessonHistory: z.string().optional(), // Added lessonHistory
+  preferredActivities: z.string().optional().describe("Comma-separated list of preferred activity types."),
+  recentMood: z.string().optional(), 
+  lessonHistory: z.string().optional(), 
 });
 
 type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons'>;
@@ -54,6 +55,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       avatarSeed: profile?.avatarSeed || '',
       learningStyle: profile?.learningStyle || 'balanced_mixed',
       fontSizePreference: profile?.fontSizePreference || 'medium',
+      preferredActivities: profile?.preferredActivities || '',
       recentMood: profile?.recentMood || 'neutral',
       lessonHistory: profile?.lessonHistory || '',
     },
@@ -164,6 +166,20 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                     </SelectContent>
                   </Select>
                   <FormDescription>How does the child learn best? This helps in tailoring lesson delivery.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="preferredActivities"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5"><ToyBrick className="h-4 w-4 text-muted-foreground" /> Preferred Activities (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="e.g., Interactive games, Storytelling, Drawing tasks, Building blocks, Experiments" {...field} />
+                  </FormControl>
+                  <FormDescription>List types of activities the child enjoys. This can help shape lesson format and suggestions.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

@@ -92,6 +92,7 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
       lessonTopic: data.lessonTopic,
       curriculum: childProfile.curriculum,
       learningStyle: childProfile.learningStyle || 'balanced_mixed',
+      preferredActivities: childProfile.preferredActivities || '',
     };
     await processLessonGeneration(input);
   };
@@ -108,6 +109,7 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
     const inputToRegenerate: GenerateTailoredLessonsInput = {
         ...lastSuccessfulInput,
         learningStyle: childProfile.learningStyle || lastSuccessfulInput.learningStyle || 'balanced_mixed',
+        preferredActivities: childProfile.preferredActivities || lastSuccessfulInput.preferredActivities || '',
         // Update recentMood from current form/profile state if desired
         recentMood: form.getValues("recentMood") || childProfile.recentMood || lastSuccessfulInput.recentMood,
     };

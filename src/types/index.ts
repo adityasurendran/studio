@@ -44,6 +44,7 @@ export interface ChildProfile {
   avatarSeed?: string; 
   learningStyle?: 'visual' | 'auditory' | 'reading_writing' | 'kinesthetic' | 'balanced_mixed';
   fontSizePreference?: 'small' | 'medium' | 'large';
+  preferredActivities?: string; // e.g., "Interactive games, Storytelling, Drawing tasks, Building blocks"
   recentMood?: string; // e.g., "happy", "neutral", "sad" - should be part of form, updated before lesson generation
   lessonHistory?: string; // General lesson history notes, updated after attempts
   lessonAttempts?: LessonAttempt[]; 

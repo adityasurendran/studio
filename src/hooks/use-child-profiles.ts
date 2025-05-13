@@ -20,8 +20,9 @@ export function useChildProfiles() {
       avatarSeed: profileData.avatarSeed || '', 
       learningStyle: profileData.learningStyle || 'balanced_mixed', 
       fontSizePreference: profileData.fontSizePreference || 'medium', 
-      recentMood: profileData.recentMood || 'neutral', // Initialize recentMood
-      lessonHistory: profileData.lessonHistory || '', // Initialize lessonHistory
+      preferredActivities: profileData.preferredActivities || '',
+      recentMood: profileData.recentMood || 'neutral', 
+      lessonHistory: profileData.lessonHistory || '', 
     };
     setProfiles(prevProfiles => [...prevProfiles, newProfile]);
     return newProfile;
@@ -39,6 +40,7 @@ export function useChildProfiles() {
             avatarSeed: updatedProfile.avatarSeed, 
             learningStyle: updatedProfile.learningStyle || p.learningStyle || 'balanced_mixed',
             fontSizePreference: updatedProfile.fontSizePreference || p.fontSizePreference || 'medium',
+            preferredActivities: updatedProfile.preferredActivities || p.preferredActivities || '',
             recentMood: updatedProfile.recentMood || p.recentMood || 'neutral',
             lessonHistory: updatedProfile.lessonHistory || p.lessonHistory || '',
           } 
