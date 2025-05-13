@@ -1,28 +1,42 @@
 // src/hooks/use-child-profiles.ts
 "use client";
 
-import type { ChildProfile, LessonAttempt, GeneratedLesson } from '@/types';
+import type { ChildProfile, LessonAttempt, GeneratedLesson, Badge } from '@/types';
 import { useLocalStorage } from './use-local-storage';
 import { v4 as uuidv4 } from 'uuid';
 import { useCallback } from 'react';
+import { useToast } from './use-toast'; // Import useToast
 
 const CHILD_PROFILES_STORAGE_KEY = 'shannon-child-profiles';
 
+const predefinedBadges: Omit<Badge, 'dateEarned'>[] = [
+  { id: 'first-lesson', name: "Trailblazer", description: "Completed your first lesson!", iconName: "Rocket" },
+  { id: 'perfect-score', name: "Perfectionist", description: "Achieved a perfect score on a quiz!", iconName: "Target" },
+  { id: 'five-lessons', name: "Consistent Learner", description: "Completed 5 lessons!", iconName: "Award" },
+  { id: 'high-scorer', name: "High Achiever", description: "Scored 80% or more on 3 quizzes!", iconName: "TrendingUp" },
+  { id: 'points-milestone-100', name: "Century Club", description: "Earned 100 points!", iconName: "Star" },
+  { id: 'points-milestone-500', name: "Point Powerhouse", description: "Earned 500 points!", iconName: "Zap" },
+];
+
 export function useChildProfiles() {
   const [profiles, setProfiles] = useLocalStorage<ChildProfile[]>(CHILD_PROFILES_STORAGE_KEY, []);
+  const { toast } = useToast(); // Initialize useToast
 
-  const addProfile = useCallback((profileData: Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory'>) => {
+  const addProfile = useCallback((profileData: Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory' | 'points' | 'badges'>) => {
     const newProfile: ChildProfile = { 
       ...profileData, 
       id: uuidv4(),
       lessonAttempts: [],
       savedLessons: [],
+      points: 0,
+      badges: [],
       avatarSeed: profileData.avatarSeed || '', 
       learningStyle: profileData.learningStyle || 'balanced_mixed', 
       fontSizePreference: profileData.fontSizePreference || 'medium', 
       preferredActivities: profileData.preferredActivities || '',
       recentMood: profileData.recentMood || 'neutral', 
-      lessonHistory: profileData.lessonHistory || '', 
+      lessonHistory: profileData.lessonHistory || '',
+      enableLeaderboard: profileData.enableLeaderboard || false,
     };
     setProfiles(prevProfiles => [...prevProfiles, newProfile]);
     return newProfile;
@@ -37,12 +51,15 @@ export function useChildProfiles() {
             ...updatedProfile, 
             lessonAttempts: updatedProfile.lessonAttempts || p.lessonAttempts || [],
             savedLessons: updatedProfile.savedLessons || p.savedLessons || [],
+            points: updatedProfile.points ?? p.points ?? 0,
+            badges: updatedProfile.badges || p.badges || [],
             avatarSeed: updatedProfile.avatarSeed, 
             learningStyle: updatedProfile.learningStyle || p.learningStyle || 'balanced_mixed',
             fontSizePreference: updatedProfile.fontSizePreference || p.fontSizePreference || 'medium',
             preferredActivities: updatedProfile.preferredActivities || p.preferredActivities || '',
             recentMood: updatedProfile.recentMood || p.recentMood || 'neutral',
             lessonHistory: updatedProfile.lessonHistory || p.lessonHistory || '',
+            enableLeaderboard: updatedProfile.enableLeaderboard ?? p.enableLeaderboard ?? false,
           } 
         : p
       ))
@@ -57,34 +74,115 @@ export function useChildProfiles() {
     return profiles.find(p => p.id === profileId);
   }, [profiles]);
 
-  const addLessonAttempt = useCallback((childId: string, attemptData: Omit<LessonAttempt, 'attemptId'>) => {
+  const addLessonAttempt = useCallback((childId: string, attemptData: Omit<LessonAttempt, 'attemptId' | 'pointsAwarded'>) => {
     setProfiles(prevProfiles => 
       prevProfiles.map(profile => {
         if (profile.id === childId) {
+          const pointsEarned = Math.max(0, attemptData.quizScore); // Award points equal to quiz score (0 if no quiz)
+          
           const newAttempt: LessonAttempt = {
             ...attemptData,
             attemptId: uuidv4(),
+            pointsAwarded: pointsEarned,
           };
           const updatedAttempts = [...(profile.lessonAttempts || []), newAttempt];
           
-          const newLessonHistoryEntry = `Completed lesson: "${attemptData.lessonTitle}" (Topic: ${attemptData.lessonTopic}, Score: ${attemptData.quizScore}%) on ${new Date(attemptData.timestamp).toLocaleDateString()}.`;
+          const newLessonHistoryEntry = `Completed lesson: "${attemptData.lessonTitle}" (Topic: ${attemptData.lessonTopic}, Score: ${attemptData.quizScore}%) on ${new Date(attemptData.timestamp).toLocaleDateString()}. Earned ${pointsEarned} points.`;
           
           const existingHistory = profile.lessonHistory || "";
           const updatedLessonHistory = existingHistory 
             ? `${existingHistory}\n${newLessonHistoryEntry}` 
             : newLessonHistoryEntry;
+
+          const updatedPoints = (profile.points || 0) + pointsEarned;
+          let updatedBadges = [...(profile.badges || [])];
+
+          // Badge Awarding Logic
+          const awardedBadgeIds = new Set(updatedBadges.map(b => b.id));
+
+          // First Lesson Badge
+          if (updatedAttempts.length === 1 && !awardedBadgeIds.has('first-lesson')) {
+            const badge = predefinedBadges.find(b => b.id === 'first-lesson');
+            if (badge) {
+              const newBadge: Badge = { ...badge, dateEarned: new Date().toISOString()};
+              updatedBadges.push(newBadge);
+              toast({ title: "Badge Unlocked! ✨", description: `You earned the "${badge.name}" badge!` });
+            }
+          }
+
+          // Perfect Score Badge
+          if (attemptData.quizScore === 100 && !awardedBadgeIds.has('perfect-score')) {
+             const badge = predefinedBadges.find(b => b.id === 'perfect-score');
+             if (badge) {
+                const newBadge: Badge = { ...badge, dateEarned: new Date().toISOString()};
+                // Check if this specific badge instance is already there (less likely for generic ones)
+                if(!updatedBadges.some(b => b.id === newBadge.id)) {
+                    updatedBadges.push(newBadge);
+                    toast({ title: "Badge Unlocked! 🎯", description: `Amazing! You earned the "${badge.name}" badge for a perfect score.` });
+                }
+             }
+          }
           
-          return { ...profile, lessonAttempts: updatedAttempts, lessonHistory: updatedLessonHistory };
+          // Completed 5 Lessons Badge
+          if (updatedAttempts.length >= 5 && !awardedBadgeIds.has('five-lessons')) {
+            const badge = predefinedBadges.find(b => b.id === 'five-lessons');
+            if (badge) {
+              const newBadge: Badge = { ...badge, dateEarned: new Date().toISOString()};
+              updatedBadges.push(newBadge);
+              toast({ title: "Badge Unlocked! 🌟", description: `Awesome! You earned the "${badge.name}" badge!` });
+            }
+          }
+
+          // High Scorer Badge (Scored >= 80% on 3 quizzes)
+          const highScoresCount = updatedAttempts.filter(att => att.quizScore >= 80).length;
+          if (highScoresCount >= 3 && !awardedBadgeIds.has('high-scorer')) {
+            const badge = predefinedBadges.find(b => b.id === 'high-scorer');
+            if (badge) {
+              const newBadge: Badge = { ...badge, dateEarned: new Date().toISOString()};
+              updatedBadges.push(newBadge);
+              toast({ title: "Badge Unlocked! 🏆", description: `Impressive! You earned the "${badge.name}" badge.` });
+            }
+          }
+          
+          // Points Milestones
+          if (updatedPoints >= 100 && !awardedBadgeIds.has('points-milestone-100')) {
+            const badge = predefinedBadges.find(b => b.id === 'points-milestone-100');
+            if (badge) {
+              const newBadge: Badge = { ...badge, dateEarned: new Date().toISOString()};
+              updatedBadges.push(newBadge);
+              toast({ title: "Badge Unlocked! 💯", description: `You hit 100 points and earned the "${badge.name}" badge!` });
+            }
+          }
+           if (updatedPoints >= 500 && !awardedBadgeIds.has('points-milestone-500')) {
+            const badge = predefinedBadges.find(b => b.id === 'points-milestone-500');
+            if (badge) {
+              const newBadge: Badge = { ...badge, dateEarned: new Date().toISOString()};
+              updatedBadges.push(newBadge);
+              toast({ title: "Badge Unlocked! 🚀", description: `Wow, 500 points! You earned the "${badge.name}" badge!` });
+            }
+          }
+
+          return { 
+            ...profile, 
+            lessonAttempts: updatedAttempts, 
+            lessonHistory: updatedLessonHistory,
+            points: updatedPoints,
+            badges: updatedBadges,
+          };
         }
         return profile;
       })
     );
-  }, [setProfiles]);
+  }, [setProfiles, toast]);
 
   const addSavedLesson = useCallback((childId: string, lesson: GeneratedLesson) => {
     setProfiles(prevProfiles =>
       prevProfiles.map(profile => {
         if (profile.id === childId) {
+          // Prevent duplicate lessons by title if desired (simple check)
+          const lessonExists = profile.savedLessons?.some(sl => sl.lessonTitle === lesson.lessonTitle);
+          if (lessonExists) return profile;
+
           const updatedSavedLessons = [...(profile.savedLessons || []), lesson];
           return { ...profile, savedLessons: updatedSavedLessons };
         }
@@ -103,3 +201,4 @@ export function useChildProfiles() {
     addSavedLesson,
   };
 }
+

@@ -6,15 +6,28 @@ import { useSearchParams } from 'next/navigation';
 import ChildProfileForm from '@/components/child-profile-form';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
-import type { ChildProfile } from '@/types';
+import type { ChildProfile, Badge as BadgeType } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Edit3, Trash2, CheckCircle, Users, Eye, Sparkle, Brain } from 'lucide-react'; // Added Brain icon
+import { UserPlus, Edit3, Trash2, CheckCircle, Users, Eye, Sparkle, Brain, Award, Star, Rocket, Target, TrendingUp, Zap as ZapIcon, BarChartHorizontalBig } from 'lucide-react'; // Added Brain icon
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory' >;
+type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory' | 'points' | 'badges' >;
+
+// Helper to get Lucide icon component by name
+const getLucideIcon = (iconName?: string) => {
+  if (!iconName) return Award; // Default icon
+  const icons: { [key: string]: React.ElementType } = {
+    Rocket, Target, Award, TrendingUp, Star, ZapIcon, Brain, BarChartHorizontalBig
+  };
+  return icons[iconName] || Award;
+};
+
 
 export default function ManageProfilesPage() {
   const { profiles, addProfile, updateProfile, deleteProfile } = useChildProfilesContext();
@@ -42,7 +55,7 @@ export default function ManageProfilesPage() {
 
   const handleUpdateProfile = (data: ProfileFormData) => {
     if (editingProfile) {
-      updateProfile({ ...editingProfile, ...data });
+      updateProfile({ ...editingProfile, ...data, points: editingProfile.points, badges: editingProfile.badges }); // Preserve points and badges
       toast({ title: "Profile Updated", description: `${data.name}'s profile has been successfully updated.` });
       setEditingProfile(null);
       setShowForm(false);
@@ -60,6 +73,18 @@ export default function ManageProfilesPage() {
     }
     setProfileToDelete(null); 
   };
+  
+  const handleToggleLeaderboard = (profileId: string, checked: boolean) => {
+    const profile = profiles.find(p => p.id === profileId);
+    if (profile) {
+      updateProfile({ ...profile, enableLeaderboard: checked });
+      toast({
+        title: "Leaderboard Setting Updated",
+        description: `${profile.name} will ${checked ? 'now' : 'no longer'} appear on leaderboards.`,
+      });
+    }
+  };
+
 
   const openEditForm = (profile: ChildProfile) => {
     setEditingProfile(profile);
@@ -95,7 +120,7 @@ export default function ManageProfilesPage() {
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <CardTitle className="text-3xl text-primary flex items-center gap-2"><Users className="h-8 w-8"/> Child Profiles</CardTitle>
-            <CardDescription className="mt-1">Manage your children&apos;s learning profiles.</CardDescription>
+            <CardDescription className="mt-1">Manage your children&apos;s learning profiles, points, and badges.</CardDescription>
           </div>
           <Button onClick={openAddForm} className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-shadow w-full sm:w-auto">
             <UserPlus className="mr-2 h-5 w-5" /> Add New Profile
@@ -132,14 +157,54 @@ export default function ManageProfilesPage() {
                         </div>
                        </div>
                     </div>
+                    <div className="mt-2 text-primary font-semibold text-lg flex items-center">
+                        <Star className="h-5 w-5 mr-1.5 text-yellow-400 fill-yellow-400"/> Points: {profile.points || 0}
+                    </div>
                   </CardHeader>
-                  <CardContent className="flex-grow space-y-2 text-sm">
+                  <CardContent className="flex-grow space-y-3 text-sm">
+                    <div>
+                        <h4 className="font-semibold text-foreground mb-1.5 flex items-center"><Award className="h-4 w-4 mr-1.5 text-accent"/>Badges:</h4>
+                        {profile.badges && profile.badges.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                            <TooltipProvider>
+                                {profile.badges.slice(0, 5).map((badge: BadgeType) => {
+                                const IconComponent = getLucideIcon(badge.iconName);
+                                return (
+                                    <Tooltip key={badge.id}>
+                                    <TooltipTrigger asChild>
+                                        <span className="p-2 bg-secondary rounded-full shadow-sm hover:bg-secondary/80 transition-colors">
+                                            <IconComponent className="h-5 w-5 text-accent" />
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="bg-popover text-popover-foreground shadow-xl">
+                                        <p className="font-bold">{badge.name}</p>
+                                        <p className="text-xs">{badge.description}</p>
+                                        <p className="text-xs text-muted-foreground">Earned: {new Date(badge.dateEarned).toLocaleDateString()}</p>
+                                    </TooltipContent>
+                                    </Tooltip>
+                                );
+                                })}
+                                {profile.badges.length > 5 && (
+                                    <span className="p-2 bg-secondary rounded-full shadow-sm text-xs font-semibold text-accent">+{profile.badges.length - 5} more</span>
+                                )}
+                            </TooltipProvider>
+                            </div>
+                        ) : (
+                            <p className="text-muted-foreground text-xs italic">No badges earned yet.</p>
+                        )}
+                    </div>
                     <p className="text-muted-foreground"><strong className="text-foreground">Curriculum:</strong> {profile.curriculum}</p>
-                    <p className="text-muted-foreground truncate" title={profile.learningDifficulties}><strong className="text-foreground">Difficulties:</strong> {profile.learningDifficulties || 'N/A'}</p>
-                     {profile.learningStyle && (
-                        <p className="text-muted-foreground"><strong className="text-foreground">Learning Style:</strong> <span className="capitalize">{profile.learningStyle.replace(/_/g, ' ')}</span></p>
-                      )}
-                    <p className="text-muted-foreground"><strong className="text-foreground">Theme:</strong> <span className="capitalize">{profile.theme}</span></p>
+                    <div className="flex items-center space-x-2 pt-2 border-t mt-2">
+                      <Switch
+                        id={`leaderboard-${profile.id}`}
+                        checked={!!profile.enableLeaderboard}
+                        onCheckedChange={(checked) => handleToggleLeaderboard(profile.id, checked)}
+                        aria-label="Enable leaderboard participation"
+                      />
+                      <Label htmlFor={`leaderboard-${profile.id}`} className="text-xs text-muted-foreground cursor-pointer">
+                        Include in Leaderboard
+                      </Label>
+                    </div>
                   </CardContent>
                   <CardFooter className="flex flex-col gap-2 pt-4 mt-auto border-t">
                     <div className="flex w-full gap-2">
@@ -178,7 +243,7 @@ export default function ManageProfilesPage() {
             <DialogHeader>
               <DialogTitle className="text-2xl">Delete Profile</DialogTitle>
               <DialogDescription className="mt-2 text-base">
-                Are you sure you want to delete {profileToDelete.name}&apos;s profile? This will remove all associated data and cannot be undone.
+                Are you sure you want to delete {profileToDelete.name}&apos;s profile? This will remove all associated data including points and badges, and cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="mt-6 sm:justify-end gap-2">

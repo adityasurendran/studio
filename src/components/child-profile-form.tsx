@@ -9,10 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile, ToyBrick } from 'lucide-react'; // Added ToyBrick for activities
+import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile, ToyBrick, BarChartHorizontalBig } from 'lucide-react'; // Added ToyBrick for activities
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -28,10 +29,11 @@ const profileSchema = z.object({
   fontSizePreference: z.enum(['small', 'medium', 'large']).optional(),
   preferredActivities: z.string().optional().describe("Comma-separated list of preferred activity types."),
   recentMood: z.string().optional(), 
-  lessonHistory: z.string().optional(), 
+  lessonHistory: z.string().optional(),
+  enableLeaderboard: z.boolean().optional(),
 });
 
-type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons'>;
+type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'points' | 'badges'>;
 
 interface ChildProfileFormProps {
   profile?: ChildProfile; 
@@ -58,6 +60,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       preferredActivities: profile?.preferredActivities || '',
       recentMood: profile?.recentMood || 'neutral',
       lessonHistory: profile?.lessonHistory || '',
+      enableLeaderboard: profile?.enableLeaderboard || false,
     },
   });
 
@@ -312,6 +315,26 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="enableLeaderboard"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-secondary/20">
+                  <div className="space-y-0.5">
+                    <FormLabel className="flex items-center gap-1.5"><BarChartHorizontalBig className="h-4 w-4 text-muted-foreground" />Leaderboard Participation</FormLabel>
+                    <FormDescription>
+                      Allow this child&apos;s name and points to appear on leaderboards?
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
             <div className="flex justify-end space-x-3 pt-4">
               {onCancel && (
                 <Button type="button" variant="outline" onClick={onCancel} size="lg">
@@ -329,3 +352,4 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
     </Card>
   );
 }
+

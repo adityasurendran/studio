@@ -3,14 +3,25 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
-import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy, Search, Eye } from 'lucide-react';
+import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy, Search, Eye, Star, Rocket, Target, Zap as ZapIcon, Trophy } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { LessonAttempt } from '@/types';
+import type { LessonAttempt, Badge as BadgeType } from '@/types';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+// Helper to get Lucide icon component by name
+const getLucideIcon = (iconName?: string) => {
+  if (!iconName) return Award; // Default icon
+  const icons: { [key: string]: React.ElementType } = {
+    Rocket, Target, Award, TrendingUp, Star, ZapIcon, Brain, Trophy
+  };
+  return icons[iconName] || Award;
+};
+
 
 export default function DashboardOverviewPage() {
   const { profiles } = useChildProfilesContext();
@@ -34,6 +45,8 @@ export default function DashboardOverviewPage() {
         totalCorrectAnswers: 0,
         totalQuestionsAttempted: 0,
         accuracy: 0,
+        totalPoints: activeChild?.points || 0,
+        badges: activeChild?.badges || [],
       };
     }
     const attempts = activeChild.lessonAttempts;
@@ -46,10 +59,9 @@ export default function DashboardOverviewPage() {
         if(attempt.lessonTopic && attempt.lessonTopic.trim() !== "") {
             subjectsCovered.add(attempt.lessonTopic);
         } else if (attempt.lessonTitle && attempt.lessonTitle.trim() !== "") {
-            // Fallback to lessonTitle if lessonTopic is empty, common for older data or specific generation flows
             subjectsCovered.add(attempt.lessonTitle);
         } else {
-            subjectsCovered.add("General Topic"); // Default if both are empty
+            subjectsCovered.add("General Topic"); 
         }
     });
 
@@ -64,6 +76,8 @@ export default function DashboardOverviewPage() {
       totalCorrectAnswers,
       totalQuestionsAttempted,
       accuracy,
+      totalPoints: activeChild.points || 0,
+      badges: activeChild.badges || [],
     };
   };
 
@@ -140,11 +154,12 @@ export default function DashboardOverviewPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <BarChart3 className="h-8 w-8 text-primary" />
-              <CardTitle className="text-2xl text-primary">Progress Overview for {activeChild.name}</CardTitle>
+              <CardTitle className="text-2xl text-primary">Progress & Rewards for {activeChild.name}</CardTitle>
             </div>
-            <CardDescription>A snapshot of {activeChild.name}&apos;s learning journey so far.</CardDescription>
+            <CardDescription>A snapshot of {activeChild.name}&apos;s learning journey, points, and badges.</CardDescription>
           </CardHeader>
           <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
+            <StatCard icon={<Star className="text-yellow-400 fill-yellow-400" />} label="Total Points" value={progressStats.totalPoints.toString()} />
             <StatCard icon={<TrendingUp className="text-accent"/>} label="Lessons Attempted" value={progressStats.totalLessonsAttempted.toString()} />
             <StatCard icon={<Award className="text-green-500"/>} label="Average Quiz Score" value={`${progressStats.averageQuizScore}%`} />
             <StatCard 
@@ -153,10 +168,41 @@ export default function DashboardOverviewPage() {
               value={`${progressStats.accuracy}%`} 
               description={progressStats.totalQuestionsAttempted > 0 ? `(${progressStats.totalCorrectAnswers} / ${progressStats.totalQuestionsAttempted} correct)` : "(No quiz questions attempted yet)"}
             />
-            <div className="md:col-span-2 lg:col-span-3 lg:pt-2">
-              <h4 className="text-lg font-semibold text-left mb-3 text-primary flex items-center gap-2"> <BookCopy className="h-5 w-5"/> Subjects Explored:</h4>
+            <div className="md:col-span-full lg:col-span-1 lg:row-span-2">
+                 <h4 className="text-lg font-semibold text-left mb-2 text-primary flex items-center gap-2"> <Award className="h-5 w-5"/> Badges Earned:</h4>
+                {progressStats.badges.length > 0 ? (
+                     <div className="flex flex-wrap gap-2 justify-center sm:justify-start p-2 bg-secondary/30 rounded-md border min-h-[60px]">
+                    <TooltipProvider>
+                        {progressStats.badges.slice(0,8).map((badge: BadgeType) => { 
+                         const IconComponent = getLucideIcon(badge.iconName);
+                         return (
+                            <Tooltip key={badge.id}>
+                                <TooltipTrigger asChild>
+                                    <span className="p-2.5 bg-card rounded-full shadow-md hover:bg-accent/10 transition-colors cursor-default">
+                                        <IconComponent className="h-6 w-6 text-accent" />
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-popover text-popover-foreground shadow-xl text-left">
+                                    <p className="font-bold text-primary">{badge.name}</p>
+                                    <p className="text-xs max-w-xs">{badge.description}</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5">Earned: {new Date(badge.dateEarned).toLocaleDateString()}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                         );
+                        })}
+                        {progressStats.badges.length > 8 && (
+                             <span className="p-2.5 bg-card rounded-full shadow-md text-sm font-semibold text-accent flex items-center justify-center h-11 w-11">+{progressStats.badges.length - 8}</span>
+                        )}
+                    </TooltipProvider>
+                    </div>
+                ) : (
+                    <p className="text-muted-foreground text-left text-sm italic p-2 bg-secondary/30 rounded-md border">No badges earned yet. Keep learning!</p>
+                )}
+            </div>
+            <div className="md:col-span-full lg:col-span-2">
+              <h4 className="text-lg font-semibold text-left mb-2 text-primary flex items-center gap-2"> <BookCopy className="h-5 w-5"/> Subjects Explored:</h4>
               {progressStats.subjectsCovered.size > 0 ? (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 p-2 bg-secondary/30 rounded-md border min-h-[60px] items-center">
                   {Array.from(progressStats.subjectsCovered).map(subject => (
                     <span key={subject} className="bg-secondary text-secondary-foreground px-3 py-1.5 rounded-full text-sm font-medium shadow-sm">
                       {subject}
@@ -164,7 +210,7 @@ export default function DashboardOverviewPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-left">No specific subjects recorded in lesson attempts yet.</p>
+                <p className="text-muted-foreground text-left text-sm italic p-2 bg-secondary/30 rounded-md border">No specific subjects recorded in lesson attempts yet.</p>
               )}
             </div>
           </CardContent>
@@ -201,6 +247,9 @@ export default function DashboardOverviewPage() {
                         )}
                          {attempt.quizTotalQuestions === 0 && (
                              <p className="text-xs text-muted-foreground">(No quiz in this lesson)</p>
+                         )}
+                          {attempt.pointsAwarded !== undefined && (
+                             <p className="text-xs text-yellow-600 dark:text-yellow-400">+{attempt.pointsAwarded} points</p>
                          )}
                     </div>
                   </div>
@@ -253,6 +302,14 @@ export default function DashboardOverviewPage() {
           linkLabel="Discover Topics"
           disabled={!activeChild}
         />
+         <FeatureCard
+          icon={<Trophy className="h-10 w-10 text-primary" />}
+          title="Leaderboard"
+          description="See who's topping the charts! (Optional participation)"
+          link="/dashboard/leaderboard"
+          linkLabel="View Leaderboard"
+          disabled={profiles.length === 0} // Disable if no profiles exist
+        />
       </div>
 
       {profiles.length > 0 && !activeChild && (
@@ -276,6 +333,7 @@ export default function DashboardOverviewPage() {
                 <div className="flex-1">
                     <span className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors block">{profile.name}</span>
                     <span className="text-sm text-muted-foreground">Age: {profile.age}</span>
+                     <span className="text-sm text-muted-foreground block mt-0.5"><Star className="h-3 w-3 inline-block mr-1 text-yellow-500 fill-yellow-400"/> Points: {profile.points || 0}</span>
                 </div>
                 <CheckCircle className="w-6 h-6 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:text-primary transition-opacity" />
               </Button>

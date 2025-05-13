@@ -29,6 +29,15 @@ export interface LessonAttempt {
   questionsAnsweredCorrectly: number;
   timestamp: string; // ISO date string
   choseToRelearn?: boolean; // True if parent chose to restart lesson after a poor quiz
+  pointsAwarded?: number;
+}
+
+export interface Badge {
+  id: string; // e.g., 'first-quiz', 'perfect-score-math'
+  name: string; // e.g., "First Quiz Completed", "Math Whiz"
+  description: string;
+  iconName?: string; // Optional: Lucide icon name
+  dateEarned: string; // ISO date string
 }
 
 export interface ChildProfile {
@@ -48,7 +57,10 @@ export interface ChildProfile {
   recentMood?: string; // e.g., "happy", "neutral", "sad" - should be part of form, updated before lesson generation
   lessonHistory?: string; // General lesson history notes, updated after attempts
   lessonAttempts?: LessonAttempt[]; 
-  savedLessons?: GeneratedLesson[]; 
+  savedLessons?: GeneratedLesson[];
+  points: number;
+  badges: Badge[];
+  enableLeaderboard?: boolean; // For future leaderboard feature
 }
 
 export interface ParentProfile {
@@ -60,3 +72,4 @@ export interface ParentProfile {
   stripeSubscriptionId?: string;
   stripeSubscriptionStatus?: string; // e.g., 'active', 'trialing', 'past_due', 'canceled'
 }
+
