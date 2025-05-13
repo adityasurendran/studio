@@ -53,8 +53,8 @@ export interface ParentProfile {
   uid: string;
   email: string | null;
   username?: string;
-  isSubscribed: boolean; // Added for paywall
-  // Other parent-specific fields
+  isSubscribed: boolean;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripeSubscriptionStatus?: string; // e.g., 'active', 'trialing', 'past_due', 'canceled'
 }
-
-

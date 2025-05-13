@@ -6,16 +6,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link";
 import { Lock, CreditCard, Sparkles, LogIn, Loader2 as Loader2Icon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { functions } from "@/lib/firebase"; // Import Firebase functions
+import { httpsCallable } from 'firebase/functions'; // Import httpsCallable
 
 export default function SubscribePage() {
-  const { currentUser, parentProfile, loading: authLoading, updateSubscriptionStatus } = useAuth();
+  const { currentUser, parentProfile, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isSubscribing, setIsSubscribing] = useState(false);
+
+  // Check for Stripe success/cancel query params
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id');
+    const canceled = searchParams.get('canceled');
+
+    if (sessionId) {
+      toast({
+        title: "Subscription Successful!",
+        description: "Welcome to Shannon Premium! Your dashboard is loading.",
+        variant: "default",
+      });
+      // Redirect to dashboard, AuthGuard will handle access based on updated profile
+      router.push('/dashboard');
+    }
+
+    if (canceled) {
+      toast({
+        title: "Subscription Canceled",
+        description: "You have canceled the subscription process. You can try again anytime.",
+        variant: "destructive",
+      });
+       // Optionally, clear the query params from URL
+      router.replace('/subscribe', undefined);
+    }
+  }, [searchParams, router, toast]);
+
 
   if (authLoading) {
     return (
@@ -26,13 +56,12 @@ export default function SubscribePage() {
     );
   }
 
-  // If user is already subscribed, redirect them to dashboard.
+  // If user is already subscribed (checked from parentProfile which should reflect Firestore state)
   if (currentUser && parentProfile?.isSubscribed) {
-    router.replace('/dashboard');
-    return null; // Render nothing while redirecting
+    router.replace('/dashboard'); // Redirect to dashboard if already subscribed
+    return null; 
   }
   
-  // If user is not logged in.
   if (!currentUser) {
      return (
         <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center min-h-[calc(100vh-var(--header-height,4rem)-2rem)] justify-center">
@@ -43,7 +72,7 @@ export default function SubscribePage() {
             </div>
             <CardTitle className="text-3xl font-bold text-primary">Access Restricted</CardTitle>
             <CardDescription className="text-lg mt-2 text-muted-foreground">
-                Please sign in to view subscription options and unlock Shannon.
+                Please sign in to subscribe and unlock Shannon.
             </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 p-0">
@@ -74,22 +103,29 @@ export default function SubscribePage() {
     }
 
     setIsSubscribing(true);
-    // Simulate API call / payment processing
-    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    try {
+      const createStripeCheckout = httpsCallable(functions, 'createStripeCheckoutSession');
+      const result = await createStripeCheckout();
+      const { sessionUrl, sessionId } = result.data as { sessionUrl: string, sessionId: string };
 
-    updateSubscriptionStatus(true);
-    setIsSubscribing(false);
-
-    toast({
-      title: "Subscription Successful!",
-      description: "Welcome to Shannon Premium! Redirecting to your dashboard...",
-      duration: 3000,
-    });
-    router.push('/dashboard');
+      if (sessionUrl) {
+        // Redirect to Stripe Checkout
+        window.location.href = sessionUrl;
+      } else {
+        throw new Error("Could not create Stripe session.");
+      }
+    } catch (error: any) {
+      console.error("Stripe Checkout Error:", error);
+      toast({
+        title: "Subscription Error",
+        description: error.message || "Could not initiate subscription. Please try again.",
+        variant: "destructive",
+      });
+      setIsSubscribing(false);
+    }
+    // setIsSubscribing(false) will not be hit if redirect happens.
   };
 
-
-  // If logged in but not subscribed:
   return (
     <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center min-h-[calc(100vh-var(--header-height,4rem)-2rem)] justify-center">
       <Card className="w-full max-w-lg shadow-xl border-t-4 border-accent p-6 md:p-8">
@@ -119,7 +155,7 @@ export default function SubscribePage() {
           <p className="text-2xl font-bold text-primary">
             Subscription Price: <span className="text-accent">$9.99 / month</span>
           </p>
-          <p className="text-sm text-muted-foreground -mt-4">(Price is for demonstration purposes)</p>
+          <p className="text-sm text-muted-foreground -mt-4">(Example price. Configure yours in Stripe & .env)</p>
           
           <Button 
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-xl py-7 shadow-lg hover:shadow-xl transition-all transform hover:scale-105" 
@@ -132,17 +168,14 @@ export default function SubscribePage() {
             ) : (
               <CreditCard className="mr-3 h-6 w-6" />
             )}
-            {isSubscribing ? "Processing..." : "Subscribe Now"}
+            {isSubscribing ? "Redirecting to Payment..." : "Subscribe Now"}
           </Button>
           
           <p className="text-xs text-muted-foreground mt-4">
-            By subscribing, you agree to our Terms of Service and Privacy Policy (details would be linked here).
+            By subscribing, you agree to our Terms of Service and Privacy Policy.
           </p>
           <Link href="/" passHref>
             <Button variant="link" className="text-sm">Back to Homepage</Button>
           </Link>
         </CardContent>
       </Card>
-    </div>
-  );
-}

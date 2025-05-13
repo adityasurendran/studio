@@ -15,6 +15,12 @@ To get started, follow these steps:
     # or
     pnpm install
     ```
+    If you have a `functions` directory for Firebase Cloud Functions, navigate into it and run `npm install` there as well:
+    ```bash
+    cd functions
+    npm install
+    cd ..
+    ```
 
 2.  **Set up Firebase Environment Variables:**
     Create a `.env.local` file in the root of your project (or update the existing `.env` file). Add your Firebase project's configuration details to this file. You can find these details in your Firebase project settings.
@@ -31,7 +37,27 @@ To get started, follow these steps:
     ```
     **Important:** Replace `"YOUR_API_KEY"`, `"YOUR_AUTH_DOMAIN"`, etc., with your actual Firebase project credentials.
 
-3.  **Run the Development Server:**
+3.  **Set up Stripe Environment Variables & Configuration:**
+    Shannon uses Stripe for managing subscriptions.
+    *   Update your `.env` or `.env.local` file with your Stripe keys and Price ID:
+        ```env
+        # Stripe Configuration
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="YOUR_STRIPE_PUBLISHABLE_KEY" # Stripe Publishable Key
+        STRIPE_SECRET_KEY="YOUR_STRIPE_SECRET_KEY"               # Stripe Secret Key
+        STRIPE_PRICE_ID="YOUR_STRIPE_PRICE_ID"                   # Stripe Price ID for your subscription product (e.g., price_xxxxxxxxxxxxxx)
+        STRIPE_WEBHOOK_SECRET="YOUR_STRIPE_WEBHOOK_SECRET"       # Stripe Webhook Signing Secret
+        APP_BASE_URL="http://localhost:9002"                     # Your app's base URL (update for production)
+        ```
+    *   **Configure Firebase Functions Environment:** For deployed functions, set these Stripe variables in the Firebase environment:
+        ```bash
+        firebase functions:config:set stripe.secret_key="YOUR_STRIPE_SECRET_KEY"
+        firebase functions:config:set stripe.price_id="YOUR_STRIPE_PRICE_ID"
+        firebase functions:config:set stripe.webhook_secret="YOUR_STRIPE_WEBHOOK_SECRET"
+        firebase functions:config:set app.base_url="YOUR_PRODUCTION_APP_URL" # e.g., https://your-app.com
+        ```
+        Deploy functions after setting config: `firebase deploy --only functions`
+
+4.  **Run the Development Server:**
     ```bash
     npm run dev
     # or
@@ -41,7 +67,7 @@ To get started, follow these steps:
     ```
     This will start the Next.js development server, typically on `http://localhost:9002`.
 
-4.  **Run Genkit (for AI features):**
+5.  **Run Genkit (for AI features):**
     In a separate terminal, start the Genkit development server:
     ```bash
     npm run genkit:dev
@@ -49,15 +75,44 @@ To get started, follow these steps:
     npm run genkit:watch
     ```
 
+6.  **Run Firebase Emulators (Recommended for testing Cloud Functions locally):**
+    In a separate terminal:
+    ```bash
+    firebase emulators:start --only functions,firestore # Add other services if needed
+    ```
+
+7.  **Set up Stripe Webhook:**
+    *   Deploy your `stripeWebhookHandler` Cloud Function. Get its URL (e.g., from Firebase console).
+    *   In your Stripe Dashboard (Developers > Webhooks), add an endpoint.
+    *   Paste the Cloud Function URL as the "Endpoint URL".
+    *   Select events to listen for:
+        *   `checkout.session.completed`
+        *   `customer.subscription.updated`
+        *   `customer.subscription.deleted`
+        *   (Consider adding `invoice.payment_failed`, `invoice.payment_succeeded`)
+    *   After creating the endpoint, Stripe will show a "Signing secret" (e.g., `whsec_xxxxxxxxxxxxxx`). Copy this and set it as `STRIPE_WEBHOOK_SECRET` in your `.env` file and Firebase functions config.
+    *   **For local testing:** Use the Stripe CLI to forward webhooks to your local emulator:
+        ```bash
+        stripe listen --forward-to localhost:5001/your-project-id/your-region/stripeWebhookHandler 
+        # Replace with your actual project ID, region, and function name if different.
+        # The Stripe CLI will provide a webhook signing secret for local testing. Use this for STRIPE_WEBHOOK_SECRET locally.
+        ```
+
+
 Open [http://localhost:9002](http://localhost:9002) with your browser to see the application.
 
 The main application code can be found in `src/app/`.
+Firebase Cloud Functions are in the `functions/` directory.
 
 ## Core Features:
 
 - Parent Sign-In: Parents sign in using Firebase Authentication with email/password.
-- Child Reference Update: (Future Feature - Cloud Function triggers when a child profile is created to update the parent's profile with the new child's reference).
-- AI-Powered Lesson Generation: Generates a lesson using Gemini API based on structured JSON prompt incorporating child profile, recent mood, and lesson history.
-- Adaptive Lesson Display: Displays lessons in a format optimized for children, taking into account potential screen issues or preferred themes from their profiles.
-- Profile Persistence: Uses localStorage to store all the children profiles locally.
+- Subscription Management: Uses Stripe to handle subscriptions for accessing premium features.
+- Child Profile Management: Parents create and manage profiles for their children.
+- AI-Powered Lesson Generation: Generates lessons using Genkit and AI models, tailored to child profiles.
+- Adaptive Lesson Display: Displays lessons with appropriate formatting and images.
+- Progress Tracking: Lesson attempts and quiz scores are saved per child.
+- Profile Persistence: Uses localStorage for child profiles (though user/subscription data is in Firestore).
 
+
+```
