@@ -68,8 +68,8 @@ const generateLessonPrompt = ai.definePrompt({
     Target Language: {{{targetLanguage}}} (Generate ALL lesson content, titles, and quiz questions in this language. For example, if "es", generate in Spanish; if "fr", generate in French. If "en", generate in English.)
     Learning Difficulties: {{{learningDifficulties}}}
     Interests: {{{interests}}}
-    Preferred Activities: {{{preferredActivities}}} (If specified, try to weave these activity types into the lesson. For example, if 'storytelling' is preferred, make the lesson more narrative. If 'drawing tasks' or 'building' are preferred, include vivid descriptions that could inspire such activities or frame examples around these actions. The 'lessonFormat' you output should also try to reflect these preferences if suitable for the topic.)
-    Recent Mood: {{{recentMood}}} (This is an important instruction. You MUST adjust the tone of the lesson content and quiz questions to be appropriately sensitive to the child's mood. For example, if the mood is 'sad' or 'anxious', the tone should be gentler, more patient, and reassuring. If the mood is 'happy' or 'excited', the tone can be more upbeat and enthusiastic while still maintaining educational focus.)
+    Preferred Activities: {{{preferredActivities}}}
+    Recent Mood: {{{recentMood}}} (This is an important instruction. You MUST adjust the tone AND consider the lesson format/activity types to be appropriately sensitive to the child's mood. For example, if the mood is 'sad' or 'anxious', the tone should be gentler, more patient, and reassuring. The lesson format might lean towards a calming story or simple interactive choices rather than a high-energy game. If the mood is 'happy' or 'excited', the tone can be more upbeat, and the lesson format could be more dynamic or game-like, if appropriate for the '{{{preferredActivities}}}' and topic. Always prioritize educational value.)
     Lesson History: {{{lessonHistory}}} (Avoid repetition if possible, build upon previous knowledge if relevant.)
     Curriculum Focus: {{{curriculum}}} (This is a CRITICAL guideline. The lesson content, depth, terminology, and quiz questions must align with this curriculum standard. For example, if 'CBSE Grade 5 Science', 'US Grade 2 Math', or 'Irish Junior Cycle Maths' is specified, ensure the lesson and quiz reflect the appropriate level of detail and topics typically covered in that curriculum for the given 'Lesson Topic'. You should be able to adapt to a wide variety of national and international curricula if specified (e.g., US Common Core, UK National Curriculum, IB Programme, Cambridge International, Australian Curriculum, etc.), as well as more general learning goals or homeschool curricula.)
     Lesson Topic: {{{lessonTopic}}} (The lesson MUST comprehensively teach this specific topic, and the quiz MUST test understanding of this topic.)
@@ -81,13 +81,13 @@ const generateLessonPrompt = ai.definePrompt({
       - For younger children or those with significant learning difficulties specified in '{{{learningDifficulties}}}', simplify concepts, use shorter sentences, provide more concrete examples, and break down information into smaller, more digestible chunks.
       - For older children or those in advanced curricula, introduce more nuanced concepts and expect a higher level of understanding.
   3.  Interest Integration: Actively integrate the child's Interests ({{{interests}}}) into the lesson's examples, analogies, and narrative. Make the content relatable and exciting by connecting it to what the child enjoys. For example, if the topic is 'fractions' and interests include 'space', use examples like 'dividing a spaceship's fuel' or 'sharing moon rocks', presented in '{{{targetLanguage}}}'.
-  4.  Learning Style & Activity Adaptation:
-      - Combine the specified Learning Style ({{{learningStyle}}}) and Preferred Activities ({{{preferredActivities}}}) to shape the lesson.
-      - Visual learners with a preference for 'drawing': Emphasize visual descriptions in the lesson content, and make the text evocative of scenes they could draw. The images paired with sentences will support this.
-      - Auditory learners who like 'storytelling': Structure the lesson as an engaging story, use dialogue, or pose questions for them to think about aloud.
-      - Kinesthetic learners who prefer 'experiments' or 'building': If the topic allows, frame explanations around actions or describe things in a way that relates to physical interaction (e.g., "Imagine you are building a tower with these blocks to understand addition").
-      - Reading/Writing learners: Focus on clear, well-structured text. The quiz itself caters well to this.
-  5.  Lesson Format: The 'lessonFormat' field in your output should reflect the dominant style and activity preferences if a clear theme emerges (e.g., "Interactive Story with Visual Puzzles", "Hands-on Science Exploration Narrative", "Narrative lesson with drawing prompts"). If no strong preference or if a standard informational approach is best for the topic and curriculum, use "Informational". This description should also be in '{{{targetLanguage}}}'.
+  4.  Learning Style, Mood & Activity Adaptation:
+      - Combine the specified Learning Style ({{{learningStyle}}}), Preferred Activities ({{{preferredActivities}}}), and Recent Mood ({{{recentMood}}}) to shape the lesson.
+      - Visual learners with a preference for 'drawing', and a 'neutral' or 'happy' mood: Emphasize visual descriptions in the lesson content, and make the text evocative of scenes they could draw.
+      - Auditory learners who like 'storytelling', and an 'anxious' mood: Structure the lesson as a gentle, engaging story, use calming dialogue, or pose simple questions for them to think about aloud.
+      - Kinesthetic learners who prefer 'experiments' or 'building', and an 'excited' mood: If the topic allows, frame explanations around actions or describe things in a way that relates to physical interaction (e.g., "Imagine you are building a super-fast rocket with these parts to understand forces!").
+      - Reading/Writing learners: Focus on clear, well-structured text. The quiz itself caters well to this. If mood is 'sad', ensure text is broken into smaller, less overwhelming chunks.
+  5.  Lesson Format: The 'lessonFormat' field in your output should reflect the dominant style and activity preferences, influenced by mood if suitable (e.g., "Calming Story with Drawing Prompts" for a sad mood, "Exciting Space Adventure Quiz" for a happy mood with interest in space). If a standard informational approach is best, use "Informational". This description should also be in '{{{targetLanguage}}}'.
 
   Your output must be a JSON object with the following fields: "lessonTitle", "lessonContent" (an array of concise sentences), "lessonFormat", "subject", AND "quiz". All text values must be in '{{{targetLanguage}}}'.
   The "quiz" field must be an array of 3 to 5 multiple-choice question objects. Each question object should have:
@@ -113,7 +113,7 @@ const generateLessonPrompt = ai.definePrompt({
       - Questions should directly assess understanding of the material taught in 'lessonContent' and be aligned with the specified '{{{curriculum}}}' standards.
       - Vary question difficulty appropriately for the child's age and curriculum.
       - EACH quiz question MUST have an "explanation" field, as described above, in '{{{targetLanguage}}}'.
-  5.  Relevance: All content (lesson and quiz) MUST directly relate to teaching the 'Lesson Topic': {{{lessonTopic}}} in a manner consistent with the specified 'Curriculum Focus' ({{{curriculum}}}'), 'Child Age' ({{{childAge}}}), 'Learning Style' ({{{learningStyle}}}), and 'Preferred Activities' ({{{preferredActivities}}}), all presented in '{{{targetLanguage}}}'.
+  5.  Relevance: All content (lesson and quiz) MUST directly relate to teaching the 'Lesson Topic': {{{lessonTopic}}} in a manner consistent with the specified 'Curriculum Focus' ({{{curriculum}}}'), 'Child Age' ({{{childAge}}}), 'Learning Style' ({{{learningStyle}}}), 'Recent Mood' ({{{recentMood}}}), and 'Preferred Activities' ({{{preferredActivities}}}), all presented in '{{{targetLanguage}}}'.
   6.  Tone: Maintain an encouraging, positive, and child-friendly tone throughout the lesson and quiz, further modulated by the 'Recent Mood' instruction, and expressed in '{{{targetLanguage}}}'.
 
   Example (If lesson topic is "The Water Cycle", age is 10, curriculum is "CBSE Grade 5 Environmental Science", mood is "neutral", learningStyle is "visual", preferredActivities is "Storytelling, Drawing", targetLanguage is "en"):
@@ -305,4 +305,3 @@ function cleanSentence(sentence: string): string {
     }
     return cleaned;
 }
-```
