@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle, Printer } from 'lucide-react'; // Changed Download to Printer
+import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle, Printer } from 'lucide-react'; 
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -83,9 +83,10 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
         console.error('Speech synthesis error:', event.error);
         setIsSpeaking(false);
         setSpeakingTextIdentifier(null);
+        toast({ title: "Speech Error", description: `Could not play audio: ${event.error}`, variant: "destructive"});
     }
     window.speechSynthesis.speak(utterance);
-  }, [childProfile?.language, isSpeaking, speakingTextIdentifier]);
+  }, [childProfile?.language, isSpeaking, speakingTextIdentifier, toast]);
 
 
   const themeClass = childProfile?.theme === 'dark' ? 'dark-theme-lesson' : 
@@ -169,8 +170,9 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   const handleTryAgainOrContinueFromExplanation = () => {
     stopSpeaking();
     if (showExplanationForQuestionIndex !== null) {
-      const { [showExplanationForQuestionIndex]: _, ...rest } = selectedAnswers;
-      setSelectedAnswers(rest); 
+      // Keep the selected answer if trying again, so it's visible
+      // const { [showExplanationForQuestionIndex]: _, ...rest } = selectedAnswers;
+      // setSelectedAnswers(rest); 
       setShowExplanationForQuestionIndex(null); 
     }
   };
@@ -248,22 +250,56 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
 
     let printContent = `<html><head><title>${lesson.lessonTitle}</title>`;
     printContent += `<style>
-      body { font-family: sans-serif; margin: 20px; }
-      h1 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-      .page { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;}
-      .page-number { font-style: italic; color: #777; text-align: right; font-size: 0.9em; }
-      p { line-height: 1.6; color: #555; }
+      body { font-family: sans-serif; margin: 20px; line-height: 1.6; }
+      h1 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; text-align: center; }
+      .page-content { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;}
+      .page-number { font-style: italic; color: #777; text-align: right; font-size: 0.9em; margin-bottom: 5px; }
+      .sentence { margin-bottom: 10px; font-size: 1.1em; }
+      .image-placeholder { text-align: center; color: #aaa; border: 1px dashed #ccc; padding: 20px; margin-top: 15px; border-radius: 5px; }
+      @media print {
+        body { margin: 0.5in; }
+        .page-content { border: 1px solid #ccc; background-color: #fff; page-break-inside: avoid; }
+        img { max-width: 100% !important; height: auto !important; display: block; margin: 10px auto; page-break-inside: avoid; }
+        .no-print { display: none !important; }
+      }
     </style></head><body>`;
     printContent += `<h1>${lesson.lessonTitle}</h1>`;
+    printContent += `<h2>Subject: ${lesson.subject}</h2>`;
     
     lesson.lessonPages.forEach((page, index) => {
-      printContent += `<div class="page">`;
+      printContent += `<div class="page-content">`;
       printContent += `<p class="page-number">Page ${index + 1}</p>`;
       page.sentences.forEach(sentence => {
-        printContent += `<p>${sentence}</p>`;
+        printContent += `<p class="sentence">${sentence}</p>`;
       });
+      if (page.imageDataUri) {
+        // For printing, it's better to use actual <img> tags if the data URI is valid.
+        // However, complex images might not print well or make the document very large.
+        // For simplicity, we'll add a placeholder indicating an image was present.
+        // If you want to embed, use: printContent += `<img src="${page.imageDataUri}" alt="Lesson Image ${index + 1}" style="max-width:500px; margin:10px auto; display:block;">`;
+         printContent += `<div class="image-placeholder">[Image was present for this page]</div>`;
+      } else if(lesson.lessonFormat !== "Custom Text-Based Lesson") {
+         printContent += `<div class="image-placeholder">[No image generated for this page]</div>`;
+      }
       printContent += `</div>`;
     });
+
+    if (lesson.quiz && lesson.quiz.length > 0) {
+      printContent += `<h2>Quiz Questions</h2>`;
+      lesson.quiz.forEach((q, qIndex) => {
+        printContent += `<div class="page-content">`;
+        printContent += `<p class="page-number">Quiz Question ${qIndex + 1}</p>`;
+        printContent += `<p class="sentence"><strong>${q.questionText}</strong></p>`;
+        printContent += `<ul>`;
+        q.options.forEach((opt, optIndex) => {
+          printContent += `<li>${String.fromCharCode(65 + optIndex)}. ${opt}</li>`;
+        });
+        printContent += `</ul>`;
+        printContent += `<p class="sentence"><em>Correct Answer: ${String.fromCharCode(65 + q.correctAnswerIndex)}. ${q.options[q.correctAnswerIndex]}</em></p>`;
+        printContent += `<p class="sentence"><em>Explanation: ${q.explanation}</em></p>`;
+        printContent += `</div>`;
+      });
+    }
 
     printContent += `</body></html>`;
 
@@ -272,11 +308,15 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
       printWindow.document.write(printContent);
       printWindow.document.close();
       printWindow.focus();
-      // Timeout to ensure content is loaded before printing
       setTimeout(() => {
-        printWindow.print();
+        try {
+            printWindow.print();
+        } catch (e) {
+            console.error("Error printing:", e);
+            toast({ title: "Print Error", description: "Could not initiate printing.", variant: "destructive" });
+        }
         // printWindow.close(); // Optional: close window after print dialog
-      }, 500);
+      }, 500); // Delay to allow content to render
     } else {
       toast({
         title: "Print Error",
@@ -537,3 +577,4 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   
   return <Card className="border-t-4 border-muted"><CardContent className="p-6">Loading lesson content...</CardContent></Card>;
 }
+
