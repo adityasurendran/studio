@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,10 +13,15 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles, Search, Lightbulb, ArrowRight, AlertTriangle, Users, Mic, MicOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { suggestLessonTopic, SuggestLessonTopicInputSchema, type SuggestLessonTopicInput, type SuggestLessonTopicOutput } from '@/ai/flows/suggest-lesson-topic';
+import { suggestLessonTopic, type SuggestLessonTopicInput, type SuggestLessonTopicOutput } from '@/ai/flows/suggest-lesson-topic';
 import { cn } from '@/lib/utils';
 
-type DiscoverTopicFormData = Pick<SuggestLessonTopicInput, 'previousTopicsLearned'>;
+// Define a local schema for the form fields used in this component
+const discoverTopicFormSchema = z.object({
+  previousTopicsLearned: z.string().optional(),
+});
+
+type DiscoverTopicFormData = z.infer<typeof discoverTopicFormSchema>;
 
 export default function DiscoverTopicsPage() {
   const { activeChild, isLoading: childLoading } = useActiveChildProfile();
@@ -29,7 +35,7 @@ export default function DiscoverTopicsPage() {
 
 
   const form = useForm<DiscoverTopicFormData>({
-    resolver: zodResolver(SuggestLessonTopicInputSchema.pick({ previousTopicsLearned: true })),
+    resolver: zodResolver(discoverTopicFormSchema),
     defaultValues: {
       previousTopicsLearned: activeChild?.lessonHistory || '',
     },

@@ -4,13 +4,12 @@
  * - suggestLessonTopic - A function that takes child details and returns a suggested topic and reasoning.
  * - SuggestLessonTopicInput - The input type for the suggestLessonTopic function.
  * - SuggestLessonTopicOutput - The return type for the suggestLessonTopic function.
- * - SuggestLessonTopicInputSchema - The Zod schema for the input.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const SuggestLessonTopicInputSchema = z.object({
+const SuggestLessonTopicInputSchema = z.object({
   childAge: z.number().describe('The age of the child.'),
   interests: z.string().optional().describe('The interests of the child.'),
   learningDifficulties: z.string().optional().describe('The learning difficulties of the child.'),
