@@ -15,7 +15,7 @@ const predefinedBadges: Omit<Badge, 'dateEarned'>[] = [
   { id: 'five-lessons', name: "Consistent Learner", description: "Completed 5 lessons!", iconName: "Award" },
   { id: 'high-scorer', name: "High Achiever", description: "Scored 80% or more on 3 quizzes!", iconName: "TrendingUp" },
   { id: 'points-milestone-100', name: "Century Club", description: "Earned 100 points!", iconName: "Star" },
-  { id: 'points-milestone-500', name: "Point Powerhouse", description: "Earned 500 points!", iconName: "Zap" },
+  { id: 'points-milestone-500', name: "Point Powerhouse", description: "Earned 500 points!", iconName: "ZapIcon" }, // Corrected icon name
 ];
 
 export function useChildProfiles() {
@@ -26,6 +26,7 @@ export function useChildProfiles() {
     const newProfile: ChildProfile = { 
       ...profileData, 
       id: uuidv4(),
+      language: profileData.language || 'en', // Ensure language defaults to 'en'
       lessonAttempts: [],
       savedLessons: [],
       points: 0,
@@ -49,6 +50,7 @@ export function useChildProfiles() {
         ? { 
             ...p, 
             ...updatedProfile, 
+            language: updatedProfile.language || p.language || 'en', // Ensure language is preserved or defaults
             lessonAttempts: updatedProfile.lessonAttempts || p.lessonAttempts || [],
             savedLessons: updatedProfile.savedLessons || p.savedLessons || [],
             points: updatedProfile.points ?? p.points ?? 0,
@@ -87,11 +89,16 @@ export function useChildProfiles() {
           };
           const updatedAttempts = [...(profile.lessonAttempts || []), newAttempt];
           
-          const newLessonHistoryEntry = `Completed lesson: "${attemptData.lessonTitle}" (Topic: ${attemptData.lessonTopic}, Score: ${attemptData.quizScore}%) on ${new Date(attemptData.timestamp).toLocaleDateString()}. Earned ${pointsEarned} points.`;
+          const newLessonHistoryEntry = `Completed lesson: "${attemptData.lessonTitle}" (Topic: ${attemptData.lessonTopic || 'N/A'}, Score: ${attemptData.quizScore}%) on ${new Date(attemptData.timestamp).toLocaleDateString()}. Earned ${pointsEarned} points.`;
           
           const existingHistory = profile.lessonHistory || "";
-          const updatedLessonHistory = existingHistory 
-            ? `${existingHistory}\n${newLessonHistoryEntry}` 
+          // Limit lesson history entries to avoid excessively large strings
+          const historyLines = existingHistory.split('\n');
+          const MAX_HISTORY_LINES = 50; // Keep last 50 entries
+          const truncatedHistory = historyLines.slice(Math.max(0, historyLines.length - MAX_HISTORY_LINES + 1)).join('\n');
+          
+          const updatedLessonHistory = truncatedHistory 
+            ? `${truncatedHistory}\n${newLessonHistoryEntry}` 
             : newLessonHistoryEntry;
 
           const updatedPoints = (profile.points || 0) + pointsEarned;
@@ -180,10 +187,16 @@ export function useChildProfiles() {
       prevProfiles.map(profile => {
         if (profile.id === childId) {
           // Prevent duplicate lessons by title if desired (simple check)
-          const lessonExists = profile.savedLessons?.some(sl => sl.lessonTitle === lesson.lessonTitle);
+          // For more robust duplicate prevention, use a lesson ID if available
+          const lessonExists = profile.savedLessons?.some(sl => sl.lessonTitle === lesson.lessonTitle && JSON.stringify(sl.lessonPages) === JSON.stringify(lesson.lessonPages));
           if (lessonExists) return profile;
 
           const updatedSavedLessons = [...(profile.savedLessons || []), lesson];
+           // Limit the number of saved lessons to, e.g., 50, to prevent unbounded growth
+          const MAX_SAVED_LESSONS = 50;
+          if (updatedSavedLessons.length > MAX_SAVED_LESSONS) {
+            updatedSavedLessons.splice(0, updatedSavedLessons.length - MAX_SAVED_LESSONS); // Remove oldest lessons
+          }
           return { ...profile, savedLessons: updatedSavedLessons };
         }
         return profile;
@@ -201,4 +214,3 @@ export function useChildProfiles() {
     addSavedLesson,
   };
 }
-

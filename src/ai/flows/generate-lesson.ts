@@ -37,6 +37,7 @@ const GenerateTailoredLessonsInputSchema = z.object({
   curriculum: z.string().describe("The child's general curriculum focus (e.g., 'CBSE Grade 5 Science', 'US Grade 2 Math', 'Irish Junior Cycle Maths', 'UK National Curriculum Year 4 History'). This is critical for content alignment."),
   learningStyle: z.string().optional().describe('The preferred learning style of the child (e.g., visual, auditory, kinesthetic, reading_writing, balanced_mixed).'),
   preferredActivities: z.string().optional().describe('Preferred types of learning activities, e.g., interactive games, storytelling, drawing tasks, building blocks.'),
+  targetLanguage: z.string().optional().default('en').describe('The target language for the lesson content (e.g., "en", "es", "fr"). Default is "en".'),
 });
 export type GenerateTailoredLessonsInput = z.infer<typeof GenerateTailoredLessonsInputSchema>;
 
@@ -64,6 +65,7 @@ const generateLessonPrompt = ai.definePrompt({
   The lesson MUST be tailored to the child's specific profile:
     Child Name: {{{childName}}}
     Child Age: {{{childAge}}}
+    Target Language: {{{targetLanguage}}} (Generate ALL lesson content, titles, and quiz questions in this language. For example, if "es", generate in Spanish; if "fr", generate in French. If "en", generate in English.)
     Learning Difficulties: {{{learningDifficulties}}}
     Interests: {{{interests}}}
     Preferred Activities: {{{preferredActivities}}} (If specified, try to weave these activity types into the lesson. For example, if 'storytelling' is preferred, make the lesson more narrative. If 'drawing tasks' or 'building' are preferred, include vivid descriptions that could inspire such activities or frame examples around these actions. The 'lessonFormat' you output should also try to reflect these preferences if suitable for the topic.)
@@ -74,35 +76,35 @@ const generateLessonPrompt = ai.definePrompt({
     Learning Style: {{{learningStyle}}}
 
   Content Personalization & Differentiation Guidelines:
-  1.  Complexity & Depth: Strictly adhere to the Child's Age and Curriculum Focus to determine the appropriate depth and complexity of the content.
+  1.  Language: ALL output text (lessonTitle, lessonContent, lessonFormat, subject, and all parts of the quiz including questionText, options, and explanation) MUST be in the 'Target Language': {{{targetLanguage}}}.
+  2.  Complexity & Depth: Strictly adhere to the Child's Age and Curriculum Focus to determine the appropriate depth and complexity of the content, in the '{{{targetLanguage}}}'.
       - For younger children or those with significant learning difficulties specified in '{{{learningDifficulties}}}', simplify concepts, use shorter sentences, provide more concrete examples, and break down information into smaller, more digestible chunks.
       - For older children or those in advanced curricula, introduce more nuanced concepts and expect a higher level of understanding.
-  2.  Interest Integration: Actively integrate the child's Interests ({{{interests}}}) into the lesson's examples, analogies, and narrative. Make the content relatable and exciting by connecting it to what the child enjoys. For example, if the topic is 'fractions' and interests include 'space', use examples like 'dividing a spaceship's fuel' or 'sharing moon rocks'.
-  3.  Learning Style & Activity Adaptation:
+  3.  Interest Integration: Actively integrate the child's Interests ({{{interests}}}) into the lesson's examples, analogies, and narrative. Make the content relatable and exciting by connecting it to what the child enjoys. For example, if the topic is 'fractions' and interests include 'space', use examples like 'dividing a spaceship's fuel' or 'sharing moon rocks', presented in '{{{targetLanguage}}}'.
+  4.  Learning Style & Activity Adaptation:
       - Combine the specified Learning Style ({{{learningStyle}}}) and Preferred Activities ({{{preferredActivities}}}) to shape the lesson.
       - Visual learners with a preference for 'drawing': Emphasize visual descriptions in the lesson content, and make the text evocative of scenes they could draw. The images paired with sentences will support this.
       - Auditory learners who like 'storytelling': Structure the lesson as an engaging story, use dialogue, or pose questions for them to think about aloud.
       - Kinesthetic learners who prefer 'experiments' or 'building': If the topic allows, frame explanations around actions or describe things in a way that relates to physical interaction (e.g., "Imagine you are building a tower with these blocks to understand addition").
       - Reading/Writing learners: Focus on clear, well-structured text. The quiz itself caters well to this.
-  4.  Lesson Format: The 'lessonFormat' field in your output should reflect the dominant style and activity preferences if a clear theme emerges (e.g., "Interactive Story with Visual Puzzles", "Hands-on Science Exploration Narrative", "Narrative lesson with drawing prompts"). If no strong preference or if a standard informational approach is best for the topic and curriculum, use "Informational".
+  5.  Lesson Format: The 'lessonFormat' field in your output should reflect the dominant style and activity preferences if a clear theme emerges (e.g., "Interactive Story with Visual Puzzles", "Hands-on Science Exploration Narrative", "Narrative lesson with drawing prompts"). If no strong preference or if a standard informational approach is best for the topic and curriculum, use "Informational". This description should also be in '{{{targetLanguage}}}'.
 
-  Your output must be a JSON object with the following fields: "lessonTitle", "lessonContent" (an array of concise sentences), "lessonFormat", "subject", AND "quiz".
+  Your output must be a JSON object with the following fields: "lessonTitle", "lessonContent" (an array of concise sentences), "lessonFormat", "subject", AND "quiz". All text values must be in '{{{targetLanguage}}}'.
   The "quiz" field must be an array of 3 to 5 multiple-choice question objects. Each question object should have:
-    - "questionText": string (The question itself)
-    - "options": string[] (An array of 2 to 4 answer choices)
+    - "questionText": string (The question itself, in '{{{targetLanguage}}}')
+    - "options": string[] (An array of 2 to 4 answer choices, in '{{{targetLanguage}}}')
     - "correctAnswerIndex": number (The 0-based index of the correct answer within the "options" array)
-    - "explanation": string (MANDATORY: A brief, child-friendly explanation for why the correct answer is right and, if applicable, why common distractors might be incorrect. This explanation will be shown to the child if they answer incorrectly.)
+    - "explanation": string (MANDATORY: A brief, child-friendly explanation in '{{{targetLanguage}}}' for why the correct answer is right and, if applicable, why common distractors might be incorrect. This explanation will be shown to the child if they answer incorrectly.)
 
   IMPORTANT:
   1.  Educational Depth & Curriculum Alignment:
-      - The lesson MUST be sufficiently informative and educational for a child of {{{childAge}}} following the {{{curriculum}}} for the specified {{{lessonTopic}}}.
-      - Imagine you have access to the official textbooks, learning materials, syllabi, and past examination papers for the '{{{curriculum}}}'.
+      - The lesson MUST be sufficiently informative and educational for a child of {{{childAge}}} following the {{{curriculum}}} for the specified {{{lessonTopic}}}, delivered in '{{{targetLanguage}}}'.
+      - Imagine you have access to the official textbooks, learning materials, syllabi, and past examination papers for the '{{{curriculum}}}' in '{{{targetLanguage}}}'.
       - The content, depth, terminology, examples, and quiz questions you generate MUST closely mirror what would be found in those official resources for a child of {{{childAge}}} learning about '{{{lessonTopic}}}'.
-      - For instance, if '{{{curriculum}}}' is "CBSE Grade 5 Science" and '{{{lessonTopic}}}' is "Photosynthesis," the lesson should teach concepts and use examples as a CBSE Grade 5 Science textbook would. Quiz questions should be similar in style and difficulty to what a student might encounter in CBSE assessments for that grade and topic.
-      - If '{{{curriculum}}}' is "Irish Junior Cycle Maths" and '{{{lessonTopic}}}' is "Solving Linear Equations," your lesson should reflect the approach, problem types, and terminology found in Junior Cycle Maths textbooks and past papers for Ireland.
-      - If '{{{curriculum}}}' is "UK National Curriculum Year 2 Phonics," the lesson should focus on phonemes, graphemes, and decoding skills appropriate for that level.
+      - For instance, if '{{{curriculum}}}' is "CBSE Grade 5 Science", '{{{lessonTopic}}}' is "Photosynthesis," and '{{{targetLanguage}}}' is "en", the lesson should teach concepts and use examples as a CBSE Grade 5 Science textbook would. Quiz questions should be similar in style and difficulty to what a student might encounter in CBSE assessments for that grade and topic.
+      - If '{{{curriculum}}}' is "Plan de estudios español, Primaria 3º curso, Matemáticas" '{{{lessonTopic}}}' is "Multiplicación por dos cifras" and '{{{targetLanguage}}}' is "es", your lesson should reflect the approach, problem types, and terminology found in Spanish 3rd-grade Maths textbooks.
       - The lesson should not be overly simplistic and must cover the topic comprehensively according to the specified curriculum's standards.
-  2.  Lesson Content: 'lessonContent' MUST be a JSON array of strings. Each string should be a single, complete, and concise sentence. These sentences will be paired with images.
+  2.  Lesson Content: 'lessonContent' MUST be a JSON array of strings. Each string should be a single, complete, and concise sentence in '{{{targetLanguage}}}'. These sentences will be paired with images.
   3.  Sentence Count: Generate a substantial lesson with AT LEAST 25-35 sentences to ensure comprehensive coverage of the {{{lessonTopic}}}. For a 10-year-old on a CBSE curriculum, this count is critical for adequate depth. Ensure these sentences are distinct and cover different aspects of the topic rather than being repetitive.
   4.  Quiz Quality:
       - Generate 3-5 unique multiple-choice questions.
@@ -110,11 +112,11 @@ const generateLessonPrompt = ai.definePrompt({
       - Ensure one option is clearly correct based on the lesson content.
       - Questions should directly assess understanding of the material taught in 'lessonContent' and be aligned with the specified '{{{curriculum}}}' standards.
       - Vary question difficulty appropriately for the child's age and curriculum.
-      - EACH quiz question MUST have an "explanation" field, as described above.
-  5.  Relevance: All content (lesson and quiz) MUST directly relate to teaching the 'Lesson Topic': {{{lessonTopic}}} in a manner consistent with the specified 'Curriculum Focus' ({{{curriculum}}}), 'Child Age' ({{{childAge}}}), 'Learning Style' ({{{learningStyle}}}), and 'Preferred Activities' ({{{preferredActivities}}}).
-  6.  Tone: Maintain an encouraging, positive, and child-friendly tone throughout the lesson and quiz, further modulated by the 'Recent Mood' instruction.
+      - EACH quiz question MUST have an "explanation" field, as described above, in '{{{targetLanguage}}}'.
+  5.  Relevance: All content (lesson and quiz) MUST directly relate to teaching the 'Lesson Topic': {{{lessonTopic}}} in a manner consistent with the specified 'Curriculum Focus' ({{{curriculum}}}'), 'Child Age' ({{{childAge}}}), 'Learning Style' ({{{learningStyle}}}), and 'Preferred Activities' ({{{preferredActivities}}}), all presented in '{{{targetLanguage}}}'.
+  6.  Tone: Maintain an encouraging, positive, and child-friendly tone throughout the lesson and quiz, further modulated by the 'Recent Mood' instruction, and expressed in '{{{targetLanguage}}}'.
 
-  Example (If lesson topic is "The Water Cycle", age is 10, curriculum is "CBSE Grade 5 Environmental Science", mood is "neutral", learningStyle is "visual", preferredActivities is "Storytelling, Drawing"):
+  Example (If lesson topic is "The Water Cycle", age is 10, curriculum is "CBSE Grade 5 Environmental Science", mood is "neutral", learningStyle is "visual", preferredActivities is "Storytelling, Drawing", targetLanguage is "en"):
   {
     "lessonTitle": "The Amazing Journey of Water: A Visual Story",
     "lessonContent": [
@@ -169,7 +171,7 @@ const generateLessonPrompt = ai.definePrompt({
     ]
   }
 
-  Please respond ONLY in JSON format matching this structure. Ensure all quiz questions have an explanation and all content is appropriate for the specified age, curriculum, mood, learning style, and preferred activities.
+  Please respond ONLY in JSON format matching this structure. Ensure all quiz questions have an explanation and all content is appropriate for the specified age, curriculum, mood, learning style, and preferred activities, and is in the '{{{targetLanguage}}}'.
   `,
 });
 
@@ -303,3 +305,4 @@ function cleanSentence(sentence: string): string {
     }
     return cleaned;
 }
+```

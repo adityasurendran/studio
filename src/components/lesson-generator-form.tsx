@@ -93,6 +93,7 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
       curriculum: childProfile.curriculum,
       learningStyle: childProfile.learningStyle || 'balanced_mixed',
       preferredActivities: childProfile.preferredActivities || '',
+      targetLanguage: childProfile.language || 'en', // Include child's language preference
     };
     await processLessonGeneration(input);
   };
@@ -112,6 +113,7 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
         preferredActivities: childProfile.preferredActivities || lastSuccessfulInput.preferredActivities || '',
         // Update recentMood from current form/profile state if desired
         recentMood: form.getValues("recentMood") || childProfile.recentMood || lastSuccessfulInput.recentMood,
+        targetLanguage: childProfile.language || lastSuccessfulInput.targetLanguage || 'en', // Ensure language is included
     };
     await processLessonGeneration(inputToRegenerate, true);
   };
@@ -302,3 +304,5 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
     </div>
   );
 }
+
+```

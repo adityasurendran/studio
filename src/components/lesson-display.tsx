@@ -86,10 +86,13 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
 
     const sentencesToSpeak = currentLessonPage.sentences.join(' ');
     const utterance = new SpeechSynthesisUtterance(sentencesToSpeak);
-    utterance.lang = childProfile?.language || 'en-US';
+    utterance.lang = childProfile?.language || 'en'; // Use child's language, default to 'en'
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+    utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event.error);
+        setIsSpeaking(false);
+    }
     window.speechSynthesis.speak(utterance);
   };
 
@@ -426,3 +429,5 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   
   return <Card className="border-t-4 border-muted"><CardContent className="p-6 text-center text-muted-foreground">Loading lesson display... Please wait.</CardContent></Card>;
 }
+
+```

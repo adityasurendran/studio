@@ -47,7 +47,7 @@ export interface ChildProfile {
   learningDifficulties: string; // Comma-separated or descriptive text
   screenIssues: string; // e.g., "prefers larger fonts, sensitive to bright colors"
   theme: 'light' | 'dark' | 'system' | 'colorful' | 'simple';
-  language: string; // e.g., "en", "es"
+  language: string; // e.g., "en" (English), "es" (Spanish), "fr" (French). Default to 'en'.
   curriculum: string; // e.g., "US Grade 2 Math", "Basic Phonics"
   interests: string; // Comma-separated or descriptive text, e.g., "Dinosaurs, space, drawing"
   avatarSeed?: string; 
@@ -73,3 +73,5 @@ export interface ParentProfile {
   stripeSubscriptionStatus?: string; // e.g., 'active', 'trialing', 'past_due', 'canceled'
 }
 
+
+```

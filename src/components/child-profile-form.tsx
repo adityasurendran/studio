@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile, ToyBrick, BarChartHorizontalBig } from 'lucide-react'; // Added ToyBrick for activities
+import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile, ToyBrick, BarChartHorizontalBig, Languages } from 'lucide-react'; // Added ToyBrick for activities, Languages icon
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -21,7 +21,7 @@ const profileSchema = z.object({
   learningDifficulties: z.string().optional(),
   screenIssues: z.string().optional(),
   theme: z.enum(['light', 'dark', 'system', 'colorful', 'simple']),
-  language: z.string().min(2, { message: "Language code required (e.g., en, es)." }),
+  language: z.string().min(2, { message: "Language selection is required." }), // Default to 'en'
   curriculum: z.string().min(3, { message: "Curriculum details required." }),
   interests: z.string().optional(),
   avatarSeed: z.string().optional().describe("A word or phrase to generate a unique avatar. Leave blank to use name."),
@@ -51,7 +51,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       learningDifficulties: profile?.learningDifficulties || '',
       screenIssues: profile?.screenIssues || '',
       theme: profile?.theme || 'system',
-      language: profile?.language || 'en',
+      language: profile?.language || 'en', // Default to English
       curriculum: profile?.curriculum || '',
       interests: profile?.interests || '',
       avatarSeed: profile?.avatarSeed || '',
@@ -116,6 +116,34 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                     <Input placeholder="e.g., happy bear, blue star, child's name" {...field} />
                   </FormControl>
                   <FormDescription>Enter a word or short phrase to create a unique avatar. If left blank, the child&apos;s name will be used.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="language"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5"><Languages className="h-4 w-4 text-muted-foreground" />Lesson Language</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select language for lessons" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="es">Español (Spanish)</SelectItem>
+                      <SelectItem value="fr">Français (French)</SelectItem>
+                      <SelectItem value="de">Deutsch (German)</SelectItem>
+                      <SelectItem value="it">Italiano (Italian)</SelectItem>
+                      <SelectItem value="pt">Português (Portuguese)</SelectItem>
+                      <SelectItem value="hi">हिन्दी (Hindi)</SelectItem>
+                      {/* Add more languages as needed */}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>Primary language for lesson content and text-to-speech.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -275,20 +303,6 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
             />
             <FormField
               control={form.control}
-              name="language"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Language</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., en (English), es (Spanish)" {...field} />
-                  </FormControl>
-                  <FormDescription>Primary language for lessons (e.g., en, es, fr).</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="curriculum"
               render={({ field }) => (
                 <FormItem>
@@ -353,3 +367,4 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
   );
 }
 
+```
