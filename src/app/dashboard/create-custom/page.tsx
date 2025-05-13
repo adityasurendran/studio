@@ -1,46 +1,56 @@
 // src/app/dashboard/create-custom/page.tsx
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { FileEdit, Lightbulb } from "lucide-react"; // Or Construction, Wrench
+import CustomLessonCreatorForm from "@/components/custom-lesson-creator-form";
+import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Loader2, Users, FileEdit } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function CreateCustomPage() {
+  const { activeChild, isLoading } = useActiveChildProfile();
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-var(--header-height,4rem)-3rem)] text-center p-4">
+        <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+        <p className="text-xl text-muted-foreground">Loading child profile...</p>
+      </div>
+    );
+  }
+
+  if (!activeChild) {
+    return (
+        <div className="flex flex-col items-center justify-center h-full py-10 px-4 min-h-[calc(100vh-var(--header-height,4rem)-3rem)]">
+            <Card className="w-full max-w-lg text-center shadow-xl p-6 md:p-8 border-t-4 border-primary">
+                <CardHeader className="p-0 mb-6">
+                    <div className="mx-auto bg-primary/10 p-5 rounded-full w-fit mb-4">
+                        <FileEdit className="h-16 w-16 text-primary" />
+                    </div>
+                    <CardTitle className="text-3xl font-semibold">No Active Child Profile</CardTitle>
+                    <CardDescription className="text-base mt-2 text-muted-foreground">
+                        To create a custom lesson, please first select an active child profile.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <Link href="/dashboard/profiles" passHref>
+                        <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-6 shadow-md hover:shadow-lg" size="lg">
+                            <Users className="mr-2 h-5 w-5" /> Manage Child Profiles
+                        </Button>
+                    </Link>
+                    <p className="mt-4 text-sm text-muted-foreground">
+                        You can set an active profile from the Profiles page.
+                    </p>
+                </CardContent>
+          </Card>
+        </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-8">
-      <Card className="shadow-xl border-t-4 border-accent">
-        <CardHeader className="text-center">
-          <div className="mx-auto bg-accent/10 p-4 rounded-full w-fit mb-4">
-            <FileEdit className="h-16 w-16 text-accent" />
-          </div>
-          <CardTitle className="text-4xl font-bold text-accent">Custom Content Creation</CardTitle>
-          <CardDescription className="text-lg text-muted-foreground mt-2">
-            Unleash your creativity! This space is for building and tailoring your own learning materials.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center py-12">
-          <Lightbulb className="h-20 w-20 text-primary mx-auto mb-6 animate-pulse" />
-          <h2 className="text-3xl font-semibold text-primary mb-4">Feature Coming Soon!</h2>
-          <p className="text-xl text-foreground mb-3">
-            We&apos;re working hard to bring you powerful tools to:
-          </p>
-          <ul className="list-disc list-inside text-left max-w-md mx-auto text-muted-foreground space-y-1 mb-8">
-            <li>Create your own lessons from scratch.</li>
-            <li>Modify AI-generated lessons to better suit your child.</li>
-            <li>Design custom quizzes and activities.</li>
-            <li>Share (optionally) your creations with the community.</li>
-          </ul>
-          <p className="text-lg text-foreground mb-6">
-            Stay tuned for updates! In the meantime, you can continue using the AI lesson generator.
-          </p>
-          <Link href="/dashboard/lessons/new" passHref>
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              Generate AI Lesson
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+    <div className="container mx-auto py-6 md:py-8">
+      <CustomLessonCreatorForm childProfile={activeChild} />
     </div>
   );
 }

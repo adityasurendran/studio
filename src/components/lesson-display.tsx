@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle, Download } from 'lucide-react';
+import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle, Printer } from 'lucide-react'; // Changed Download to Printer
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -243,11 +243,47 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     handleRestartLessonInternal();
   }
 
-  const handleDownloadLesson = () => {
-    toast({
-      title: "Feature Coming Soon",
-      description: "Offline access for lessons will be available in a future update!",
+  const handlePrintLesson = () => {
+    if (typeof window === 'undefined') return;
+
+    let printContent = `<html><head><title>${lesson.lessonTitle}</title>`;
+    printContent += `<style>
+      body { font-family: sans-serif; margin: 20px; }
+      h1 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+      .page { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;}
+      .page-number { font-style: italic; color: #777; text-align: right; font-size: 0.9em; }
+      p { line-height: 1.6; color: #555; }
+    </style></head><body>`;
+    printContent += `<h1>${lesson.lessonTitle}</h1>`;
+    
+    lesson.lessonPages.forEach((page, index) => {
+      printContent += `<div class="page">`;
+      printContent += `<p class="page-number">Page ${index + 1}</p>`;
+      page.sentences.forEach(sentence => {
+        printContent += `<p>${sentence}</p>`;
+      });
+      printContent += `</div>`;
     });
+
+    printContent += `</body></html>`;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      // Timeout to ensure content is loaded before printing
+      setTimeout(() => {
+        printWindow.print();
+        // printWindow.close(); // Optional: close window after print dialog
+      }, 500);
+    } else {
+      toast({
+        title: "Print Error",
+        description: "Could not open print window. Please check your browser's pop-up settings.",
+        variant: "destructive"
+      });
+    }
   };
 
 
@@ -281,10 +317,13 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
             {currentLessonPage.imageDataUri ? (
                 <Image src={currentLessonPage.imageDataUri} alt={`Illustration for page ${currentPageIndex + 1}`} width={600} height={375} className="object-contain w-full h-full" priority={currentPageIndex < 2}/>
             ) : (
-                <div className="text-center text-destructive p-4 flex flex-col items-center justify-center h-full">
+                <div className="text-center text-muted-foreground p-4 flex flex-col items-center justify-center h-full">
                     <ImageOff className="h-20 w-20 mx-auto mb-2" />
-                    <p className="text-lg font-medium">Image not available for this page.</p>
-                    <p className="text-sm">This might be due to content filters or a generation issue.</p>
+                    <p className="text-lg font-medium">Image not displayed for this page.</p>
+                    {lesson.lessonFormat === "Custom Text-Based Lesson" ?
+                        <p className="text-sm">Custom lessons do not include AI-generated images.</p> :
+                        <p className="text-sm">This might be due to content filters or a generation issue.</p>
+                    }
                 </div>
             )}
             </div>
@@ -309,8 +348,8 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
         <CardFooter className="flex flex-col sm:flex-row items-center justify-between p-4 border-t gap-3">
             <div className="flex items-center gap-2">
                 <p className="text-sm text-muted-foreground">Page {currentPageIndex + 1} of {totalLessonPages}</p>
-                <Button variant="outline" size="sm" onClick={handleDownloadLesson} className="shadow-sm hover:shadow-md">
-                    <Download className="mr-1.5 h-4 w-4" /> Download (Soon)
+                <Button variant="outline" size="sm" onClick={handlePrintLesson} className="shadow-sm hover:shadow-md">
+                    <Printer className="mr-1.5 h-4 w-4" /> Print Lesson
                 </Button>
             </div>
             <div className="flex gap-3">

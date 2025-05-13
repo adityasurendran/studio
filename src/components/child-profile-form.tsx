@@ -347,7 +347,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                   <FormControl>
                     <Input type="number" placeholder="e.g., 60 (for 1 hour)" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
                   </FormControl>
-                  <FormDescription>Set a daily time limit for app usage in minutes (e.g., 30, 60). Leave blank for no limit. (Enforcement coming soon)</FormDescription>
+                  <FormDescription>Set a daily time limit for app usage in minutes (e.g., 30, 60). Leave blank for no limit.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -361,7 +361,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                   <FormControl>
                      <Input type="number" placeholder="e.g., 300 (for 5 hours)" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
                   </FormControl>
-                  <FormDescription>Set a weekly time limit for app usage in minutes. Leave blank for no limit. (Enforcement coming soon)</FormDescription>
+                  <FormDescription>Set a weekly time limit for app usage in minutes. Leave blank for no limit.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
