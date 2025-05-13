@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile, ToyBrick, BarChartHorizontalBig, Languages, Clock } from 'lucide-react';
+import { Save, XCircle, Image as ImageIcon, Users, Type, Smile, ToyBrick, BarChartHorizontalBig, Languages, Clock } from 'lucide-react'; // Changed FontSize to Type
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -228,7 +228,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
               name="fontSizePreference"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center gap-1.5"><FontSize className="h-4 w-4 text-muted-foreground" /> Font Size Preference</FormLabel>
+                  <FormLabel className="flex items-center gap-1.5"><Type className="h-4 w-4 text-muted-foreground" /> Font Size Preference</FormLabel> {/* Changed FontSize to Type */}
                   <Select onValueChange={field.onChange} defaultValue={field.value || 'medium'}>
                     <FormControl>
                       <SelectTrigger>
@@ -402,3 +402,4 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
     </Card>
   );
 }
+
