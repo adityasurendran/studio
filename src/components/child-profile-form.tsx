@@ -275,9 +275,9 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                 <FormItem>
                   <FormLabel>Curriculum Focus</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., US Grade 2 Math, Basic Phonics, CBSE Grade 3 Science" {...field} />
+                    <Input placeholder="e.g., US Grade 2 Math, UK Year 3 English, IB PYP Science, Basic Phonics" {...field} />
                   </FormControl>
-                  <FormDescription>What curriculum or subjects should lessons focus on?</FormDescription>
+                  <FormDescription>Specify the educational framework (e.g., US Grade 2 Math, UK Year 3 English, CBSE Grade 5 Science, IB PYP, general phonics). This helps the AI tailor content accurately.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

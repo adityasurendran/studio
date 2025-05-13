@@ -13,7 +13,7 @@ export const SuggestLessonTopicInputSchema = z.object({
   childAge: z.number().describe('The age of the child.'),
   interests: z.string().optional().describe('The interests of the child.'),
   learningDifficulties: z.string().optional().describe('The learning difficulties of the child.'),
-  curriculum: z.string().describe("The child's general curriculum focus (e.g., 'CBSE Grade 5 Science', 'US Grade 2 Math')."),
+  curriculum: z.string().describe("The child's general curriculum focus (e.g., 'CBSE Grade 5 Science', 'US Grade 2 Math', 'UK National Curriculum Year 1')."),
   previousTopicsLearned: z.string().optional().describe('A summary of topics recently learned or areas covered to avoid repetition or to build upon.'),
   learningStyle: z.string().optional().describe('The preferred learning style of the child (e.g., visual, auditory, kinesthetic, reading_writing, balanced_mixed).'),
 });
@@ -42,14 +42,14 @@ Consider the following child details:
 
 Based on this, suggest ONE specific lesson topic that would be:
 1.  Age-appropriate.
-2.  Aligned with the specified Curriculum Focus ({{{curriculum}}}). For example, if it's "CBSE Grade 2 Maths", suggest a Grade 2 Maths topic. If it's "Irish Junior Cycle English", suggest a relevant text, skill, or theme.
+2.  Aligned with the specified Curriculum Focus ({{{curriculum}}}). For example, if it's "CBSE Grade 2 Maths", suggest a Grade 2 Maths topic. If it's "Irish Junior Cycle English", suggest a relevant text, skill, or theme. Be prepared to interpret diverse curriculum inputs, from specific national standards (e.g., US Common Core, UK National Curriculum, Australian Curriculum) to broader educational programs (e.g., IB, Montessori, Cambridge International) or general skill areas (e.g., 'early literacy skills', 'basic coding concepts').
 3.  Ideally, related to their Interests if a natural fit exists.
 4.  Sensitive to Learning Difficulties by not being overly complex initially, or suggesting a foundational concept if needed.
 5.  Consider the Learning Style in how the topic might be approached (though you are just suggesting the topic itself).
 6.  DIFFERENT from previously learned topics, unless it's a clear next step.
 
 Provide the topic and a brief (1-2 sentences) reasoning for your suggestion.
-The suggested topic should be something a child can learn about in a single lesson session (e.g., "The Life Cycle of a Butterfly", "Adding Two-Digit Numbers with Regrouping", "Understanding Nouns and Verbs", "Primary Colors in Art").
+The suggested topic should be something a child can learn about in a single lesson session (e.g., "The Life Cycle of a Butterfly", "Adding Two-Digit Numbers with Regrouping", "Understanding Nouns and Verbs", "Primary Colors in Art", "Introduction to Python Variables").
 Do NOT suggest broad subject areas like "Math" or "Science". Be specific.
 
 Output Format:

@@ -34,7 +34,7 @@ const GenerateTailoredLessonsInputSchema = z.object({
   recentMood: z.string().describe('The recent mood of the child (e.g., happy, sad, neutral).'),
   lessonHistory: z.string().optional().describe("A summary of the child's previous lessons."),
   lessonTopic: z.string().describe('The specific topic the child should learn about for this lesson.'),
-  curriculum: z.string().describe("The child's general curriculum focus (e.g., 'CBSE Grade 5 Science', 'US Grade 2 Math', 'Irish Junior Cycle Maths'). This is critical for content alignment."),
+  curriculum: z.string().describe("The child's general curriculum focus (e.g., 'CBSE Grade 5 Science', 'US Grade 2 Math', 'Irish Junior Cycle Maths', 'UK National Curriculum Year 4 History'). This is critical for content alignment."),
   learningStyle: z.string().optional().describe('The preferred learning style of the child (e.g., visual, auditory, kinesthetic, reading_writing, balanced_mixed).'),
 });
 export type GenerateTailoredLessonsInput = z.infer<typeof GenerateTailoredLessonsInputSchema>;
@@ -67,7 +67,7 @@ const generateLessonPrompt = ai.definePrompt({
     Interests: {{{interests}}} (Incorporate these interests to make the lesson and quiz more engaging, if relevant to the topic.)
     Recent Mood: {{{recentMood}}} (This is an important instruction. You MUST adjust the tone of the lesson content and quiz questions to be appropriately sensitive to the child's mood. For example, if the mood is 'sad' or 'anxious', the tone should be gentler, more patient, and reassuring. If the mood is 'happy' or 'excited', the tone can be more upbeat and enthusiastic while still maintaining educational focus.)
     Lesson History: {{{lessonHistory}}} (Avoid repetition if possible, build upon previous knowledge if relevant.)
-    Curriculum Focus: {{{curriculum}}} (This is a CRITICAL guideline. The lesson content, depth, terminology, and quiz questions must align with this curriculum standard. For example, if 'CBSE Grade 5 Science', 'US Grade 2 Math', or 'Irish Junior Cycle Maths' is specified, ensure the lesson and quiz reflect the appropriate level of detail and topics typically covered in that curriculum for the given 'Lesson Topic'.)
+    Curriculum Focus: {{{curriculum}}} (This is a CRITICAL guideline. The lesson content, depth, terminology, and quiz questions must align with this curriculum standard. For example, if 'CBSE Grade 5 Science', 'US Grade 2 Math', or 'Irish Junior Cycle Maths' is specified, ensure the lesson and quiz reflect the appropriate level of detail and topics typically covered in that curriculum for the given 'Lesson Topic'. You should be able to adapt to a wide variety of national and international curricula if specified (e.g., US Common Core, UK National Curriculum, IB Programme, Cambridge International, Australian Curriculum, etc.), as well as more general learning goals or homeschool curricula.)
     Lesson Topic: {{{lessonTopic}}} (The lesson MUST comprehensively teach this specific topic, and the quiz MUST test understanding of this topic.)
     Learning Style: {{{learningStyle}}} (If specified, adapt the lesson's presentation and any implicit activity suggestions.
       - For 'visual': Describe scenes vividly. Focus on what things look like.
@@ -91,6 +91,7 @@ const generateLessonPrompt = ai.definePrompt({
       - The content, depth, terminology, examples, and quiz questions you generate MUST closely mirror what would be found in those official resources for a child of {{{childAge}}} learning about '{{{lessonTopic}}}'.
       - For instance, if '{{{curriculum}}}' is "CBSE Grade 5 Science" and '{{{lessonTopic}}}' is "Photosynthesis," the lesson should teach concepts and use examples as a CBSE Grade 5 Science textbook would. Quiz questions should be similar in style and difficulty to what a student might encounter in CBSE assessments for that grade and topic.
       - If '{{{curriculum}}}' is "Irish Junior Cycle Maths" and '{{{lessonTopic}}}' is "Solving Linear Equations," your lesson should reflect the approach, problem types, and terminology found in Junior Cycle Maths textbooks and past papers for Ireland.
+      - If '{{{curriculum}}}' is "UK National Curriculum Year 2 Phonics," the lesson should focus on phonemes, graphemes, and decoding skills appropriate for that level.
       - The lesson should not be overly simplistic and must cover the topic comprehensively according to the specified curriculum's standards.
   2.  Lesson Content: 'lessonContent' MUST be a JSON array of strings. Each string should be a single, complete, and concise sentence. These sentences will be paired with images.
   3.  Sentence Count: Generate a substantial lesson with AT LEAST 25-35 sentences to ensure comprehensive coverage of the {{{lessonTopic}}}. For a 10-year-old on a CBSE curriculum, this count is critical for adequate depth. Ensure these sentences are distinct and cover different aspects of the topic rather than being repetitive.
