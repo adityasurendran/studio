@@ -13,15 +13,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Edit3, Trash2, CheckCircle, Users, Eye, Sparkle, Brain, Award, Star, Rocket, Target, TrendingUp, Zap as ZapIcon, BarChartHorizontalBig } from 'lucide-react'; // Added Brain icon
+import { UserPlus, Edit3, Trash2, CheckCircle, Users, Eye, Sparkle, Brain, Award, Star, Rocket, Target, TrendingUp, Zap as ZapIcon, BarChartHorizontalBig, KeyRound, Lock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import PinDialog from '@/components/pin-dialog'; // Import PinDialog
+import { useAuth } from '@/hooks/use-auth'; // Import useAuth
 
 type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory' | 'points' | 'badges' >;
 
-// Helper to get Lucide icon component by name
 const getLucideIcon = (iconName?: string) => {
-  if (!iconName) return Award; // Default icon
+  if (!iconName) return Award; 
   const icons: { [key: string]: React.ElementType } = {
     Rocket, Target, Award, TrendingUp, Star, ZapIcon, Brain, BarChartHorizontalBig
   };
@@ -35,16 +36,68 @@ export default function ManageProfilesPage() {
   const [editingProfile, setEditingProfile] = useState<ChildProfile | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<ChildProfile | null>(null);
-
+  
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const { isLocalPinSetup, verifyLocalPin } = useAuth(); // Get PIN status and verification function
+
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [pinAction, setPinAction] = useState<'add' | 'edit' | null>(null); // To know which action to perform after PIN
 
   useEffect(() => {
     if (searchParams.get('action') === 'add') {
-      setShowForm(true);
-      setEditingProfile(null);
+      handleOpenAddForm(); // Use the new handler that checks PIN
     }
-  }, [searchParams]);
+  }, [searchParams, isLocalPinSetup]); // Add isLocalPinSetup to dependency array
+
+
+  const proceedWithAddForm = () => {
+    setEditingProfile(null);
+    setShowForm(true);
+  };
+
+  const proceedWithEditForm = (profile: ChildProfile) => {
+    setEditingProfile(profile);
+    setShowForm(true);
+  };
+
+  const handleOpenAddForm = () => {
+    if (isLocalPinSetup) {
+      setPinAction('add');
+      setShowPinDialog(true);
+    } else {
+      proceedWithAddForm();
+    }
+  };
+
+  const handleOpenEditForm = (profile: ChildProfile) => {
+    if (isLocalPinSetup) {
+      setPinAction('edit');
+      setEditingProfile(profile); // Store profile to edit after PIN
+      setShowPinDialog(true);
+    } else {
+      proceedWithEditForm(profile);
+    }
+  };
+
+  const handlePinSuccess = (pinValue?: string) => {
+    // verifyLocalPin is called by PinDialog if mode is 'enter'
+    // For this flow, we always need to verify
+    if (pinValue && verifyLocalPin(pinValue)) {
+        setShowPinDialog(false);
+        if (pinAction === 'add') {
+            proceedWithAddForm();
+        } else if (pinAction === 'edit' && editingProfile) {
+            proceedWithEditForm(editingProfile);
+        }
+        setPinAction(null);
+        toast({title: "PIN Verified", description: "Access granted."})
+    } else {
+        toast({title: "Incorrect PIN", description: "Please try again.", variant: "destructive"});
+        // PinDialog remains open, or you can close it and reset pinAction
+    }
+  };
+
 
   const handleAddProfile = (data: ProfileFormData) => {
     const newProfile = addProfile(data);
@@ -55,7 +108,7 @@ export default function ManageProfilesPage() {
 
   const handleUpdateProfile = (data: ProfileFormData) => {
     if (editingProfile) {
-      updateProfile({ ...editingProfile, ...data, points: editingProfile.points, badges: editingProfile.badges }); // Preserve points and badges
+      updateProfile({ ...editingProfile, ...data, points: editingProfile.points, badges: editingProfile.badges }); 
       toast({ title: "Profile Updated", description: `${data.name}'s profile has been successfully updated.` });
       setEditingProfile(null);
       setShowForm(false);
@@ -84,24 +137,14 @@ export default function ManageProfilesPage() {
       });
     }
   };
-
-
-  const openEditForm = (profile: ChildProfile) => {
-    setEditingProfile(profile);
-    setShowForm(true);
-  };
-
-  const openAddForm = () => {
-    setEditingProfile(null);
-    setShowForm(true);
-  };
   
   const closeForm = () => {
     setShowForm(false);
     setEditingProfile(null);
+    setPinAction(null); // Reset pin action
   }
 
-  if (showForm || editingProfile) {
+  if (showForm) { // ChildProfileForm is shown after PIN verification if needed
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
         <ChildProfileForm
@@ -116,13 +159,23 @@ export default function ManageProfilesPage() {
 
   return (
     <div className="space-y-8">
+      <PinDialog
+        isOpen={showPinDialog}
+        setIsOpen={setShowPinDialog}
+        mode="enter" // Always 'enter' mode here, as we are verifying
+        onSuccess={handlePinSuccess}
+        title="Enter PIN"
+        description="Please enter your PIN to manage child profiles."
+      />
+
       <Card className="shadow-xl">
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <CardTitle className="text-3xl text-primary flex items-center gap-2"><Users className="h-8 w-8"/> Child Profiles</CardTitle>
             <CardDescription className="mt-1">Manage your children&apos;s learning profiles, points, and badges.</CardDescription>
           </div>
-          <Button onClick={openAddForm} className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-shadow w-full sm:w-auto">
+          <Button onClick={handleOpenAddForm} className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-shadow w-full sm:w-auto">
+            {isLocalPinSetup && <Lock className="mr-1.5 h-4 w-4" />}
             <UserPlus className="mr-2 h-5 w-5" /> Add New Profile
           </Button>
         </CardHeader>
@@ -132,7 +185,8 @@ export default function ManageProfilesPage() {
               <Users className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
               <p className="text-2xl text-muted-foreground mb-4">No child profiles yet.</p>
               <p className="text-muted-foreground mb-6">Create profiles to personalize lessons and track progress.</p>
-              <Button onClick={openAddForm} size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:scale-105 transition-transform">
+              <Button onClick={handleOpenAddForm} size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:scale-105 transition-transform">
+                 {isLocalPinSetup && <Lock className="mr-1.5 h-4 w-4" />}
                 <UserPlus className="mr-2 h-5 w-5" /> Create Your First Profile
               </Button>
             </div>
@@ -208,8 +262,8 @@ export default function ManageProfilesPage() {
                   </CardContent>
                   <CardFooter className="flex flex-col gap-2 pt-4 mt-auto border-t">
                     <div className="flex w-full gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 hover:border-primary hover:text-primary" onClick={() => openEditForm(profile)}>
-                            <Edit3 className="mr-1.5 h-4 w-4" /> Edit
+                        <Button variant="outline" size="sm" className="flex-1 hover:border-primary hover:text-primary" onClick={() => handleOpenEditForm(profile)}>
+                            {isLocalPinSetup && <Lock className="mr-1 h-3 w-3"/>} <Edit3 className="mr-1.5 h-4 w-4" /> Edit
                         </Button>
                         <Button variant="ghost" size="sm" className="flex-1 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setProfileToDelete(profile)}>
                             <Trash2 className="mr-1.5 h-4 w-4" /> Delete
@@ -260,4 +314,3 @@ export default function ManageProfilesPage() {
     </div>
   );
 }
-

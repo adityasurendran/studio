@@ -61,8 +61,8 @@ export interface ChildProfile {
   points: number;
   badges: Badge[];
   enableLeaderboard?: boolean; 
-  dailyUsageLimitMinutes?: number; // Optional daily usage limit in minutes
-  weeklyUsageLimitMinutes?: number; // Optional weekly usage limit in minutes
+  dailyUsageLimitMinutes?: number | null; // Optional daily usage limit in minutes, can be null
+  weeklyUsageLimitMinutes?: number | null; // Optional weekly usage limit in minutes, can be null
 }
 
 export interface ParentProfile {
@@ -73,4 +73,6 @@ export interface ParentProfile {
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   stripeSubscriptionStatus?: string; // e.g., 'active', 'trialing', 'past_due', 'canceled'
+  pinEnabled?: boolean; // For local PIN protection feature
 }
+
