@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile, ToyBrick, BarChartHorizontalBig, Languages, Clock } from 'lucide-react'; 
+import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile, ToyBrick, BarChartHorizontalBig, Languages, Clock } from 'lucide-react';
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -21,14 +21,14 @@ const profileSchema = z.object({
   learningDifficulties: z.string().optional(),
   screenIssues: z.string().optional(),
   theme: z.enum(['light', 'dark', 'system', 'colorful', 'simple']),
-  language: z.string().min(2, { message: "Language selection is required." }), 
+  language: z.string().min(2, { message: "Language selection is required." }),
   curriculum: z.string().min(3, { message: "Curriculum details required." }),
   interests: z.string().optional(),
   avatarSeed: z.string().optional().describe("A word or phrase to generate a unique avatar. Leave blank to use name."),
   learningStyle: z.enum(['visual', 'auditory', 'reading_writing', 'kinesthetic', 'balanced_mixed']).optional(),
   fontSizePreference: z.enum(['small', 'medium', 'large']).optional(),
   preferredActivities: z.string().optional().describe("Comma-separated list of preferred activity types."),
-  recentMood: z.string().optional(), 
+  recentMood: z.string().optional(),
   lessonHistory: z.string().optional(),
   enableLeaderboard: z.boolean().optional(),
   dailyUsageLimitMinutes: z.coerce.number().int().min(0).optional().nullable(),
@@ -38,7 +38,7 @@ const profileSchema = z.object({
 type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'points' | 'badges'>;
 
 interface ChildProfileFormProps {
-  profile?: ChildProfile; 
+  profile?: ChildProfile;
   onSubmit: (data: ProfileFormData) => void;
   onCancel?: () => void;
   isEditing?: boolean;
@@ -53,7 +53,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       learningDifficulties: profile?.learningDifficulties || '',
       screenIssues: profile?.screenIssues || '',
       theme: profile?.theme || 'system',
-      language: profile?.language || 'en', 
+      language: profile?.language || 'en',
       curriculum: profile?.curriculum || '',
       interests: profile?.interests || '',
       avatarSeed: profile?.avatarSeed || '',
@@ -69,14 +69,13 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
   });
 
   const handleFormSubmit: SubmitHandler<ProfileFormData> = (data) => {
-    // Ensure empty strings for optional number fields become undefined or null
     const processedData = {
       ...data,
       dailyUsageLimitMinutes: data.dailyUsageLimitMinutes === undefined || data.dailyUsageLimitMinutes === null || (typeof data.dailyUsageLimitMinutes === 'string' && data.dailyUsageLimitMinutes.trim() === '') ? undefined : Number(data.dailyUsageLimitMinutes),
       weeklyUsageLimitMinutes: data.weeklyUsageLimitMinutes === undefined || data.weeklyUsageLimitMinutes === null || (typeof data.weeklyUsageLimitMinutes === 'string' && data.weeklyUsageLimitMinutes.trim() === '') ? undefined : Number(data.weeklyUsageLimitMinutes),
     };
     onSubmit(processedData);
-    if (!isEditing) { 
+    if (!isEditing) {
       form.reset();
     }
   };
@@ -219,7 +218,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                   <FormControl>
                     <Textarea placeholder="e.g., Interactive games, Storytelling, Drawing tasks, Building blocks, Experiments" {...field} />
                   </FormControl>
-                  <FormDescription>List types of activities the child enjoys. This can help shape lesson format and suggestions.</FormMessage>
+                  <FormDescription>List types of activities the child enjoys. This can help shape lesson format and suggestions.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
