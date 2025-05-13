@@ -304,5 +304,3 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
     </div>
   );
 }
-
-```
