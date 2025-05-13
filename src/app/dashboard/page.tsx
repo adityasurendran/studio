@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
-import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy, Search, Eye, Star, Rocket, Target, Zap as ZapIcon, Trophy } from 'lucide-react';
+import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy, Search, Eye, Star, Rocket, Target, Zap as ZapIcon, Trophy, FastForward } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -278,7 +278,7 @@ export default function DashboardOverviewPage() {
         </Card>
       )}
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-6">
         <FeatureCard
           icon={<Users className="h-10 w-10 text-primary" />}
           title="Manage Profiles"
@@ -301,6 +301,14 @@ export default function DashboardOverviewPage() {
           link="/dashboard/discover" 
           linkLabel="Discover Topics"
           disabled={!activeChild}
+        />
+         <FeatureCard
+          icon={<FastForward className="h-10 w-10 text-primary" />}
+          title="Next Lesson Recommendations"
+          description="Get AI suggestions for the next logical lesson based on progress."
+          link="/dashboard/recommendations"
+          linkLabel="Get Recommendation"
+          disabled={!activeChild || !activeChild.lessonAttempts || activeChild.lessonAttempts.length === 0}
         />
          <FeatureCard
           icon={<Trophy className="h-10 w-10 text-primary" />}
