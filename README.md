@@ -56,6 +56,7 @@ To get started, follow these steps:
         firebase functions:config:set app.base_url="YOUR_PRODUCTION_APP_URL" # e.g., https://your-app.com
         ```
         Deploy functions after setting config: `firebase deploy --only functions`
+    *   **Troubleshooting "Internal Error" on Subscription:** If you encounter an "internal error firebase" message when trying to subscribe, **check your Firebase Function logs** in the Firebase Console (Functions > Logs for the `createStripeCheckoutSession` function). These logs will provide specific error details from the backend, often related to missing or incorrect Stripe keys/Price ID or other configuration issues.
 
 4.  **Run the Development Server:**
     ```bash
@@ -80,6 +81,7 @@ To get started, follow these steps:
     ```bash
     firebase emulators:start --only functions,firestore # Add other services if needed
     ```
+    To use Firebase emulators, ensure your application connects to them. For client-side Firebase SDK, you might need to add conditional logic (e.g., based on `process.env.NODE_ENV === 'development'`) in `src/lib/firebase.ts` to use `connectAuthEmulator`, `connectFirestoreEmulator`, `connectFunctionsEmulator`, etc.
 
 7.  **Set up Stripe Webhook:**
     *   Deploy your `stripeWebhookHandler` Cloud Function. Get its URL (e.g., from Firebase console).
@@ -93,10 +95,11 @@ To get started, follow these steps:
     *   After creating the endpoint, Stripe will show a "Signing secret" (e.g., `whsec_xxxxxxxxxxxxxx`). Copy this and set it as `STRIPE_WEBHOOK_SECRET` in your `.env` file and Firebase functions config.
     *   **For local testing:** Use the Stripe CLI to forward webhooks to your local emulator:
         ```bash
+        # Ensure your Firebase emulators are running. The default port for functions is 5001.
+        # Replace 'your-project-id' and 'your-region' (e.g., us-central1)
         stripe listen --forward-to localhost:5001/your-project-id/your-region/stripeWebhookHandler 
-        # Replace with your actual project ID, region, and function name if different.
-        # The Stripe CLI will provide a webhook signing secret for local testing. Use this for STRIPE_WEBHOOK_SECRET locally.
         ```
+        The Stripe CLI will provide a webhook signing secret (usually starts with `whsec_...`). **Use this specific secret for `STRIPE_WEBHOOK_SECRET` in your `.env` file when testing locally with the Stripe CLI.** Do NOT use your production webhook secret for local CLI forwarding.
 
 
 Open [http://localhost:9002](http://localhost:9002) with your browser to see the application.
@@ -113,6 +116,4 @@ Firebase Cloud Functions are in the `functions/` directory.
 - Adaptive Lesson Display: Displays lessons with appropriate formatting and images.
 - Progress Tracking: Lesson attempts and quiz scores are saved per child.
 - Profile Persistence: Uses localStorage for child profiles (though user/subscription data is in Firestore).
-
-
 ```
