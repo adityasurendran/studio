@@ -15,18 +15,18 @@ const predefinedBadges: Omit<Badge, 'dateEarned'>[] = [
   { id: 'five-lessons', name: "Consistent Learner", description: "Completed 5 lessons!", iconName: "Award" },
   { id: 'high-scorer', name: "High Achiever", description: "Scored 80% or more on 3 quizzes!", iconName: "TrendingUp" },
   { id: 'points-milestone-100', name: "Century Club", description: "Earned 100 points!", iconName: "Star" },
-  { id: 'points-milestone-500', name: "Point Powerhouse", description: "Earned 500 points!", iconName: "ZapIcon" }, // Corrected icon name
+  { id: 'points-milestone-500', name: "Point Powerhouse", description: "Earned 500 points!", iconName: "ZapIcon" }, 
 ];
 
 export function useChildProfiles() {
   const [profiles, setProfiles] = useLocalStorage<ChildProfile[]>(CHILD_PROFILES_STORAGE_KEY, []);
-  const { toast } = useToast(); // Initialize useToast
+  const { toast } = useToast(); 
 
   const addProfile = useCallback((profileData: Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory' | 'points' | 'badges'>) => {
     const newProfile: ChildProfile = { 
       ...profileData, 
       id: uuidv4(),
-      language: profileData.language || 'en', // Ensure language defaults to 'en'
+      language: profileData.language || 'en', 
       lessonAttempts: [],
       savedLessons: [],
       points: 0,
@@ -38,6 +38,8 @@ export function useChildProfiles() {
       recentMood: profileData.recentMood || 'neutral', 
       lessonHistory: profileData.lessonHistory || '',
       enableLeaderboard: profileData.enableLeaderboard || false,
+      dailyUsageLimitMinutes: profileData.dailyUsageLimitMinutes, // Handle new field
+      weeklyUsageLimitMinutes: profileData.weeklyUsageLimitMinutes, // Handle new field
     };
     setProfiles(prevProfiles => [...prevProfiles, newProfile]);
     return newProfile;
@@ -50,7 +52,7 @@ export function useChildProfiles() {
         ? { 
             ...p, 
             ...updatedProfile, 
-            language: updatedProfile.language || p.language || 'en', // Ensure language is preserved or defaults
+            language: updatedProfile.language || p.language || 'en', 
             lessonAttempts: updatedProfile.lessonAttempts || p.lessonAttempts || [],
             savedLessons: updatedProfile.savedLessons || p.savedLessons || [],
             points: updatedProfile.points ?? p.points ?? 0,
@@ -62,6 +64,8 @@ export function useChildProfiles() {
             recentMood: updatedProfile.recentMood || p.recentMood || 'neutral',
             lessonHistory: updatedProfile.lessonHistory || p.lessonHistory || '',
             enableLeaderboard: updatedProfile.enableLeaderboard ?? p.enableLeaderboard ?? false,
+            dailyUsageLimitMinutes: updatedProfile.dailyUsageLimitMinutes, // Handle new field
+            weeklyUsageLimitMinutes: updatedProfile.weeklyUsageLimitMinutes, // Handle new field
           } 
         : p
       ))
@@ -80,7 +84,7 @@ export function useChildProfiles() {
     setProfiles(prevProfiles => 
       prevProfiles.map(profile => {
         if (profile.id === childId) {
-          const pointsEarned = Math.max(0, attemptData.quizScore); // Award points equal to quiz score (0 if no quiz)
+          const pointsEarned = Math.max(0, attemptData.quizScore); 
           
           const newAttempt: LessonAttempt = {
             ...attemptData,
@@ -92,9 +96,8 @@ export function useChildProfiles() {
           const newLessonHistoryEntry = `Completed lesson: "${attemptData.lessonTitle}" (Topic: ${attemptData.lessonTopic || 'N/A'}, Score: ${attemptData.quizScore}%) on ${new Date(attemptData.timestamp).toLocaleDateString()}. Earned ${pointsEarned} points.`;
           
           const existingHistory = profile.lessonHistory || "";
-          // Limit lesson history entries to avoid excessively large strings
           const historyLines = existingHistory.split('\n');
-          const MAX_HISTORY_LINES = 50; // Keep last 50 entries
+          const MAX_HISTORY_LINES = 50; 
           const truncatedHistory = historyLines.slice(Math.max(0, historyLines.length - MAX_HISTORY_LINES + 1)).join('\n');
           
           const updatedLessonHistory = truncatedHistory 
@@ -104,10 +107,8 @@ export function useChildProfiles() {
           const updatedPoints = (profile.points || 0) + pointsEarned;
           let updatedBadges = [...(profile.badges || [])];
 
-          // Badge Awarding Logic
           const awardedBadgeIds = new Set(updatedBadges.map(b => b.id));
 
-          // First Lesson Badge
           if (updatedAttempts.length === 1 && !awardedBadgeIds.has('first-lesson')) {
             const badge = predefinedBadges.find(b => b.id === 'first-lesson');
             if (badge) {
@@ -117,12 +118,10 @@ export function useChildProfiles() {
             }
           }
 
-          // Perfect Score Badge
           if (attemptData.quizScore === 100 && !awardedBadgeIds.has('perfect-score')) {
              const badge = predefinedBadges.find(b => b.id === 'perfect-score');
              if (badge) {
                 const newBadge: Badge = { ...badge, dateEarned: new Date().toISOString()};
-                // Check if this specific badge instance is already there (less likely for generic ones)
                 if(!updatedBadges.some(b => b.id === newBadge.id)) {
                     updatedBadges.push(newBadge);
                     toast({ title: "Badge Unlocked! 🎯", description: `Amazing! You earned the "${badge.name}" badge for a perfect score.` });
@@ -130,7 +129,6 @@ export function useChildProfiles() {
              }
           }
           
-          // Completed 5 Lessons Badge
           if (updatedAttempts.length >= 5 && !awardedBadgeIds.has('five-lessons')) {
             const badge = predefinedBadges.find(b => b.id === 'five-lessons');
             if (badge) {
@@ -140,7 +138,6 @@ export function useChildProfiles() {
             }
           }
 
-          // High Scorer Badge (Scored >= 80% on 3 quizzes)
           const highScoresCount = updatedAttempts.filter(att => att.quizScore >= 80).length;
           if (highScoresCount >= 3 && !awardedBadgeIds.has('high-scorer')) {
             const badge = predefinedBadges.find(b => b.id === 'high-scorer');
@@ -151,7 +148,6 @@ export function useChildProfiles() {
             }
           }
           
-          // Points Milestones
           if (updatedPoints >= 100 && !awardedBadgeIds.has('points-milestone-100')) {
             const badge = predefinedBadges.find(b => b.id === 'points-milestone-100');
             if (badge) {
@@ -186,16 +182,13 @@ export function useChildProfiles() {
     setProfiles(prevProfiles =>
       prevProfiles.map(profile => {
         if (profile.id === childId) {
-          // Prevent duplicate lessons by title if desired (simple check)
-          // For more robust duplicate prevention, use a lesson ID if available
           const lessonExists = profile.savedLessons?.some(sl => sl.lessonTitle === lesson.lessonTitle && JSON.stringify(sl.lessonPages) === JSON.stringify(lesson.lessonPages));
           if (lessonExists) return profile;
 
           const updatedSavedLessons = [...(profile.savedLessons || []), lesson];
-           // Limit the number of saved lessons to, e.g., 50, to prevent unbounded growth
           const MAX_SAVED_LESSONS = 50;
           if (updatedSavedLessons.length > MAX_SAVED_LESSONS) {
-            updatedSavedLessons.splice(0, updatedSavedLessons.length - MAX_SAVED_LESSONS); // Remove oldest lessons
+            updatedSavedLessons.splice(0, updatedSavedLessons.length - MAX_SAVED_LESSONS); 
           }
           return { ...profile, savedLessons: updatedSavedLessons };
         }

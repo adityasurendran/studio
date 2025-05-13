@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile, ToyBrick, BarChartHorizontalBig, Languages } from 'lucide-react'; // Added ToyBrick for activities, Languages icon
+import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile, ToyBrick, BarChartHorizontalBig, Languages, Clock } from 'lucide-react'; 
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -21,7 +21,7 @@ const profileSchema = z.object({
   learningDifficulties: z.string().optional(),
   screenIssues: z.string().optional(),
   theme: z.enum(['light', 'dark', 'system', 'colorful', 'simple']),
-  language: z.string().min(2, { message: "Language selection is required." }), // Default to 'en'
+  language: z.string().min(2, { message: "Language selection is required." }), 
   curriculum: z.string().min(3, { message: "Curriculum details required." }),
   interests: z.string().optional(),
   avatarSeed: z.string().optional().describe("A word or phrase to generate a unique avatar. Leave blank to use name."),
@@ -31,6 +31,8 @@ const profileSchema = z.object({
   recentMood: z.string().optional(), 
   lessonHistory: z.string().optional(),
   enableLeaderboard: z.boolean().optional(),
+  dailyUsageLimitMinutes: z.coerce.number().int().min(0).optional().nullable(),
+  weeklyUsageLimitMinutes: z.coerce.number().int().min(0).optional().nullable(),
 });
 
 type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'points' | 'badges'>;
@@ -51,7 +53,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       learningDifficulties: profile?.learningDifficulties || '',
       screenIssues: profile?.screenIssues || '',
       theme: profile?.theme || 'system',
-      language: profile?.language || 'en', // Default to English
+      language: profile?.language || 'en', 
       curriculum: profile?.curriculum || '',
       interests: profile?.interests || '',
       avatarSeed: profile?.avatarSeed || '',
@@ -61,11 +63,19 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       recentMood: profile?.recentMood || 'neutral',
       lessonHistory: profile?.lessonHistory || '',
       enableLeaderboard: profile?.enableLeaderboard || false,
+      dailyUsageLimitMinutes: profile?.dailyUsageLimitMinutes || undefined,
+      weeklyUsageLimitMinutes: profile?.weeklyUsageLimitMinutes || undefined,
     },
   });
 
   const handleFormSubmit: SubmitHandler<ProfileFormData> = (data) => {
-    onSubmit(data);
+    // Ensure empty strings for optional number fields become undefined or null
+    const processedData = {
+      ...data,
+      dailyUsageLimitMinutes: data.dailyUsageLimitMinutes === undefined || data.dailyUsageLimitMinutes === null || (typeof data.dailyUsageLimitMinutes === 'string' && data.dailyUsageLimitMinutes.trim() === '') ? undefined : Number(data.dailyUsageLimitMinutes),
+      weeklyUsageLimitMinutes: data.weeklyUsageLimitMinutes === undefined || data.weeklyUsageLimitMinutes === null || (typeof data.weeklyUsageLimitMinutes === 'string' && data.weeklyUsageLimitMinutes.trim() === '') ? undefined : Number(data.weeklyUsageLimitMinutes),
+    };
+    onSubmit(processedData);
     if (!isEditing) { 
       form.reset();
     }
@@ -140,7 +150,6 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                       <SelectItem value="it">Italiano (Italian)</SelectItem>
                       <SelectItem value="pt">Português (Portuguese)</SelectItem>
                       <SelectItem value="hi">हिन्दी (Hindi)</SelectItem>
-                      {/* Add more languages as needed */}
                     </SelectContent>
                   </Select>
                   <FormDescription>Primary language for lesson content and text-to-speech.</FormDescription>
@@ -210,7 +219,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                   <FormControl>
                     <Textarea placeholder="e.g., Interactive games, Storytelling, Drawing tasks, Building blocks, Experiments" {...field} />
                   </FormControl>
-                  <FormDescription>List types of activities the child enjoys. This can help shape lesson format and suggestions.</FormDescription>
+                  <FormDescription>List types of activities the child enjoys. This can help shape lesson format and suggestions.</FormMessage>
                   <FormMessage />
                 </FormItem>
               )}
@@ -331,6 +340,34 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
             />
             <FormField
               control={form.control}
+              name="dailyUsageLimitMinutes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-muted-foreground" /> Daily Usage Limit (Minutes)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 60 (for 1 hour)" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                  </FormControl>
+                  <FormDescription>Set a daily time limit for app usage in minutes (e.g., 30, 60). Leave blank for no limit. (Enforcement coming soon)</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="weeklyUsageLimitMinutes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-muted-foreground" /> Weekly Usage Limit (Minutes)</FormLabel>
+                  <FormControl>
+                     <Input type="number" placeholder="e.g., 300 (for 5 hours)" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))} />
+                  </FormControl>
+                  <FormDescription>Set a weekly time limit for app usage in minutes. Leave blank for no limit. (Enforcement coming soon)</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="enableLeaderboard"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-secondary/20">
@@ -361,4 +398,8 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
               </Button>
             </div>
           </form>
-        
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}

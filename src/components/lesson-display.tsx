@@ -8,9 +8,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle } from 'lucide-react';
+import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle, Download } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface LessonDisplayProps {
   lesson: GeneratedLesson;
@@ -32,10 +33,10 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speakingTextIdentifier, setSpeakingTextIdentifier] = useState<string | null>(null);
+  const { toast } = useToast();
 
 
   useEffect(() => {
-    // Reset state when lesson changes
     setView('lesson');
     setCurrentPageIndex(0);
     setCurrentQuestionIndex(0);
@@ -45,7 +46,6 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     setShowExplanationForQuestionIndex(null);
     setAttemptedQuestions(new Set());
     
-    // Cleanup speech synthesis when component unmounts or lesson changes
     return () => {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
@@ -67,7 +67,6 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     
     if (isSpeaking) {
         window.speechSynthesis.cancel();
-        // onend/onerror of previous utterance will reset isSpeaking and speakingTextIdentifier
     }
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
@@ -94,7 +93,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
                      childProfile?.theme === 'simple' ? 'simple-theme-lesson' :
                      '';
   
-  let fontClass = 'text-base md:text-lg'; // Default medium
+  let fontClass = 'text-base md:text-lg'; 
   if (childProfile?.fontSizePreference === 'small') {
     fontClass = 'text-sm md:text-base';
   } else if (childProfile?.fontSizePreference === 'large') {
@@ -141,7 +140,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   const handlePreviousPage = () => {
     stopSpeaking();
     if (currentPageIndex > 0) {
-      setCurrentPageIndex(prev => prev - 1); // Corrected to decrement
+      setCurrentPageIndex(prev => prev - 1); 
     }
   };
 
@@ -171,9 +170,8 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     stopSpeaking();
     if (showExplanationForQuestionIndex !== null) {
       const { [showExplanationForQuestionIndex]: _, ...rest } = selectedAnswers;
-      setSelectedAnswers(rest); // Clear selection for this question
+      setSelectedAnswers(rest); 
       setShowExplanationForQuestionIndex(null); 
-      // Don't advance, let them try again on the same question.
     }
   };
 
@@ -245,6 +243,13 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     handleRestartLessonInternal();
   }
 
+  const handleDownloadLesson = () => {
+    toast({
+      title: "Feature Coming Soon",
+      description: "Offline access for lessons will be available in a future update!",
+    });
+  };
+
 
   if (view === 'lesson') {
     if (!currentLessonPage) {
@@ -302,7 +307,12 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
         </CardContent>
 
         <CardFooter className="flex flex-col sm:flex-row items-center justify-between p-4 border-t gap-3">
-            <p className="text-sm text-muted-foreground">Page {currentPageIndex + 1} of {totalLessonPages}</p>
+            <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">Page {currentPageIndex + 1} of {totalLessonPages}</p>
+                <Button variant="outline" size="sm" onClick={handleDownloadLesson} className="shadow-sm hover:shadow-md">
+                    <Download className="mr-1.5 h-4 w-4" /> Download (Soon)
+                </Button>
+            </div>
             <div className="flex gap-3">
             <Button onClick={handlePreviousPage} disabled={currentPageIndex === 0} variant="outline" size="lg" className="shadow-sm hover:shadow-md transition-shadow"><ChevronLeft className="mr-2 h-5 w-5" /> Previous</Button>
             <Button onClick={handleNextPage} variant="default" size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all transform hover:scale-105">
@@ -312,7 +322,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
             </div>
         </CardFooter>
         <style jsx global>{`
-        .dark-theme-lesson { background-color: hsl(var(--background)); color: hsl(var(--foreground)); } /* Use theme vars */
+        .dark-theme-lesson { background-color: hsl(var(--background)); color: hsl(var(--foreground)); } 
         .dark-theme-lesson .text-primary { color: hsl(var(--primary)); }
         .dark-theme-lesson .text-muted-foreground { color: hsl(var(--muted-foreground)); }
         .colorful-theme-lesson { background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1)); color: hsl(var(--foreground)); }
@@ -486,4 +496,5 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     );
   }
   
-  return <Card className="border-t-4 border-muted"><CardContent className
+  return <Card className="border-t-4 border-muted"><CardContent className="p-6">Loading lesson content...</CardContent></Card>;
+}

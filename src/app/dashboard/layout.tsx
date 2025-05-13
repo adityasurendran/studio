@@ -5,7 +5,7 @@ import AuthGuard from '@/components/auth-guard';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, PlusSquare, BookOpen, Settings, LogOut, Palette, Sparkles, Brain, History, Search, Trophy, FastForward } from 'lucide-react'; // Added FastForward
+import { Home, Users, PlusSquare, BookOpen, Settings, LogOut, Palette, Sparkles, Brain, History, Search, Trophy, FastForward, FileEdit } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
@@ -45,6 +45,7 @@ export default function DashboardLayout({
     { href: '/dashboard/lessons', label: 'Lesson History', icon: History, disabled: !activeChild },
     { href: '/dashboard/discover', label: 'Explore Topics', icon: Search, disabled: !activeChild },
     { href: '/dashboard/recommendations', label: 'Next Lesson', icon: FastForward, disabled: !activeChild || !activeChild.lessonAttempts || activeChild.lessonAttempts.length === 0 },
+    { href: '/dashboard/create-custom', label: 'Custom Content', icon: FileEdit, disabled: !activeChild },
     { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
     // { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ];
@@ -52,7 +53,7 @@ export default function DashboardLayout({
   return (
     <AuthGuard>
       <div className="flex h-[calc(100vh-var(--header-height,4rem))]">
-        <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r bg-card"> {/* Added bg-card for consistent theming */}
+        <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r bg-card"> 
           <SidebarHeader className="flex items-center justify-between p-2">
             {currentUser && (
               <div className="flex items-center gap-2 p-2 group-data-[collapsible=icon]:hidden">
@@ -115,4 +116,3 @@ export default function DashboardLayout({
     </AuthGuard>
   );
 }
-

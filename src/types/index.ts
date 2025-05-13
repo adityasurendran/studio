@@ -52,7 +52,7 @@ export interface ChildProfile {
   interests: string; // Comma-separated or descriptive text, e.g., "Dinosaurs, space, drawing"
   avatarSeed?: string; 
   learningStyle?: 'visual' | 'auditory' | 'reading_writing' | 'kinesthetic' | 'balanced_mixed';
-  fontSizePreference?: 'small' | 'medium' | 'large'; // Added font size preference
+  fontSizePreference?: 'small' | 'medium' | 'large'; 
   preferredActivities?: string; // e.g., "Interactive games, Storytelling, Drawing tasks, Building blocks"
   recentMood?: string; // e.g., "happy", "neutral", "sad" - should be part of form, updated before lesson generation
   lessonHistory?: string; // General lesson history notes, updated after attempts
@@ -60,7 +60,9 @@ export interface ChildProfile {
   savedLessons?: GeneratedLesson[];
   points: number;
   badges: Badge[];
-  enableLeaderboard?: boolean; // For future leaderboard feature
+  enableLeaderboard?: boolean; 
+  dailyUsageLimitMinutes?: number; // Optional daily usage limit in minutes
+  weeklyUsageLimitMinutes?: number; // Optional weekly usage limit in minutes
 }
 
 export interface ParentProfile {
