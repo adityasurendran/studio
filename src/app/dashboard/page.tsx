@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
-import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy, Search } from 'lucide-react';
+import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy, Search, Eye } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import type { LessonAttempt } from '@/types';
 
 export default function DashboardOverviewPage() {
   const { profiles } = useChildProfilesContext();
@@ -32,15 +33,29 @@ export default function DashboardOverviewPage() {
         subjectsCovered: new Set<string>(),
         totalCorrectAnswers: 0,
         totalQuestionsAttempted: 0,
+        accuracy: 0,
       };
     }
     const attempts = activeChild.lessonAttempts;
     const totalLessonsAttempted = attempts.length;
     const totalQuizScoreSum = attempts.reduce((sum, attempt) => sum + attempt.quizScore, 0);
     const averageQuizScore = totalLessonsAttempted > 0 ? Math.round(totalQuizScoreSum / totalLessonsAttempted) : 0;
-    const subjectsCovered = new Set(attempts.map(attempt => attempt.lessonTopic || 'General Topic'));
-    const totalCorrectAnswers = attempts.reduce((sum, attempt) => sum + attempt.questionsAnsweredCorrectly, 0);
-    const totalQuestionsAttempted = attempts.reduce((sum, attempt) => sum + attempt.quizTotalQuestions, 0);
+    
+    const subjectsCovered = new Set<string>();
+    attempts.forEach(attempt => {
+        if(attempt.lessonTopic && attempt.lessonTopic.trim() !== "") {
+            subjectsCovered.add(attempt.lessonTopic);
+        } else if (attempt.lessonTitle && attempt.lessonTitle.trim() !== "") {
+            // Fallback to lessonTitle if lessonTopic is empty, common for older data or specific generation flows
+            subjectsCovered.add(attempt.lessonTitle);
+        } else {
+            subjectsCovered.add("General Topic"); // Default if both are empty
+        }
+    });
+
+    const totalCorrectAnswers = attempts.reduce((sum, attempt) => sum + (attempt.questionsAnsweredCorrectly || 0), 0);
+    const totalQuestionsAttempted = attempts.reduce((sum, attempt) => sum + (attempt.quizTotalQuestions || 0), 0);
+    const accuracy = totalQuestionsAttempted > 0 ? Math.round((totalCorrectAnswers / totalQuestionsAttempted) * 100) : 0;
 
     return {
       totalLessonsAttempted,
@@ -48,6 +63,7 @@ export default function DashboardOverviewPage() {
       subjectsCovered,
       totalCorrectAnswers,
       totalQuestionsAttempted,
+      accuracy,
     };
   };
 
@@ -130,15 +146,15 @@ export default function DashboardOverviewPage() {
           </CardHeader>
           <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
             <StatCard icon={<TrendingUp className="text-accent"/>} label="Lessons Attempted" value={progressStats.totalLessonsAttempted.toString()} />
-            <StatCard icon={<Percent className="text-green-500"/>} label="Average Quiz Score" value={`${progressStats.averageQuizScore}%`} />
+            <StatCard icon={<Award className="text-green-500"/>} label="Average Quiz Score" value={`${progressStats.averageQuizScore}%`} />
             <StatCard 
-              icon={<CheckCircle className="text-blue-500"/>} 
-              label="Total Correct Answers" 
-              value={`${progressStats.totalCorrectAnswers} / ${progressStats.totalQuestionsAttempted}`} 
-              description={progressStats.totalQuestionsAttempted > 0 ? `(${(Math.round(progressStats.totalCorrectAnswers / progressStats.totalQuestionsAttempted * 100) || 0)}% Accuracy)` : ""}
+              icon={<Percent className="text-blue-500"/>} 
+              label="Overall Accuracy" 
+              value={`${progressStats.accuracy}%`} 
+              description={progressStats.totalQuestionsAttempted > 0 ? `(${progressStats.totalCorrectAnswers} / ${progressStats.totalQuestionsAttempted} correct)` : "(No quiz questions attempted yet)"}
             />
-            <div className="md:col-span-2 lg:col-span-3">
-              <h4 className="text-lg font-semibold text-left mb-2 text-primary flex items-center gap-2"> <BookCopy className="h-5 w-5"/> Subjects Covered:</h4>
+            <div className="md:col-span-2 lg:col-span-3 lg:pt-2">
+              <h4 className="text-lg font-semibold text-left mb-3 text-primary flex items-center gap-2"> <BookCopy className="h-5 w-5"/> Subjects Explored:</h4>
               {progressStats.subjectsCovered.size > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {Array.from(progressStats.subjectsCovered).map(subject => (
@@ -163,18 +179,18 @@ export default function DashboardOverviewPage() {
                 <HistoryIcon className="h-7 w-7 text-primary" />
                 <CardTitle className="text-2xl text-primary">Recent Activity for {activeChild.name}</CardTitle>
             </div>
-            <CardDescription>Overview of the latest lessons and quiz attempts.</CardDescription>
+            <CardDescription>Overview of the latest lessons and quiz attempts. For a full history, visit the <Link href="/dashboard/lessons" className="text-accent hover:underline">Lesson History</Link> page.</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-4">
               {activeChild.lessonAttempts.slice(-3).reverse().map(attempt => (
                 <li key={attempt.attemptId} className="p-4 border rounded-lg bg-card hover:shadow-xl transition-shadow duration-200 ease-in-out">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                        <h3 className="font-semibold text-lg text-primary group-hover:text-accent transition-colors">{attempt.lessonTitle}</h3>
-                        <p className="text-sm text-muted-foreground">Topic: {attempt.lessonTopic}</p>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+                    <div className="flex-grow mb-2 sm:mb-0">
+                        <h3 className="font-semibold text-lg text-primary group-hover:text-accent transition-colors line-clamp-1" title={attempt.lessonTitle}>{attempt.lessonTitle}</h3>
+                        <p className="text-sm text-muted-foreground">Topic: {attempt.lessonTopic || "N/A"}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right w-full sm:w-auto">
                         <span className={`font-bold text-2xl ${attempt.quizScore >= 60 ? 'text-green-600' : 'text-destructive'}`}>
                         {attempt.quizScore}%
                         </span>
@@ -183,30 +199,33 @@ export default function DashboardOverviewPage() {
                             {attempt.questionsAnsweredCorrectly}/{attempt.quizTotalQuestions} correct
                         </p>
                         )}
+                         {attempt.quizTotalQuestions === 0 && (
+                             <p className="text-xs text-muted-foreground">(No quiz in this lesson)</p>
+                         )}
                     </div>
                   </div>
-                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-dashed">
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row justify-between items-center mt-2 pt-2 border-t border-dashed">
+                    <p className="text-xs text-muted-foreground mb-1 sm:mb-0">
                         {format(new Date(attempt.timestamp), "MMM d, yyyy 'at' h:mm a")}
                     </p>
                     {attempt.choseToRelearn && (
-                        <span className="text-xs px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-700 dark:text-amber-100 rounded-full font-semibold shadow-sm">Chose to relearn</span>
+                        <span className="text-xs px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-700 dark:text-amber-100 rounded-full font-semibold shadow-sm self-start sm:self-center">Chose to relearn</span>
                     )}
                   </div>
                 </li>
               ))}
             </ul>
-            {activeChild.lessonAttempts.length > 3 && (
-              <div className="text-center mt-6">
-                <Button variant="link" asChild className="text-primary hover:text-accent">
-                    <Link href="/dashboard/lessons">View all activity</Link>
-                </Button>
-              </div>
-            )}
              {activeChild.lessonAttempts.length === 0 && (
                  <p className="text-center text-muted-foreground py-4">No recent activity recorded yet.</p>
              )}
           </CardContent>
+           {activeChild.lessonAttempts.length > 3 && (
+              <CardFooter className="justify-center pt-4">
+                <Button variant="outline" asChild className="text-primary hover:text-accent hover:border-accent">
+                    <Link href="/dashboard/lessons"><Eye className="mr-2"/> View All Activity</Link>
+                </Button>
+              </CardFooter>
+            )}
         </Card>
       )}
 
@@ -323,3 +342,4 @@ function StatCard({ icon, label, value, description }: StatCardProps) {
     </Card>
   );
 }
+
