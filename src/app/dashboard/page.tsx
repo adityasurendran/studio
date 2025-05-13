@@ -408,4 +408,3 @@ function StatCard({ icon, label, value, description }: StatCardProps) {
     </Card>
   );
 }
-

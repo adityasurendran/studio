@@ -141,7 +141,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   const handlePreviousPage = () => {
     stopSpeaking();
     if (currentPageIndex > 0) {
-      setCurrentPageIndex(prev => prev + 1);
+      setCurrentPageIndex(prev => prev - 1); // Corrected to decrement
     }
   };
 
@@ -271,7 +271,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
             </div>
         </CardHeader>
         
-        <CardContent className={cn("flex-grow flex flex-col items-center justify-start p-4 md:p-6 space-y-4", fontClass)}>
+        <CardContent className={cn("flex-grow flex flex-col items-center justify-start p-4 md:p-6 space-y-4")}>
             <div className="w-full aspect-[16/10] bg-muted/30 rounded-lg overflow-hidden flex items-center justify-center mb-4 shadow-inner border max-h-[450px]">
             {currentLessonPage.imageDataUri ? (
                 <Image src={currentLessonPage.imageDataUri} alt={`Illustration for page ${currentPageIndex + 1}`} width={600} height={375} className="object-contain w-full h-full" priority={currentPageIndex < 2}/>
@@ -486,6 +486,4 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     );
   }
   
-  return <Card className="border-t-4 border-muted"><CardContent className="p-6 text-center text-muted-foreground">Loading lesson display... Please wait.</CardContent></Card>;
-}
-
+  return <Card className="border-t-4 border-muted"><CardContent className

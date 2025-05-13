@@ -361,10 +361,4 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
               </Button>
             </div>
           </form>
-        </Form>
-      </CardContent>
-    </Card>
-  );
-}
-
-```
+        
