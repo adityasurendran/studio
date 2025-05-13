@@ -29,14 +29,10 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   const [answeredCorrectly, setAnsweredCorrectly] = useState(0);
   const [showExplanationForQuestionIndex, setShowExplanationForQuestionIndex] = useState<number | null>(null);
   const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(new Set());
+  
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingTextIdentifier, setSpeakingTextIdentifier] = useState<string | null>(null);
 
-  const cleanupSpeech = useCallback(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    }
-  }, []);
 
   useEffect(() => {
     // Reset state when lesson changes
@@ -48,13 +44,50 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     setAnsweredCorrectly(0);
     setShowExplanationForQuestionIndex(null);
     setAttemptedQuestions(new Set());
-    cleanupSpeech();
-
+    
     // Cleanup speech synthesis when component unmounts or lesson changes
     return () => {
-      cleanupSpeech();
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      setIsSpeaking(false);
+      setSpeakingTextIdentifier(null);
     };
-  }, [lesson, cleanupSpeech]);
+  }, [lesson]);
+
+  const handleSpeak = useCallback((textToSpeak: string, identifier: string) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    if (isSpeaking && speakingTextIdentifier === identifier) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      setSpeakingTextIdentifier(null);
+      return;
+    }
+    
+    if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        // onend/onerror of previous utterance will reset isSpeaking and speakingTextIdentifier
+    }
+
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.lang = childProfile?.language || 'en';
+    utterance.onstart = () => {
+        setIsSpeaking(true);
+        setSpeakingTextIdentifier(identifier);
+    };
+    utterance.onend = () => {
+        setIsSpeaking(false);
+        setSpeakingTextIdentifier(null);
+    };
+    utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event.error);
+        setIsSpeaking(false);
+        setSpeakingTextIdentifier(null);
+    }
+    window.speechSynthesis.speak(utterance);
+  }, [childProfile?.language, isSpeaking, speakingTextIdentifier]);
+
 
   const themeClass = childProfile?.theme === 'dark' ? 'dark-theme-lesson' : 
                      childProfile?.theme === 'colorful' ? 'colorful-theme-lesson' :
@@ -75,29 +108,17 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   const totalQuizQuestions = lesson.quiz?.length || 0;
   const currentQuizQuestion: QuizQuestion | undefined = lesson.quiz?.[currentQuestionIndex];
 
-  const handleSpeak = () => {
-    if (typeof window === 'undefined' || !window.speechSynthesis || !currentLessonPage) return;
-
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      return;
-    }
-
-    const sentencesToSpeak = currentLessonPage.sentences.join(' ');
-    const utterance = new SpeechSynthesisUtterance(sentencesToSpeak);
-    utterance.lang = childProfile?.language || 'en'; // Use child's language, default to 'en'
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event.error);
+  const stopSpeaking = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
         setIsSpeaking(false);
+        setSpeakingTextIdentifier(null);
     }
-    window.speechSynthesis.speak(utterance);
-  };
+  }, []);
+
 
   const handleNextPage = () => {
-    cleanupSpeech();
+    stopSpeaking();
     if (currentPageIndex < totalLessonPages - 1) {
       setCurrentPageIndex(prev => prev + 1);
     } else {
@@ -118,9 +139,9 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   };
 
   const handlePreviousPage = () => {
-    cleanupSpeech();
+    stopSpeaking();
     if (currentPageIndex > 0) {
-      setCurrentPageIndex(prev => prev - 1);
+      setCurrentPageIndex(prev => prev + 1);
     }
   };
 
@@ -132,6 +153,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   };
 
   const handleSubmitAnswer = () => {
+    stopSpeaking();
     if (currentQuizQuestion === undefined || selectedAnswers[currentQuestionIndex] === undefined) return;
 
     const isCorrect = selectedAnswers[currentQuestionIndex] === currentQuizQuestion.correctAnswerIndex;
@@ -146,6 +168,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   };
   
   const handleTryAgainOrContinueFromExplanation = () => {
+    stopSpeaking();
     if (showExplanationForQuestionIndex !== null) {
       const { [showExplanationForQuestionIndex]: _, ...rest } = selectedAnswers;
       setSelectedAnswers(rest); // Clear selection for this question
@@ -184,7 +207,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   };
 
   const handleRestartLessonInternal = () => {
-    cleanupSpeech();
+    stopSpeaking();
     setView('lesson');
     setCurrentPageIndex(0);
     setCurrentQuestionIndex(0);
@@ -232,6 +255,8 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
             </Card>
         );
     }
+    const lessonPageSentences = currentLessonPage.sentences.join(' ');
+    const lessonPageIdentifier = `lesson-page-${currentPageIndex}`;
     return (
       <Card className={cn("w-full shadow-xl transition-all duration-300 flex flex-col border-t-4 border-primary", themeClass)}>
         <CardHeader className="pb-3">
@@ -262,9 +287,17 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
             <div className={cn("text-center min-h-[5em] w-full bg-card p-4 rounded-md shadow relative", fontClass, themeClass === 'dark-theme-lesson' ? 'text-slate-100' : 'text-foreground')}>
               {currentLessonPage.sentences.map((sentence, sIdx) => (<p key={sIdx} className={cn("leading-relaxed", sIdx > 0 ? "mt-2" : "")}>{sentence}</p>))}
               {currentLessonPage.sentences.length === 0 && <p>Loading content...</p>}
-              <Button onClick={handleSpeak} variant="ghost" size="icon" className="absolute top-2 right-2 text-primary hover:text-accent" aria-label={isSpeaking ? "Stop reading" : "Read aloud"}>
-                {isSpeaking ? <StopCircle className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
-              </Button>
+              {lessonPageSentences.trim() && (
+                  <Button 
+                    onClick={() => handleSpeak(lessonPageSentences, lessonPageIdentifier)} 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 right-2 text-primary hover:text-accent" 
+                    aria-label={isSpeaking && speakingTextIdentifier === lessonPageIdentifier ? "Stop reading" : "Read aloud"}
+                  >
+                    {isSpeaking && speakingTextIdentifier === lessonPageIdentifier ? <StopCircle className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+                  </Button>
+              )}
             </div>
         </CardContent>
 
@@ -293,6 +326,8 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   if (view === 'quiz' && currentQuizQuestion) {
     const isExplanationVisible = showExplanationForQuestionIndex === currentQuestionIndex;
     const hasSelectedAnswer = selectedAnswers[currentQuestionIndex] !== undefined;
+    const questionTextIdentifier = `quiz-question-${currentQuestionIndex}`;
+    const explanationTextIdentifier = `quiz-explanation-${currentQuestionIndex}`;
 
     return (
       <Card className={cn("w-full shadow-xl border-t-4 border-accent", themeClass)}>
@@ -305,7 +340,20 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
           <Progress value={((currentQuestionIndex + 1) / totalQuizQuestions) * 100} className="w-full mt-3 h-3" />
         </CardHeader>
         <CardContent className={cn("p-4 md:p-6 space-y-6", fontClass)}>
-          <p className="font-semibold text-xl md:text-2xl leading-tight">{currentQuizQuestion.questionText}</p>
+          <div className="relative">
+            <p className="font-semibold text-xl md:text-2xl leading-tight pr-10">{currentQuizQuestion.questionText}</p>
+            {currentQuizQuestion.questionText.trim() && (
+                 <Button 
+                    onClick={() => handleSpeak(currentQuizQuestion.questionText, questionTextIdentifier)} 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-0 right-0 text-primary hover:text-accent" 
+                    aria-label={isSpeaking && speakingTextIdentifier === questionTextIdentifier ? "Stop reading question" : "Read question aloud"}
+                  >
+                    {isSpeaking && speakingTextIdentifier === questionTextIdentifier ? <StopCircle className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                </Button>
+            )}
+          </div>
           <RadioGroup
             value={selectedAnswers[currentQuestionIndex]?.toString()}
             onValueChange={(value) => handleAnswerSelection(currentQuestionIndex, parseInt(value))}
@@ -334,10 +382,21 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
 
           {isExplanationVisible && (
             <Card className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-400 dark:border-blue-600 rounded-lg shadow-md">
-              <CardHeader className="p-0 pb-2 mb-2 border-b border-blue-300 dark:border-blue-700">
-                <CardTitle className="text-xl font-semibold text-blue-700 dark:text-blue-300 flex items-center">
+              <CardHeader className="p-0 pb-2 mb-2 border-b border-blue-300 dark:border-blue-700 relative">
+                <CardTitle className="text-xl font-semibold text-blue-700 dark:text-blue-300 flex items-center pr-10">
                   <HelpCircle className="h-6 w-6 mr-2"/> Let&apos;s understand this!
                 </CardTitle>
+                {currentQuizQuestion.explanation.trim() && (
+                    <Button 
+                        onClick={() => handleSpeak(currentQuizQuestion.explanation, explanationTextIdentifier)} 
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute top-0 right-0 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                        aria-label={isSpeaking && speakingTextIdentifier === explanationTextIdentifier ? "Stop reading explanation" : "Read explanation aloud"}
+                    >
+                        {isSpeaking && speakingTextIdentifier === explanationTextIdentifier ? <StopCircle className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                    </Button>
+                )}
               </CardHeader>
               <CardContent className="p-0 text-sm md:text-base text-blue-600 dark:text-blue-200 space-y-2">
                 <p>
@@ -430,4 +489,3 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   return <Card className="border-t-4 border-muted"><CardContent className="p-6 text-center text-muted-foreground">Loading lesson display... Please wait.</CardContent></Card>;
 }
 
-```

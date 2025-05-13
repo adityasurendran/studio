@@ -1,7 +1,7 @@
 // src/app/dashboard/discover/page.tsx
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles, Search, Lightbulb, ArrowRight, AlertTriangle, Users } from 'lucide-react';
+import { Loader2, Sparkles, Search, Lightbulb, ArrowRight, AlertTriangle, Users, Mic, MicOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { suggestLessonTopic, SuggestLessonTopicInputSchema, type SuggestLessonTopicInput, type SuggestLessonTopicOutput } from '@/ai/flows/suggest-lesson-topic';
+import { cn } from '@/lib/utils';
 
 type DiscoverTopicFormData = Pick<SuggestLessonTopicInput, 'previousTopicsLearned'>;
 
@@ -22,12 +23,118 @@ export default function DiscoverTopicsPage() {
   const [suggestion, setSuggestion] = useState<SuggestLessonTopicOutput | null>(null);
   const { toast } = useToast();
 
+  const [isListening, setIsListening] = useState(false);
+  const [sttError, setSttError] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+
   const form = useForm<DiscoverTopicFormData>({
     resolver: zodResolver(SuggestLessonTopicInputSchema.pick({ previousTopicsLearned: true })),
     defaultValues: {
       previousTopicsLearned: activeChild?.lessonHistory || '',
     },
   });
+
+  useEffect(() => {
+     if (activeChild) {
+        form.reset({ previousTopicsLearned: activeChild.lessonHistory || '' });
+     }
+  }, [activeChild, form]);
+
+  const initializeSpeechRecognition = useCallback(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+        const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognitionRef.current = new SpeechRecognitionAPI();
+        const recognition = recognitionRef.current;
+        recognition.continuous = false;
+        recognition.lang = activeChild?.language || 'en-US';
+        recognition.interimResults = false;
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[event.results.length - 1][0].transcript;
+            const currentFieldValue = form.getValues("previousTopicsLearned");
+            form.setValue("previousTopicsLearned", currentFieldValue ? `${currentFieldValue.trim()} ${transcript}`.trim() : transcript);
+            toast({ title: "Transcript Added", description: "Your spoken text has been added to the input field." });
+        };
+
+        recognition.onspeechend = () => {
+            setIsListening(false);
+        };
+        
+        recognition.onnomatch = () => {
+            const errorMsg = "Speech not recognized. Please try again.";
+            setSttError(errorMsg);
+            toast({title: "Speech Not Recognized", description: errorMsg, variant: "destructive"})
+            setIsListening(false);
+        }
+
+        recognition.onerror = (event) => {
+            let errorMsg = "An unknown speech recognition error occurred.";
+            if (event.error === 'no-speech') {
+                errorMsg = "No speech was detected. Please try again.";
+            } else if (event.error === 'audio-capture') {
+                errorMsg = "Audio capture failed. Ensure your microphone is working and permitted.";
+            } else if (event.error === 'not-allowed') {
+                errorMsg = "Microphone access denied. Please enable it in your browser settings.";
+            } else if (event.error === 'network') {
+                 errorMsg = "Network error during speech recognition. Please check your connection.";
+            } else if (event.error) {
+                errorMsg = `Speech recognition error: ${event.error}.`;
+            }
+            setSttError(errorMsg);
+            toast({ title: "Speech Recognition Error", description: errorMsg, variant: "destructive"});
+            setIsListening(false);
+        };
+        setSttError(null); // Clear previous errors on successful init
+    } else {
+        setSttError("Speech recognition is not supported by your browser.");
+    }
+  }, [activeChild?.language, form, toast]);
+
+  useEffect(() => {
+    initializeSpeechRecognition();
+    // Cleanup function to abort recognition if component unmounts while listening
+    return () => {
+        if (recognitionRef.current && isListening) {
+            recognitionRef.current.abort();
+            setIsListening(false);
+        }
+    };
+  }, [initializeSpeechRecognition, isListening]);
+
+  const toggleListening = () => {
+    if (sttError === "Speech recognition is not supported by your browser.") {
+        toast({ title: "Not Supported", description: sttError, variant: "destructive" });
+        return;
+    }
+    if (!recognitionRef.current) { // If not initialized yet (e.g. activeChild was null)
+        initializeSpeechRecognition(); // Try to initialize again
+        if (!recognitionRef.current) { // Still not initialized
+            toast({ title: "STT Error", description: "Speech recognition could not be initialized.", variant: "destructive"});
+            return;
+        }
+    }
+
+    if (isListening) {
+        recognitionRef.current.stop();
+        setIsListening(false);
+    } else {
+        try {
+            recognitionRef.current.lang = activeChild?.language || 'en-US'; // Ensure lang is current
+            recognitionRef.current.start();
+            setIsListening(true);
+            setSttError(null); // Clear previous operational errors
+            toast({ title: "Listening...", description: "Speak now to add to the context field."});
+        } catch (e: any) {
+            const errorMsg = "Could not start speech recognition. It might already be active or an error occurred.";
+            console.error("Error starting STT:", e);
+            toast({ title: "STT Error", description: errorMsg, variant: "destructive"});
+            setSttError(errorMsg);
+            setIsListening(false);
+        }
+    }
+  };
+
 
   const handleFormSubmit: SubmitHandler<DiscoverTopicFormData> = async (data) => {
     if (!activeChild) {
@@ -116,18 +223,32 @@ export default function DiscoverTopicsPage() {
                 name="previousTopicsLearned"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base">Previous Topics or Context (Optional)</FormLabel>
+                    <div className="flex justify-between items-center">
+                        <FormLabel className="text-base">Previous Topics or Context (Optional)</FormLabel>
+                        <Button 
+                            type="button" 
+                            onClick={toggleListening} 
+                            variant="ghost" 
+                            size="icon"
+                            className={cn("hover:bg-accent/20", isListening ? "text-destructive" : "text-primary")}
+                            aria-label={isListening ? "Stop listening" : "Start listening"}
+                            disabled={!!sttError && sttError === "Speech recognition is not supported by your browser."}
+                        >
+                            {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                        </Button>
+                    </div>
                     <FormControl>
                       <Textarea
-                        placeholder="e.g., 'Learned about planets last week.' or 'Needs help with fractions.'"
+                        placeholder="e.g., 'Learned about planets last week.' or 'Needs help with fractions.' You can also use the microphone to dictate."
                         {...field}
                         rows={4}
                       />
                     </FormControl>
                     <FormDescription>
-                      Help the AI by mentioning what {activeChild.name} has learned recently or any specific focus areas. Uses profile history if blank.
+                      Help the AI by mentioning what {activeChild.name} has learned recently or any specific focus areas. Uses profile history if blank. {isListening && <span className="text-accent font-semibold animate-pulse">Listening...</span>}
                     </FormDescription>
-                    <FormMessage />
+                    {sttError && <FormMessage className="text-destructive">{sttError}</FormMessage>}
+                    {!sttError && <FormMessage />}
                   </FormItem>
                 )}
               />
@@ -173,3 +294,4 @@ export default function DiscoverTopicsPage() {
     </div>
   );
 }
+
