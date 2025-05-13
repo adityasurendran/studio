@@ -42,6 +42,7 @@ export interface ChildProfile {
   curriculum: string; // e.g., "US Grade 2 Math", "Basic Phonics"
   interests: string; // Comma-separated or descriptive text, e.g., "Dinosaurs, space, drawing"
   avatarSeed?: string; // Optional seed string for generating avatar
+  learningStyle?: 'visual' | 'auditory' | 'reading_writing' | 'kinesthetic' | 'balanced_mixed' | string; // Added learning style
   recentMood?: string;
   lessonHistory?: string; // General lesson history notes
   lessonAttempts?: LessonAttempt[]; // Array of specific lesson/quiz attempts
@@ -55,4 +56,5 @@ export interface ParentProfile {
   isSubscribed: boolean; // Added for paywall
   // Other parent-specific fields
 }
+
 

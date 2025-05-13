@@ -89,6 +89,7 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
       lessonHistory: data.lessonHistory || "No specific recent history provided.",
       lessonTopic: data.lessonTopic,
       curriculum: childProfile.curriculum,
+      learningStyle: childProfile.learningStyle || 'balanced_mixed', // Pass learning style
     };
     await processLessonGeneration(input);
   };
@@ -102,7 +103,12 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
       });
       return;
     }
-    await processLessonGeneration(lastSuccessfulInput, true);
+    // Ensure learningStyle is included if it was part of the original successful input or profile
+    const inputToRegenerate: GenerateTailoredLessonsInput = {
+        ...lastSuccessfulInput,
+        learningStyle: childProfile.learningStyle || lastSuccessfulInput.learningStyle || 'balanced_mixed',
+    };
+    await processLessonGeneration(inputToRegenerate, true);
   };
 
   const handleQuizComplete = (attemptData: Omit<LessonAttempt, 'attemptId'>) => {
@@ -275,3 +281,4 @@ export default function LessonGeneratorForm({ childProfile }: LessonGeneratorFor
     </div>
   );
 }
+

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Save, XCircle, Image as ImageIcon } from 'lucide-react';
+import { Save, XCircle, Image as ImageIcon, Users } from 'lucide-react';
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -24,7 +24,7 @@ const profileSchema = z.object({
   curriculum: z.string().min(3, { message: "Curriculum details required." }),
   interests: z.string().optional(),
   avatarSeed: z.string().optional().describe("A word or phrase to generate a unique avatar. Leave blank to use name."),
-  // recentMood and lessonHistory are not part of this form, managed elsewhere or contextually
+  learningStyle: z.string().optional(),
 });
 
 // This FormData is for creating/editing the core profile, not including attempts.
@@ -51,6 +51,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       curriculum: profile?.curriculum || '',
       interests: profile?.interests || '',
       avatarSeed: profile?.avatarSeed || '',
+      learningStyle: profile?.learningStyle || 'balanced_mixed',
     },
   });
 
@@ -140,6 +141,31 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
             />
             <FormField
               control={form.control}
+              name="learningStyle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5"><Users className="h-4 w-4 text-muted-foreground" /> Preferred Learning Style</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a learning style" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="visual">Visual (learns by seeing)</SelectItem>
+                      <SelectItem value="auditory">Auditory (learns by hearing)</SelectItem>
+                      <SelectItem value="reading_writing">Reading/Writing (learns by reading and writing)</SelectItem>
+                      <SelectItem value="kinesthetic">Kinesthetic (learns by doing)</SelectItem>
+                      <SelectItem value="balanced_mixed">Balanced / Mixed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>How does the child learn best? This helps in tailoring lesson delivery.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="screenIssues"
               render={({ field }) => (
                 <FormItem>
@@ -221,4 +247,5 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
     </Card>
   );
 }
+
 

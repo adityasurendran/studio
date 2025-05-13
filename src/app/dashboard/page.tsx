@@ -41,6 +41,7 @@ export default function DashboardOverviewPage() {
               <div className="text-sm text-foreground mb-6 space-y-1 bg-card/50 p-3 rounded-md border max-w-sm mx-auto">
                   <p><span className="font-medium text-primary/80">Age:</span> {activeChild.age}</p>
                   <p><span className="font-medium text-primary/80">Curriculum:</span> {activeChild.curriculum}</p>
+                   {activeChild.learningStyle && <p><span className="font-medium text-primary/80">Learning Style:</span> <span className="capitalize">{activeChild.learningStyle.replace(/_/g, ' ')}</span></p>}
               </div>
               <Link href="/dashboard/lessons/new" passHref>
                 <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-8 py-6 text-lg">
@@ -115,7 +116,7 @@ export default function DashboardOverviewPage() {
             {activeChild.lessonAttempts.length > 3 && (
               <div className="text-center mt-6">
                 <Button variant="link" asChild className="text-primary hover:text-accent">
-                    <Link href="#">View all activity (coming soon)</Link>
+                    <Link href="/dashboard/lessons">View all activity</Link>
                 </Button>
               </div>
             )}
@@ -146,9 +147,8 @@ export default function DashboardOverviewPage() {
           icon={<Award className="h-10 w-10 text-primary" />}
           title="Adaptive Learning"
           description="Lessons adapt to screen preferences and learning styles."
-          link="#"
-          linkLabel="Learn More (Coming Soon)"
-          disabled
+          link="/dashboard/profiles"
+          linkLabel="Adjust in Profiles"
         />
       </div>
 
@@ -219,3 +219,4 @@ function FeatureCard({ icon, title, description, link, linkLabel, disabled }: Fe
     </Card>
   );
 }
+

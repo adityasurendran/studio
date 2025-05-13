@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { UserPlus, Edit3, Trash2, CheckCircle, Users, Eye, Sparkle } from 'lucide-react';
+import { UserPlus, Edit3, Trash2, CheckCircle, Users, Eye, Sparkle, Brain } from 'lucide-react'; // Added Brain icon
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory' >;
@@ -136,6 +136,9 @@ export default function ManageProfilesPage() {
                   <CardContent className="flex-grow space-y-2 text-sm">
                     <p className="text-muted-foreground"><strong className="text-foreground">Curriculum:</strong> {profile.curriculum}</p>
                     <p className="text-muted-foreground truncate" title={profile.learningDifficulties}><strong className="text-foreground">Difficulties:</strong> {profile.learningDifficulties || 'N/A'}</p>
+                     {profile.learningStyle && (
+                        <p className="text-muted-foreground"><strong className="text-foreground">Learning Style:</strong> <span className="capitalize">{profile.learningStyle.replace(/_/g, ' ')}</span></p>
+                      )}
                     <p className="text-muted-foreground"><strong className="text-foreground">Theme:</strong> <span className="capitalize">{profile.theme}</span></p>
                   </CardContent>
                   <CardFooter className="flex flex-col gap-2 pt-4 mt-auto border-t">
