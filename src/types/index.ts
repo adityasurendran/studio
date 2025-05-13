@@ -4,7 +4,7 @@ export interface QuizQuestion {
   questionText: string;
   options: string[]; // Array of answer options
   correctAnswerIndex: number; // 0-based index of the correct option in the options array
-  explanation?: string; // Optional explanation for the correct answer
+  explanation: string; // MANDATORY: Explanation for the correct answer
 }
 
 export interface LessonPage {
@@ -17,7 +17,7 @@ export interface GeneratedLesson {
   lessonPages: LessonPage[]; // Each element represents a screen with sentences and an image
   lessonFormat: string; // e.g., "story", "quiz", "activity"
   subject: string; // e.g. "Math", "English", "Science"
-  quiz: QuizQuestion[]; // Added quiz
+  quiz: QuizQuestion[]; 
 }
 
 export interface LessonAttempt {
@@ -41,13 +41,13 @@ export interface ChildProfile {
   language: string; // e.g., "en", "es"
   curriculum: string; // e.g., "US Grade 2 Math", "Basic Phonics"
   interests: string; // Comma-separated or descriptive text, e.g., "Dinosaurs, space, drawing"
-  avatarSeed?: string; // Optional seed string for generating avatar
+  avatarSeed?: string; 
   learningStyle?: 'visual' | 'auditory' | 'reading_writing' | 'kinesthetic' | 'balanced_mixed';
   fontSizePreference?: 'small' | 'medium' | 'large';
-  recentMood?: string;
-  lessonHistory?: string; // General lesson history notes
-  lessonAttempts?: LessonAttempt[]; // Array of specific lesson/quiz attempts
-  savedLessons?: GeneratedLesson[]; // Array of all generated lessons
+  recentMood?: string; // e.g., "happy", "neutral", "sad" - should be part of form, updated before lesson generation
+  lessonHistory?: string; // General lesson history notes, updated after attempts
+  lessonAttempts?: LessonAttempt[]; 
+  savedLessons?: GeneratedLesson[]; 
 }
 
 export interface ParentProfile {

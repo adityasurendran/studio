@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
-import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy } from 'lucide-react';
+import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy, Search } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -90,7 +90,7 @@ export default function DashboardOverviewPage() {
                 </Link>
                 <Link href="/dashboard/discover" passHref>
                   <Button size="lg" variant="outline" className="text-primary border-primary hover:bg-primary/10 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-8 py-6 text-lg">
-                    <Sparkles className="mr-2 h-6 w-6" /> Explore Topics
+                    <Search className="mr-2 h-6 w-6" /> Explore Topics
                   </Button>
                 </Link>
               </div>
@@ -227,10 +227,10 @@ export default function DashboardOverviewPage() {
           disabled={!activeChild}
         />
         <FeatureCard
-          icon={<Sparkles className="h-10 w-10 text-primary" />}
+          icon={<Search className="h-10 w-10 text-primary" />}
           title="Explore Topics"
           description="Get AI suggestions for new lesson topics tailored to your child."
-          link="/dashboard/discover" // Link to the new discover page
+          link="/dashboard/discover" 
           linkLabel="Discover Topics"
           disabled={!activeChild}
         />

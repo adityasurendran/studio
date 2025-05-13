@@ -19,7 +19,9 @@ export default function NewLessonPage() {
   useEffect(() => {
     const topicFromQuery = searchParams.get('topic');
     if (topicFromQuery) {
-      setInitialTopic(topicFromQuery);
+      setInitialTopic(decodeURIComponent(topicFromQuery));
+    } else {
+      setInitialTopic(undefined); // Clear if no topic in query
     }
   }, [searchParams]);
 

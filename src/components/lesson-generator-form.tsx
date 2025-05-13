@@ -28,7 +28,7 @@ type LessonGenerationFormData = z.infer<typeof lessonGenerationSchema>;
 
 interface LessonGeneratorFormProps {
   childProfile: ChildProfile;
-  initialTopic?: string; // Added to prefill topic
+  initialTopic?: string; 
 }
 
 export default function LessonGeneratorForm({ childProfile, initialTopic }: LessonGeneratorFormProps) {
@@ -47,14 +47,14 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
   const { addLessonAttempt, addSavedLesson, updateProfile } = useChildProfilesContext();
 
   useEffect(() => {
-    // Reset form when childProfile changes or initialTopic changes
     form.reset({
       lessonTopic: initialTopic || '',
       recentMood: childProfile.recentMood || 'neutral',
       lessonHistory: childProfile.lessonHistory || '',
     });
-    setGeneratedLesson(null);
-    setLastSuccessfulInput(null);
+    // Optionally, you might want to clear the generated lesson when the profile or topic changes significantly
+    // setGeneratedLesson(null); 
+    // setLastSuccessfulInput(null);
   }, [childProfile, initialTopic, form]);
 
   const processLessonGeneration = async (input: GenerateTailoredLessonsInput, isRegeneration: boolean = false) => {
@@ -108,25 +108,27 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
     const inputToRegenerate: GenerateTailoredLessonsInput = {
         ...lastSuccessfulInput,
         learningStyle: childProfile.learningStyle || lastSuccessfulInput.learningStyle || 'balanced_mixed',
+        // Update recentMood from current form/profile state if desired
+        recentMood: form.getValues("recentMood") || childProfile.recentMood || lastSuccessfulInput.recentMood,
     };
     await processLessonGeneration(inputToRegenerate, true);
   };
 
   const handleQuizComplete = (attemptData: Omit<LessonAttempt, 'attemptId'>) => {
     if (childProfile) {
-      addLessonAttempt(childProfile.id, attemptData); // This now also updates lessonHistory in the hook
+      addLessonAttempt(childProfile.id, attemptData);
       
-      // Also update recentMood in the profile based on quiz outcome or a general assumption
       let newMood = childProfile.recentMood;
       if (attemptData.quizScore >= 80) newMood = 'happy';
-      else if (attemptData.quizScore < 50) newMood = 'sad'; // or 'neutral' depending on philosophy
+      else if (attemptData.quizScore < 50) newMood = 'sad';
       
-      updateProfile({
-        ...childProfile,
-        recentMood: newMood,
-        // lessonHistory is updated by addLessonAttempt hook
-      });
-
+      // We only update mood if it actually changed, to avoid unnecessary profile updates
+      if (newMood !== childProfile.recentMood) {
+         updateProfile({
+          ...childProfile,
+          recentMood: newMood,
+        });
+      }
       toast({
         title: "Quiz Finished!",
         description: `Score: ${attemptData.quizScore}%. Results saved for ${childProfile.name}.`,
@@ -137,11 +139,12 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
   const handleRestartLesson = () => {
     setGeneratedLesson(null); 
     setIsLoading(false); 
-    form.reset({ // Reset form fully, including topic
-      lessonTopic: '',
+    form.reset({ 
+      lessonTopic: '', // Reset topic to blank
       recentMood: childProfile.recentMood || 'neutral',
-      lessonHistory: childProfile.lessonHistory || '',
+      lessonHistory: childProfile.lessonHistory || '', // Keep lesson history or reset as needed
     });
+    setLastSuccessfulInput(null); // Clear last successful input
     toast({
         title: "Ready for a New Lesson",
         description: "The previous lesson view has been cleared. Feel free to generate a new lesson or adjust the topic."

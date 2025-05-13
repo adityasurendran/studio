@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Save, XCircle, Image as ImageIcon, Users, FontSize } from 'lucide-react';
+import { Save, XCircle, Image as ImageIcon, Users, FontSize, Smile } from 'lucide-react'; // Added Smile for mood
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -26,14 +26,14 @@ const profileSchema = z.object({
   avatarSeed: z.string().optional().describe("A word or phrase to generate a unique avatar. Leave blank to use name."),
   learningStyle: z.enum(['visual', 'auditory', 'reading_writing', 'kinesthetic', 'balanced_mixed']).optional(),
   fontSizePreference: z.enum(['small', 'medium', 'large']).optional(),
+  recentMood: z.string().optional(), // Added recentMood
+  lessonHistory: z.string().optional(), // Added lessonHistory
 });
 
-// This FormData is for creating/editing the core profile, not including attempts.
-type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'recentMood' | 'lessonHistory' | 'savedLessons'>;
-
+type ProfileFormData = Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons'>;
 
 interface ChildProfileFormProps {
-  profile?: ChildProfile; // For editing
+  profile?: ChildProfile; 
   onSubmit: (data: ProfileFormData) => void;
   onCancel?: () => void;
   isEditing?: boolean;
@@ -54,6 +54,8 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
       avatarSeed: profile?.avatarSeed || '',
       learningStyle: profile?.learningStyle || 'balanced_mixed',
       fontSizePreference: profile?.fontSizePreference || 'medium',
+      recentMood: profile?.recentMood || 'neutral',
+      lessonHistory: profile?.lessonHistory || '',
     },
   });
 
@@ -65,7 +67,7 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-lg">
+    <Card className="w-full max-w-2xl mx-auto shadow-lg border-t-4 border-primary">
       <CardHeader>
         <CardTitle className="text-2xl text-primary">{isEditing ? 'Edit Child Profile' : 'Create New Child Profile'}</CardTitle>
         <CardDescription>{isEditing ? 'Update the details for this profile.' : 'Fill in the details to create a new child profile.'}</CardDescription>
@@ -189,6 +191,31 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                 </FormItem>
               )}
             />
+             <FormField
+                control={form.control}
+                name="recentMood"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center gap-1.5"><Smile className="h-4 w-4 text-muted-foreground" /> Default Recent Mood</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || 'neutral'}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select child's typical mood" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="happy">😊 Happy / Engaged</SelectItem>
+                        <SelectItem value="neutral">😐 Neutral / Calm</SelectItem>
+                        <SelectItem value="sad">😞 Sad / Tired / Unfocused</SelectItem>
+                        <SelectItem value="anxious">😟 Anxious / Stressed</SelectItem>
+                        <SelectItem value="excited">🤩 Excited / Eager</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormDescription>Set a default mood. This can be updated before generating each lesson.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
             <FormField
               control={form.control}
               name="screenIssues"
@@ -248,20 +275,34 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                 <FormItem>
                   <FormLabel>Curriculum Focus</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., US Grade 2 Math, Basic Phonics" {...field} />
+                    <Input placeholder="e.g., US Grade 2 Math, Basic Phonics, CBSE Grade 3 Science" {...field} />
                   </FormControl>
                   <FormDescription>What curriculum or subjects should lessons focus on?</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="lessonHistory"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Initial Lesson History / Notes (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Any relevant background, e.g., 'Completed basic phonics.' 'Knows numbers up to 20.'" {...field} />
+                  </FormControl>
+                  <FormDescription>This will be automatically updated as lessons are completed.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="flex justify-end space-x-3 pt-4">
               {onCancel && (
-                <Button type="button" variant="outline" onClick={onCancel}>
+                <Button type="button" variant="outline" onClick={onCancel} size="lg">
                   <XCircle className="mr-2 h-4 w-4" /> Cancel
                 </Button>
               )}
-              <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90" size="lg">
                 <Save className="mr-2 h-4 w-4" />
                 {isEditing ? 'Save Changes' : 'Create Profile'}
               </Button>

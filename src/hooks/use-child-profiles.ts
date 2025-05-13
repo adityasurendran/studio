@@ -17,9 +17,11 @@ export function useChildProfiles() {
       id: uuidv4(),
       lessonAttempts: [],
       savedLessons: [],
-      avatarSeed: profileData.avatarSeed || '', // Ensure avatarSeed is initialized
-      learningStyle: profileData.learningStyle || 'balanced_mixed', // Initialize learningStyle
-      fontSizePreference: profileData.fontSizePreference || 'medium', // Initialize fontSizePreference
+      avatarSeed: profileData.avatarSeed || '', 
+      learningStyle: profileData.learningStyle || 'balanced_mixed', 
+      fontSizePreference: profileData.fontSizePreference || 'medium', 
+      recentMood: profileData.recentMood || 'neutral', // Initialize recentMood
+      lessonHistory: profileData.lessonHistory || '', // Initialize lessonHistory
     };
     setProfiles(prevProfiles => [...prevProfiles, newProfile]);
     return newProfile;
@@ -36,7 +38,9 @@ export function useChildProfiles() {
             savedLessons: updatedProfile.savedLessons || p.savedLessons || [],
             avatarSeed: updatedProfile.avatarSeed, 
             learningStyle: updatedProfile.learningStyle || p.learningStyle || 'balanced_mixed',
-            fontSizePreference: updatedProfile.fontSizePreference || p.fontSizePreference || 'medium', // Ensure fontSizePreference is updated
+            fontSizePreference: updatedProfile.fontSizePreference || p.fontSizePreference || 'medium',
+            recentMood: updatedProfile.recentMood || p.recentMood || 'neutral',
+            lessonHistory: updatedProfile.lessonHistory || p.lessonHistory || '',
           } 
         : p
       ))
@@ -60,10 +64,12 @@ export function useChildProfiles() {
             attemptId: uuidv4(),
           };
           const updatedAttempts = [...(profile.lessonAttempts || []), newAttempt];
-          // Update lessonHistory with the topic of the new attempt
-          const newLessonHistoryEntry = `Completed lesson: ${attemptData.lessonTopic} (Score: ${attemptData.quizScore}%)`;
-          const updatedLessonHistory = profile.lessonHistory 
-            ? `${profile.lessonHistory}\n${newLessonHistoryEntry}` 
+          
+          const newLessonHistoryEntry = `Completed lesson: "${attemptData.lessonTitle}" (Topic: ${attemptData.lessonTopic}, Score: ${attemptData.quizScore}%) on ${new Date(attemptData.timestamp).toLocaleDateString()}.`;
+          
+          const existingHistory = profile.lessonHistory || "";
+          const updatedLessonHistory = existingHistory 
+            ? `${existingHistory}\n${newLessonHistoryEntry}` 
             : newLessonHistoryEntry;
           
           return { ...profile, lessonAttempts: updatedAttempts, lessonHistory: updatedLessonHistory };

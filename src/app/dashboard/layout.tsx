@@ -50,7 +50,7 @@ export default function DashboardLayout({
   return (
     <AuthGuard>
       <div className="flex h-[calc(100vh-var(--header-height,4rem))]">
-        <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r">
+        <Sidebar side="left" variant="sidebar" collapsible="icon" className="border-r bg-card"> {/* Added bg-card for consistent theming */}
           <SidebarHeader className="flex items-center justify-between p-2">
             {currentUser && (
               <div className="flex items-center gap-2 p-2 group-data-[collapsible=icon]:hidden">
