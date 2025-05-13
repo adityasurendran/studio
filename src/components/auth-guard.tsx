@@ -21,13 +21,15 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       if (!currentUser) {
         // If not logged in, redirect to signin, appending current path as redirect query
         router.push(`/signin?redirect=${encodeURIComponent(pathname)}`);
-      } else if (!isCompetitionModeEnabled && parentProfile && !parentProfile.isSubscribed) {
-        // If logged in but not subscribed AND competition mode is OFF, redirect to subscribe page.
-        // This guard is used for routes like /dashboard/*
-        // Ensure not already on /subscribe page to prevent loops
-        if (pathname !== '/subscribe') {
-          router.push('/subscribe');
-        }
+      } else if (
+        !isCompetitionModeEnabled &&
+        parentProfile &&
+        !parentProfile.isSubscribed &&
+        pathname !== '/subscribe' && // Allow access to /subscribe itself
+        pathname !== '/dashboard/parent-settings' // Allow access to parent settings page
+      ) {
+        // If logged in, competition mode OFF, not subscribed, AND not on an allowed page, redirect to subscribe.
+        router.push('/subscribe');
       }
     }
   }, [currentUser, parentProfile, loading, router, pathname]);
@@ -45,12 +47,26 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     return <>{children}</>;
   }
 
-  // If user is not authenticated OR (competition mode is OFF AND user is authenticated but not subscribed)
-  // useEffect above will handle redirection. Return null to prevent rendering children.
-  if (!currentUser || (parentProfile && !parentProfile.isSubscribed)) {
+  // If user is not authenticated:
+  if (!currentUser) {
+    // useEffect above will handle redirection. Return null to prevent rendering children.
     return null; 
   }
-
-  // User is authenticated and subscribed (or competition mode is on).
+  
+  // If user is authenticated, but competition mode is OFF AND user is not subscribed,
+  // AND they are trying to access a page other than /subscribe or /dashboard/parent-settings:
+  if (
+    !isCompetitionModeEnabled &&
+    parentProfile &&
+    !parentProfile.isSubscribed &&
+    pathname !== '/subscribe' &&
+    pathname !== '/dashboard/parent-settings'
+  ) {
+    // useEffect above will handle redirection. Return null.
+    return null;
+  }
+  
+  // User is authenticated and either subscribed, or competition mode is on, or on an allowed page.
   return <>{children}</>;
 }
+
