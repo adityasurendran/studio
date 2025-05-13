@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Shannon',
-  description: 'A free learning app for children with learning difficulties.',
+  description: 'Shannon: AI-powered personalized learning for children with learning difficulties.',
 };
 
 export default function RootLayout({
