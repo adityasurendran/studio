@@ -6,14 +6,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
-import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award } from 'lucide-react';
+import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function DashboardOverviewPage() {
   const { profiles } = useChildProfilesContext();
-  const { activeChild, setActiveChildId } = useActiveChildProfile();
+  const { activeChild, setActiveChildId, isLoading: activeChildLoading } = useActiveChildProfile();
+
+  if (activeChildLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-var(--header-height,4rem)-3rem)] text-center p-4">
+        <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+        <p className="text-xl text-muted-foreground">Loading dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
