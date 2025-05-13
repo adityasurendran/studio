@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Lock, CreditCard, Sparkles, LogIn, Loader2 as Loader2Icon } from "lucide-react";
+import { Lock, CreditCard, Sparkles, LogIn, Loader2 as Loader2Icon, Award } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from "lucide-react";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { functions } from "@/lib/firebase"; 
 import { httpsCallable } from 'firebase/functions'; 
+import { isCompetitionModeEnabled } from '@/config'; // Import the configuration
 
 export default function SubscribePage() {
   const { currentUser, parentProfile, loading: authLoading } = useAuth();
@@ -21,6 +22,15 @@ export default function SubscribePage() {
   const [isSubscribing, setIsSubscribing] = useState(false);
 
   useEffect(() => {
+    if (isCompetitionModeEnabled && currentUser) {
+      toast({
+        title: "Competition Mode Active",
+        description: "All features are currently unlocked. Redirecting to dashboard.",
+      });
+      router.replace('/dashboard');
+      return; // Early exit if redirecting
+    }
+
     const sessionId = searchParams.get('session_id');
     const canceled = searchParams.get('canceled');
 
@@ -39,12 +49,13 @@ export default function SubscribePage() {
         description: "You have canceled the subscription process. You can try again anytime.",
         variant: "destructive",
       });
-      router.replace('/subscribe', undefined);
+      // Use router.replace to remove query params from URL without adding to history
+      router.replace('/subscribe', undefined); 
     }
-  }, [searchParams, router, toast]);
+  }, [isCompetitionModeEnabled, currentUser, router, toast, searchParams]);
 
 
-  if (authLoading) {
+  if (authLoading || (isCompetitionModeEnabled && currentUser)) { // Also show loading if redirecting due to competition mode
     return (
       <div className="flex flex-col justify-center items-center h-[calc(100vh-var(--header-height,4rem)-3rem)] text-center p-4">
         <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
@@ -53,11 +64,23 @@ export default function SubscribePage() {
     );
   }
 
-  if (currentUser && parentProfile?.isSubscribed) {
+  if (currentUser && parentProfile?.isSubscribed && !isCompetitionModeEnabled) { // Don't redirect if competition mode is on
     router.replace('/dashboard'); 
     return null; 
   }
   
+  if (isCompetitionModeEnabled && currentUser) {
+    // This state should ideally be caught by the useEffect and authLoading block above,
+    // but as a fallback, show loading.
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-var(--header-height,4rem)-3rem)] text-center p-4">
+        <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+        <p className="text-xl text-muted-foreground">Competition mode active. Redirecting...</p>
+      </div>
+    );
+  }
+
+
   if (!currentUser) {
      return (
         <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center min-h-[calc(100vh-var(--header-height,4rem)-2rem)] justify-center">
@@ -68,11 +91,11 @@ export default function SubscribePage() {
             </div>
             <CardTitle className="text-3xl font-bold text-primary">Access Restricted</CardTitle>
             <CardDescription className="text-lg mt-2 text-muted-foreground">
-                Please sign in to subscribe and unlock Shannon.
+                Please sign in to {isCompetitionModeEnabled ? "access the dashboard" : "subscribe and unlock Shannon"}.
             </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 p-0">
-            <Link href="/signin?redirect=/subscribe" passHref>
+            <Link href={isCompetitionModeEnabled ? "/signin?redirect=/dashboard" : "/signin?redirect=/subscribe"} passHref>
                 <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-6" size="lg">
                     <LogIn className="mr-2 h-5 w-5" /> Sign In
                 </Button>
@@ -91,10 +114,19 @@ export default function SubscribePage() {
     );
   }
 
+  // If competition mode is enabled and user is logged in, they should have been redirected.
+  // If they reach here, it means competition mode is OFF and they are logged in but not subscribed.
+  // Or an edge case where redirection is still pending.
+
   const handleSubscribe = async () => {
     if (!currentUser) { 
       toast({ title: "Error", description: "You must be logged in to subscribe.", variant: "destructive" });
       router.push("/signin?redirect=/subscribe");
+      return;
+    }
+    if (isCompetitionModeEnabled) { // Double check, should not happen if redirection works
+      toast({ title: "Competition Mode Active", description: "Subscription is not required."});
+      router.push('/dashboard');
       return;
     }
 
@@ -120,6 +152,8 @@ export default function SubscribePage() {
     }
   };
 
+  // This content will be shown if competition mode is OFF,
+  // and the user is logged in but NOT subscribed.
   const pageContent = (
     <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center min-h-[calc(100vh-var(--header-height,4rem)-2rem)] justify-center">
       <Card className="w-full max-w-lg shadow-xl border-t-4 border-accent p-6 md:p-8">

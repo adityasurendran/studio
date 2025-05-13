@@ -7,12 +7,13 @@ import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { LogIn, LogOut, UserPlus, LayoutDashboard, HelpCircle, Info } from 'lucide-react'; // Added Info icon
+import { LogIn, LogOut, UserPlus, LayoutDashboard, HelpCircle, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Logo from '@/components/logo'; 
+import { isCompetitionModeEnabled } from '@/config'; // Import the configuration
 
 export default function Header() {
-  const { currentUser, parentProfile } = useAuth(); // Added parentProfile
+  const { currentUser, parentProfile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -27,7 +28,7 @@ export default function Header() {
     }
   };
 
-  const dashboardLink = currentUser && parentProfile?.isSubscribed ? "/dashboard" : "/subscribe";
+  const dashboardLink = (currentUser && (parentProfile?.isSubscribed || isCompetitionModeEnabled)) ? "/dashboard" : "/subscribe";
 
   return (
     <header className="bg-card shadow-md sticky top-0 z-50 h-[var(--header-height,4rem)] flex items-center">
@@ -77,4 +78,3 @@ export default function Header() {
     </header>
   );
 }
-

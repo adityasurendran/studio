@@ -47,6 +47,11 @@ To get started, follow these steps:
         STRIPE_PRICE_ID="YOUR_STRIPE_PRICE_ID"                   # Stripe Price ID for your subscription product (e.g., price_xxxxxxxxxxxxxx)
         STRIPE_WEBHOOK_SECRET="YOUR_STRIPE_WEBHOOK_SECRET"       # Stripe Webhook Signing Secret
         APP_BASE_URL="http://localhost:9002"                     # Your app's base URL (update for production)
+        
+        # Competition/Demo Mode (Optional)
+        # Set to "true" to bypass subscription checks for all users. Useful for demos or competitions.
+        # Defaults to false if not set.
+        NEXT_PUBLIC_COMPETITION_MODE_ENABLED="false" 
         ```
     *   **Configure Firebase Functions Environment:** For deployed functions, set these Stripe variables in the Firebase environment:
         ```bash

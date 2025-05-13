@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
+import { isCompetitionModeEnabled } from '@/config'; // Import the configuration
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -20,10 +21,10 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       if (!currentUser) {
         // If not logged in, redirect to signin, appending current path as redirect query
         router.push(`/signin?redirect=${encodeURIComponent(pathname)}`);
-      } else if (parentProfile && !parentProfile.isSubscribed) {
-        // If logged in but not subscribed, redirect to subscribe page.
+      } else if (!isCompetitionModeEnabled && parentProfile && !parentProfile.isSubscribed) {
+        // If logged in but not subscribed AND competition mode is OFF, redirect to subscribe page.
         // This guard is used for routes like /dashboard/*
-        // Ensure not already on /subscribe page to prevent loops (though /subscribe won't use this guard)
+        // Ensure not already on /subscribe page to prevent loops
         if (pathname !== '/subscribe') {
           router.push('/subscribe');
         }
@@ -39,12 +40,17 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  // If user is not authenticated OR is authenticated but not subscribed,
+  // If competition mode is enabled, allow access even if not subscribed (as long as logged in).
+  if (isCompetitionModeEnabled && currentUser) {
+    return <>{children}</>;
+  }
+
+  // If user is not authenticated OR (competition mode is OFF AND user is authenticated but not subscribed)
   // useEffect above will handle redirection. Return null to prevent rendering children.
   if (!currentUser || (parentProfile && !parentProfile.isSubscribed)) {
     return null; 
   }
 
-  // User is authenticated and (implicitly, due to the check above) subscribed.
+  // User is authenticated and subscribed (or competition mode is on).
   return <>{children}</>;
 }
