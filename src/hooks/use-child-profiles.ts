@@ -38,8 +38,8 @@ export function useChildProfiles() {
       recentMood: profileData.recentMood || 'neutral', 
       lessonHistory: profileData.lessonHistory || '',
       enableLeaderboard: profileData.enableLeaderboard || false,
-      dailyUsageLimitMinutes: profileData.dailyUsageLimitMinutes, // Handle new field
-      weeklyUsageLimitMinutes: profileData.weeklyUsageLimitMinutes, // Handle new field
+      dailyUsageLimitMinutes: profileData.dailyUsageLimitMinutes, 
+      weeklyUsageLimitMinutes: profileData.weeklyUsageLimitMinutes, 
     };
     setProfiles(prevProfiles => [...prevProfiles, newProfile]);
     return newProfile;
@@ -64,8 +64,8 @@ export function useChildProfiles() {
             recentMood: updatedProfile.recentMood || p.recentMood || 'neutral',
             lessonHistory: updatedProfile.lessonHistory || p.lessonHistory || '',
             enableLeaderboard: updatedProfile.enableLeaderboard ?? p.enableLeaderboard ?? false,
-            dailyUsageLimitMinutes: updatedProfile.dailyUsageLimitMinutes, // Handle new field
-            weeklyUsageLimitMinutes: updatedProfile.weeklyUsageLimitMinutes, // Handle new field
+            dailyUsageLimitMinutes: updatedProfile.dailyUsageLimitMinutes, 
+            weeklyUsageLimitMinutes: updatedProfile.weeklyUsageLimitMinutes, 
           } 
         : p
       ))
@@ -90,10 +90,11 @@ export function useChildProfiles() {
             ...attemptData,
             attemptId: uuidv4(),
             pointsAwarded: pointsEarned,
+            // subject is already part of attemptData from LessonDisplay
           };
           const updatedAttempts = [...(profile.lessonAttempts || []), newAttempt];
           
-          const newLessonHistoryEntry = `Completed lesson: "${attemptData.lessonTitle}" (Topic: ${attemptData.lessonTopic || 'N/A'}, Score: ${attemptData.quizScore}%) on ${new Date(attemptData.timestamp).toLocaleDateString()}. Earned ${pointsEarned} points.`;
+          const newLessonHistoryEntry = `Completed lesson: "${attemptData.lessonTitle}" (Topic: ${attemptData.lessonTopic || 'N/A'}, Subject: ${attemptData.subject || 'N/A'}, Score: ${attemptData.quizScore}%) on ${new Date(attemptData.timestamp).toLocaleDateString()}. Earned ${pointsEarned} points.`;
           
           const existingHistory = profile.lessonHistory || "";
           const historyLines = existingHistory.split('\n');
@@ -207,3 +208,4 @@ export function useChildProfiles() {
     addSavedLesson,
   };
 }
+

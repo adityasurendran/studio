@@ -22,7 +22,7 @@ function formatLessonHistorySummary(attempts?: LessonAttempt[]): string {
     .slice(-5) 
     .reverse()
     .map(attempt => 
-      `Lesson: "${attempt.lessonTitle}" (Topic: ${attempt.lessonTopic || 'N/A'})` +
+      `Lesson: "${attempt.lessonTitle}" (Topic: ${attempt.lessonTopic || 'N/A'}, Subject: ${attempt.subject || 'N/A'})` +
       `${attempt.quizTotalQuestions > 0 ? `, Score: ${attempt.quizScore}% (${attempt.questionsAnsweredCorrectly}/${attempt.quizTotalQuestions} correct)` : ', No quiz'}` +
       `${attempt.pointsAwarded ? `, Points: +${attempt.pointsAwarded}`: ''}` +
       `, About ${formatDistanceToNow(new Date(attempt.timestamp), { addSuffix: true })}.` +
@@ -207,3 +207,4 @@ export default function RecommendationsPage() {
     </div>
   );
 }
+

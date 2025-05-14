@@ -24,6 +24,7 @@ export interface LessonAttempt {
   attemptId: string; // Unique ID for this attempt
   lessonTitle: string;
   lessonTopic: string; // The original topic requested
+  subject: string; // The AI-determined subject of the lesson
   quizScore: number; // Percentage
   quizTotalQuestions: number;
   questionsAnsweredCorrectly: number;

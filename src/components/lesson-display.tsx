@@ -25,7 +25,7 @@ interface LessonDisplayProps {
 }
 
 // Helper function to format lesson history summary
-function formatLessonHistorySummary(attempts?: LessonAttempt[]): string {
+function formatLessonHistorySummaryForRecommendations(attempts?: LessonAttempt[]): string {
   if (!attempts || attempts.length === 0) {
     return "No lesson history available yet.";
   }
@@ -33,7 +33,7 @@ function formatLessonHistorySummary(attempts?: LessonAttempt[]): string {
     .slice(-5) // Take last 5
     .reverse() // Newest first
     .map(attempt => 
-      `Lesson: "${attempt.lessonTitle}" (Topic: ${attempt.lessonTopic || 'N/A'})` +
+      `Lesson: "${attempt.lessonTitle}" (Topic: ${attempt.lessonTopic || 'N/A'}, Subject: ${attempt.subject || 'N/A'})` +
       `${attempt.quizTotalQuestions > 0 ? `, Score: ${attempt.quizScore}% (${attempt.questionsAnsweredCorrectly}/${attempt.quizTotalQuestions} correct)` : ', No quiz'}` +
       `${attempt.pointsAwarded ? `, Points: +${attempt.pointsAwarded}`: ''}` +
       `, About ${formatDistanceToNow(new Date(attempt.timestamp), { addSuffix: true })}.` +
@@ -88,7 +88,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
       const fetchRecommendation = async () => {
         setIsFetchingRecommendation(true);
         try {
-          const historySummary = formatLessonHistorySummary(childProfile.lessonAttempts);
+          const historySummary = formatLessonHistorySummaryForRecommendations(childProfile.lessonAttempts);
           const input: RecommendNextLessonInput = {
             childAge: childProfile.age,
             interests: childProfile.interests,
@@ -194,9 +194,11 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
       if (totalQuizQuestions > 0) {
         setView('quiz');
       } else {
+        // If no quiz, lesson is complete. Call onQuizComplete with 100% score.
         onQuizComplete({ 
             lessonTitle: lesson.lessonTitle, 
             lessonTopic: lessonTopic,
+            subject: lesson.subject, // Add subject here
             quizScore: 100, 
             quizTotalQuestions: 0, 
             questionsAnsweredCorrectly: 0,
@@ -240,6 +242,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     stopSpeaking();
     if (showExplanationForQuestionIndex !== null) {
       setShowExplanationForQuestionIndex(null); 
+      // Do not advance, let user try the same question again or submit if they want
     }
   };
 
@@ -545,6 +548,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     const currentAttemptData = {
         lessonTitle: lesson.lessonTitle,
         lessonTopic: lessonTopic,
+        subject: lesson.subject, // Add subject here
         quizScore: quizScore,
         quizTotalQuestions: totalQuizQuestions,
         questionsAnsweredCorrectly: answeredCorrectly,
@@ -657,3 +661,4 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   
   return <Card className="border-t-4 border-muted"><CardContent className="p-6">Loading lesson content...</CardContent></Card>;
 }
+
