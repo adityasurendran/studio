@@ -8,10 +8,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle, Printer } from 'lucide-react'; 
+import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle, Printer, Loader2 } from 'lucide-react'; 
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { recommendNextLesson, type RecommendNextLessonInput } from '@/ai/flows/recommend-next-lesson';
+import { formatDistanceToNow } from 'date-fns';
 
 interface LessonDisplayProps {
   lesson: GeneratedLesson;
@@ -20,6 +23,25 @@ interface LessonDisplayProps {
   onQuizComplete: (attempt: Omit<LessonAttempt, 'attemptId'>) => void;
   onRestartLesson: () => void; 
 }
+
+// Helper function to format lesson history summary
+function formatLessonHistorySummary(attempts?: LessonAttempt[]): string {
+  if (!attempts || attempts.length === 0) {
+    return "No lesson history available yet.";
+  }
+  return attempts
+    .slice(-5) // Take last 5
+    .reverse() // Newest first
+    .map(attempt => 
+      `Lesson: "${attempt.lessonTitle}" (Topic: ${attempt.lessonTopic || 'N/A'})` +
+      `${attempt.quizTotalQuestions > 0 ? `, Score: ${attempt.quizScore}% (${attempt.questionsAnsweredCorrectly}/${attempt.quizTotalQuestions} correct)` : ', No quiz'}` +
+      `${attempt.pointsAwarded ? `, Points: +${attempt.pointsAwarded}`: ''}` +
+      `, About ${formatDistanceToNow(new Date(attempt.timestamp), { addSuffix: true })}.` +
+      `${attempt.choseToRelearn ? ' Chose to relearn.' : ''}`
+    )
+    .join('\n');
+}
+
 
 export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQuizComplete, onRestartLesson }: LessonDisplayProps) {
   const [view, setView] = useState<'lesson' | 'quiz' | 'results'>('lesson');
@@ -34,6 +56,10 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speakingTextIdentifier, setSpeakingTextIdentifier] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
+
+  const [nextRecommendedTopic, setNextRecommendedTopic] = useState<string | null>(null);
+  const [isFetchingRecommendation, setIsFetchingRecommendation] = useState(false);
 
 
   useEffect(() => {
@@ -45,6 +71,8 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     setAnsweredCorrectly(0);
     setShowExplanationForQuestionIndex(null);
     setAttemptedQuestions(new Set());
+    setNextRecommendedTopic(null);
+    setIsFetchingRecommendation(false);
     
     return () => {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -54,6 +82,47 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
       setSpeakingTextIdentifier(null);
     };
   }, [lesson]);
+
+  useEffect(() => {
+    if (view === 'results' && quizScore >= 60 && childProfile && childProfile.lessonAttempts && childProfile.lessonAttempts.length > 0 && !isFetchingRecommendation && !nextRecommendedTopic) {
+      const fetchRecommendation = async () => {
+        setIsFetchingRecommendation(true);
+        try {
+          const historySummary = formatLessonHistorySummary(childProfile.lessonAttempts);
+          const input: RecommendNextLessonInput = {
+            childAge: childProfile.age,
+            interests: childProfile.interests,
+            learningDifficulties: childProfile.learningDifficulties,
+            curriculum: childProfile.curriculum,
+            lessonHistorySummary: historySummary,
+            learningStyle: childProfile.learningStyle || 'balanced_mixed',
+          };
+          const result = await recommendNextLesson(input);
+          if (result && result.recommendedTopic) {
+            setNextRecommendedTopic(result.recommendedTopic);
+          } else {
+            setNextRecommendedTopic(null);
+          }
+        } catch (error: any) {
+          console.error("Error fetching next lesson recommendation:", error);
+          toast({
+            title: "Recommendation Error",
+            description: "Could not fetch next lesson suggestion.",
+            variant: "destructive"
+          });
+          setNextRecommendedTopic(null);
+        } finally {
+          setIsFetchingRecommendation(false);
+        }
+      };
+      fetchRecommendation();
+    }
+    // Reset recommendation if view changes from results or quiz score is not good
+    if (view !== 'results' || quizScore < 60) {
+      setNextRecommendedTopic(null);
+    }
+  }, [view, quizScore, childProfile, isFetchingRecommendation, nextRecommendedTopic, toast]);
+
 
   const handleSpeak = useCallback((textToSpeak: string, identifier: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -170,9 +239,6 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   const handleTryAgainOrContinueFromExplanation = () => {
     stopSpeaking();
     if (showExplanationForQuestionIndex !== null) {
-      // Keep the selected answer if trying again, so it's visible
-      // const { [showExplanationForQuestionIndex]: _, ...rest } = selectedAnswers;
-      // setSelectedAnswers(rest); 
       setShowExplanationForQuestionIndex(null); 
     }
   };
@@ -196,14 +262,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     const score = totalQuizQuestions > 0 ? Math.round((correctAnswersCount / totalQuizQuestions) * 100) : 100;
     setQuizScore(score);
     setView('results');
-    onQuizComplete({
-      lessonTitle: lesson.lessonTitle,
-      lessonTopic: lessonTopic,
-      quizScore: score,
-      quizTotalQuestions: totalQuizQuestions,
-      questionsAnsweredCorrectly: correctAnswersCount,
-      timestamp: new Date().toISOString(),
-    });
+    // onQuizComplete is called from the results view buttons to include choseToRelearn status
   };
 
   const handleRestartLessonInternal = () => {
@@ -218,32 +277,6 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     setAttemptedQuestions(new Set());
     onRestartLesson(); 
   };
-
-  const handleUserChoseToRelearn = () => {
-     onQuizComplete({ 
-      lessonTitle: lesson.lessonTitle,
-      lessonTopic: lessonTopic, 
-      quizScore: quizScore,
-      quizTotalQuestions: totalQuizQuestions,
-      questionsAnsweredCorrectly: answeredCorrectly,
-      timestamp: new Date().toISOString(),
-      choseToRelearn: true,
-    });
-    handleRestartLessonInternal();
-  }
-
-  const handleUserChoseToSkipOrContinue = () => {
-     onQuizComplete({ 
-      lessonTitle: lesson.lessonTitle,
-      lessonTopic: lessonTopic, 
-      quizScore: quizScore,
-      quizTotalQuestions: totalQuizQuestions,
-      questionsAnsweredCorrectly: answeredCorrectly,
-      timestamp: new Date().toISOString(),
-      choseToRelearn: false, 
-    });
-    handleRestartLessonInternal();
-  }
 
   const handlePrintLesson = () => {
     if (typeof window === 'undefined') return;
@@ -273,10 +306,6 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
         printContent += `<p class="sentence">${sentence}</p>`;
       });
       if (page.imageDataUri) {
-        // For printing, it's better to use actual <img> tags if the data URI is valid.
-        // However, complex images might not print well or make the document very large.
-        // For simplicity, we'll add a placeholder indicating an image was present.
-        // If you want to embed, use: printContent += `<img src="${page.imageDataUri}" alt="Lesson Image ${index + 1}" style="max-width:500px; margin:10px auto; display:block;">`;
          printContent += `<div class="image-placeholder">[Image was present for this page]</div>`;
       } else if(lesson.lessonFormat !== "Custom Text-Based Lesson") {
          printContent += `<div class="image-placeholder">[No image generated for this page]</div>`;
@@ -315,8 +344,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
             console.error("Error printing:", e);
             toast({ title: "Print Error", description: "Could not initiate printing.", variant: "destructive" });
         }
-        // printWindow.close(); // Optional: close window after print dialog
-      }, 500); // Delay to allow content to render
+      }, 500); 
     } else {
       toast({
         title: "Print Error",
@@ -514,6 +542,15 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
 
   if (view === 'results') {
     const isSuccess = quizScore >= 60;
+    const currentAttemptData = {
+        lessonTitle: lesson.lessonTitle,
+        lessonTopic: lessonTopic,
+        quizScore: quizScore,
+        quizTotalQuestions: totalQuizQuestions,
+        questionsAnsweredCorrectly: answeredCorrectly,
+        timestamp: new Date().toISOString(),
+    };
+
     return (
       <Card className={cn("w-full shadow-xl text-center border-t-4", themeClass, isSuccess ? "border-green-500" : "border-destructive")}>
         <CardHeader className="pb-2 pt-8">
@@ -551,25 +588,68 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
              <p className="text-xl text-green-600 mt-4 font-medium">Well done on completing the lesson!</p>
           )}
           
-          {!isSuccess && totalQuizQuestions > 0 && (
-            <div className="mt-8 p-6 bg-secondary/50 rounded-lg shadow-md border">
-              <p className="mb-3 text-xl text-foreground">This topic might need a little more review.</p>
-              <p className="mb-4 text-muted-foreground">Would you like to try learning this topic again, or move on?</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button onClick={handleUserChoseToRelearn} variant="default" size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg">
-                  <RotateCcw className="mr-2 h-5 w-5"/> Learn Again
+           {/* Main action button area */}
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            {isFetchingRecommendation && quizScore >= 60 && (
+              <Button variant="default" size="lg" className="bg-accent text-accent-foreground" disabled>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Fetching Next Suggestion...
+              </Button>
+            )}
+
+            {!isFetchingRecommendation && nextRecommendedTopic && quizScore >= 60 && (
+              <Button
+                onClick={() => {
+                  onQuizComplete({ ...currentAttemptData, choseToRelearn: false });
+                  router.push(`/dashboard/lessons/new?topic=${encodeURIComponent(nextRecommendedTopic)}`);
+                }}
+                variant="default"
+                size="lg"
+                className="bg-green-600 hover:bg-green-700 text-white shadow-lg hover:scale-105"
+              >
+                Next Lesson: {nextRecommendedTopic.substring(0, 25)}{nextRecommendedTopic.length > 25 ? '...' : ''} <ChevronRight className="ml-2 h-5 w-5"/>
+              </Button>
+            )}
+            
+            {/* Fallback / default continue button if no specific next topic or still fetching (and quiz was good) or no quiz*/}
+            {(!(isFetchingRecommendation || (nextRecommendedTopic && quizScore >= 60)) && (isSuccess || totalQuizQuestions === 0)) && (
+                <Button 
+                    onClick={() => {
+                        onQuizComplete({ ...currentAttemptData, choseToRelearn: false });
+                        onRestartLesson();
+                    }} 
+                    variant="default" size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg">
+                    {totalQuizQuestions > 0 ? 'Generate New Lesson' : 'Back to Dashboard'} <ChevronRight className="ml-2 h-5 w-5"/>
                 </Button>
-                <Button onClick={handleUserChoseToSkipOrContinue} variant="outline" size="lg" className="shadow-sm hover:shadow-md">
-                  Skip for Now
+            )}
+          </div>
+
+          {/* For poor scores, offer relearn or different topic */}
+          {!isSuccess && totalQuizQuestions > 0 && (
+            <div className="mt-6 p-4 bg-secondary/50 rounded-lg shadow-sm border">
+              <p className="mb-3 text-lg text-foreground">This topic might need a little more review.</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button 
+                  onClick={() => {
+                    onQuizComplete({ ...currentAttemptData, choseToRelearn: true });
+                    handleRestartLessonInternal(); // This resets the form for the same topic
+                  }} 
+                  variant="default" size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <RotateCcw className="mr-2 h-5 w-5"/> Learn This Topic Again
+                </Button>
+                <Button 
+                  onClick={() => {
+                    onQuizComplete({ ...currentAttemptData, choseToRelearn: false });
+                    onRestartLesson(); // This clears form for a new topic
+                  }} 
+                  variant="outline" size="lg"
+                >
+                  Choose a Different Topic
                 </Button>
               </div>
             </div>
           )}
-          {(isSuccess || totalQuizQuestions === 0) && (
-             <Button onClick={handleUserChoseToSkipOrContinue} variant="default" size="lg" className="mt-8 bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg hover:scale-105 transition-transform py-3 px-8 text-lg">
-                {totalQuizQuestions > 0 ? 'Continue Learning' : 'Back to Dashboard'} <ChevronRight className="ml-2 h-5 w-5"/>
-            </Button>
-          )}
+
         </CardContent>
       </Card>
     );
@@ -577,4 +657,3 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   
   return <Card className="border-t-4 border-muted"><CardContent className="p-6">Loading lesson content...</CardContent></Card>;
 }
-
