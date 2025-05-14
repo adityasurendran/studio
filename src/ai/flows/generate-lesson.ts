@@ -67,32 +67,106 @@ const FetchCurriculumInfoOutputSchema = z.object({
 const fetchCurriculumInfoTool = ai.defineTool(
   {
     name: 'fetchCurriculumInfoTool',
-    description: 'Fetches and summarizes information about a specific curriculum, topic, and age level from external sources to ensure educational accuracy and depth. Use this tool BEFORE generating lesson content to gather curriculum-specific context.',
+    description: 'Fetches and summarizes information about a specific curriculum, topic, and age level from external sources (Google Custom Search) to ensure educational accuracy and depth. Use this tool BEFORE generating lesson content to gather curriculum-specific context.',
     inputSchema: FetchCurriculumInfoInputSchema,
     outputSchema: FetchCurriculumInfoOutputSchema,
   },
   async (input) => {
     console.log('[fetchCurriculumInfoTool] Called with input:', input);
-    // !!! Placeholder Implementation !!!
-    // In a real application, this function would:
-    // 1. Use a search engine API (e.g., Google Custom Search, Bing API) or a web scraping library.
-    // 2. Formulate search queries based on input.curriculumName, input.lessonTopic, input.childAge, input.targetLanguage.
-    // 3. Fetch and process search results (e.g., summarize top N relevant pages).
-    // 4. Potentially use another LLM call to summarize the findings into the required format.
-    // 5. Handle errors and cases where no relevant information is found.
+    const apiKey = process.env.GOOGLE_API_KEY;
+    const cseId = process.env.GOOGLE_CSE_ID;
 
-    // For now, returning a placeholder response:
-    const placeholderSummary = `Placeholder: Based on a simulated search for '${input.lessonTopic}' within the '${input.curriculumName}' for a ${input.childAge}-year-old, key concepts often include [concept A, concept B]. Learning objectives typically cover [objective 1, objective 2]. The depth should be appropriate for the age, focusing on practical examples. For the actual lesson, ensure to elaborate on these points with engaging content. Consider common misconceptions related to the topic for this age group.`;
-    
-    const sourceHints = [
-        `Example Source 1: Official ${input.curriculumName} Syllabus (if available online)`,
-        `Example Source 2: Reputable educational website covering ${input.lessonTopic} for ${input.childAge}-year-olds (e.g., Khan Academy, BBC Bitesize, or curriculum-specific resources)`
+    const placeholderSummary = `Placeholder: Could not fetch live curriculum data. Defaulting to general knowledge for '${input.lessonTopic}' within '${input.curriculumName}' for a ${input.childAge}-year-old. Key concepts likely include basic definitions and examples. Learning objectives would typically cover understanding these basics. The depth should be appropriate for the age, focusing on practical examples. For the actual lesson, ensure to elaborate on these points with engaging content.`;
+    const placeholderSources = ["General educational knowledge bases."];
+
+    if (!apiKey || apiKey === "YOUR_GOOGLE_AI_API_KEY" || !cseId || cseId === "YOUR_GOOGLE_CUSTOM_SEARCH_ENGINE_ID") {
+      let missingVars = [];
+      if (!apiKey || apiKey === "YOUR_GOOGLE_AI_API_KEY") missingVars.push("GOOGLE_API_KEY (ensure Custom Search API is enabled for it)");
+      if (!cseId || cseId === "YOUR_GOOGLE_CUSTOM_SEARCH_ENGINE_ID") missingVars.push("GOOGLE_CSE_ID");
+      
+      console.warn(`[fetchCurriculumInfoTool] Missing or placeholder environment variables: ${missingVars.join(', ')}. The Custom Search API will not be called. Ensure these are set in your .env file. Falling back to placeholder data.`);
+      return {
+        summary: placeholderSummary,
+        sourceHints: placeholderSources,
+      };
+    }
+
+    const queryParts = [
+        `"${input.curriculumName}" syllabus`,
+        `"${input.lessonTopic}" for ${input.childAge} year old`,
+        `key concepts and learning objectives`,
     ];
+    const query = queryParts.join(" ");
+    
+    let searchUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${encodeURIComponent(query)}&num=3`; // Get top 3 results
+    
+    if (input.targetLanguage) {
+      // Google Custom Search API uses 'lr' parameter with format 'lang_xx'
+      searchUrl += `&lr=lang_${input.targetLanguage.substring(0,2)}`;
+    }
+    
+    try {
+      const response = await fetch(searchUrl);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[fetchCurriculumInfoTool] Google Custom Search API error: ${response.status} - ${errorText}. Query: ${query}`);
+        toast({
+          title: "Curriculum Search Error",
+          description: `Could not fetch curriculum data (Status: ${response.status}). Using general knowledge.`,
+          variant: "destructive",
+        });
+        return { summary: placeholderSummary, sourceHints: placeholderSources };
+      }
+      const searchData = await response.json();
 
-    return {
-      summary: placeholderSummary,
-      sourceHints: sourceHints,
-    };
+      if (!searchData.items || searchData.items.length === 0) {
+        console.warn(`[fetchCurriculumInfoTool] No search results found for query: ${query}`);
+        toast({
+            title: "Curriculum Search",
+            description: "No specific curriculum details found via search for this topic. Using general knowledge.",
+        });
+        return { 
+            summary: `No specific search results found for '${input.lessonTopic}' within '${input.curriculumName}' for a ${input.childAge}-year-old. The lesson will be based on general knowledge, focusing on foundational concepts appropriate for the age.`, 
+            sourceHints: ["General educational knowledge." ]
+        };
+      }
+
+      const snippets = searchData.items.map((item: any) => `Title: ${item.title}\nSnippet: ${item.snippet}\nLink: ${item.link}`).join("\n\n---\n\n");
+      const sourceHints = searchData.items.map((item: any) => `${item.title} (${item.link})`);
+
+      const summarizationPromptText = `Based on the following search results, provide a concise summary of key concepts, learning objectives, and the typical educational depth and focus for a lesson on "${input.lessonTopic}". This lesson is for a ${input.childAge}-year-old child following the "${input.curriculumName}" curriculum. The lesson should be in ${input.targetLanguage || 'English'}. Be specific and extract actionable information for lesson planning. Search results:\n${snippets}`;
+      
+      const { text: summarizedText } = await ai.generate({
+        prompt: summarizationPromptText,
+        model: 'googleai/gemini-2.0-flash', // Or your preferred text model
+        config: { temperature: 0.3 } 
+      });
+
+      if (!summarizedText) {
+        console.error("[fetchCurriculumInfoTool] Failed to summarize search results. Using raw snippets.");
+        toast({
+          title: "Curriculum Data",
+          description: "Using raw search snippets as AI summarization failed.",
+          variant: "default"
+        });
+        return { summary: snippets.substring(0, 2000), sourceHints }; // Truncate if too long
+      }
+
+      console.log("[fetchCurriculumInfoTool] Successfully fetched and summarized curriculum info. Summary length:", summarizedText.length);
+      return {
+        summary: summarizedText,
+        sourceHints: sourceHints,
+      };
+
+    } catch (error: any) {
+      console.error(`[fetchCurriculumInfoTool] Error during curriculum search or summarization: ${error.message}`, error);
+      toast({
+          title: "Curriculum Search Failed",
+          description: `An error occurred: ${error.message}. Using general knowledge.`,
+          variant: "destructive",
+      });
+      return { summary: placeholderSummary, sourceHints: placeholderSources };
+    }
   }
 );
 // --- End Tool Definition ---
@@ -198,6 +272,17 @@ const generateLessonPrompt = ai.definePrompt({
   Please respond ONLY in JSON format matching this structure. Ensure all quiz questions have an explanation and all content is appropriate for the specified age, curriculum (as informed by the 'fetchCurriculumInfoTool'), mood, learning style, and preferred activities, and is in the '{{{targetLanguage}}}'.
   `,
 });
+
+// Helper function to show toast (can be moved to a utils file if used elsewhere)
+// For server-side components/flows, direct toast is not possible. Logging is primary.
+// This is a simple placeholder for potential client-side usage or for flows called from client.
+const toast = (options: {title: string, description: string, variant?: 'default' | 'destructive'}) => {
+    console.log(`TOAST: ${options.title} - ${options.description} (Variant: ${options.variant || 'default'})`);
+    // If this flow could be called from a client component that has access to a toast hook,
+    // you might pass the toast function down or use a shared service.
+    // For a pure server flow, console logging or structured logging is typical.
+};
+
 
 const generateTailoredLessonsFlow = ai.defineFlow(
   {
@@ -334,3 +419,4 @@ function cleanSentence(sentence: string): string {
     }
     return cleaned;
 }
+
