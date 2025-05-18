@@ -113,7 +113,6 @@ const fetchCurriculumInfoTool = ai.defineTool(
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[fetchCurriculumInfoTool] Google Custom Search API error: ${response.status} - ${errorText}. Query: ${query}`);
-        // Do not toast from server-side flow
         console.log(`SERVER LOG: Curriculum Search Error - Could not fetch curriculum data (Status: ${response.status}). Using general knowledge.`);
         return { summary: placeholderSummary, sourceHints: placeholderSources };
       }
@@ -275,114 +274,117 @@ const generateTailoredLessonsFlow = ai.defineFlow(
   },
   async (input) => {
     console.log('[generateTailoredLessonsFlow] Starting lesson generation for topic:', input.lessonTopic, 'Curriculum:', input.curriculum, 'Language:', input.targetLanguage);
+    let textAndQuizOutput;
+    
     try {
-      let textAndQuizOutput;
-      try {
-        console.log('[generateTailoredLessonsFlow] Calling generateLessonPrompt with input:', JSON.stringify(input, null, 2));
-        const result = await generateLessonPrompt(input);
-        textAndQuizOutput = result.output;
+      console.log('[generateTailoredLessonsFlow] Calling generateLessonPrompt with input:', JSON.stringify(input, null, 2));
+      const result = await generateLessonPrompt(input);
+      console.log('[generateTailoredLessonsFlow] Raw result from generateLessonPrompt:', JSON.stringify(result, null, 2));
 
-        if (!textAndQuizOutput) {
-            console.error('[generateTailoredLessonsFlow] CRITICAL: Output from generateLessonPrompt was null or undefined. This indicates a problem with the prompt execution or the AI model response. Input:', JSON.stringify(input, null, 2), 'Raw result from prompt:', JSON.stringify(result, null, 2));
-            throw new Error("Failed to generate lesson text and quiz. AI model returned no output from the main prompt.");
-        }
-        console.log('[generateTailoredLessonsFlow] Received output from generateLessonPrompt. Title:', textAndQuizOutput.lessonTitle, 'Content sentence count:', textAndQuizOutput.lessonContent?.length, 'Quiz question count:', textAndQuizOutput.quiz?.length);
+      textAndQuizOutput = result.output;
+      console.log('[generateTailoredLessonsFlow] Parsed output from generateLessonPrompt (textAndQuizOutput):', JSON.stringify(textAndQuizOutput, null, 2));
 
-      } catch (promptError: any) {
-        console.error("[generateTailoredLessonsFlow] Error directly from generateLessonPrompt:", promptError.message ? promptError.message : JSON.stringify(promptError), "Details:", JSON.stringify(promptError, Object.getOwnPropertyNames(promptError)));
-        // Attempt to provide more context if it's a tool error
-        if (promptError.message && (promptError.message.includes('fetchCurriculumInfoTool') || promptError.message.includes('tool'))) {
-            throw new Error(`Error during curriculum information fetching: ${promptError.message}. Please check tool logs and API configurations.`);
-        }
-        throw promptError; // Re-throw to be caught by the outer try-catch
+      if (!textAndQuizOutput) {
+          console.error('[generateTailoredLessonsFlow] CRITICAL: Output from generateLessonPrompt was null or undefined. This indicates a problem with the prompt execution or the AI model response. Input:', JSON.stringify(input, null, 2), 'Raw result from prompt:', JSON.stringify(result, null, 2));
+          throw new Error("Failed to generate lesson text and quiz. AI model returned no output from the main prompt.");
       }
-      
-      let lessonContent = textAndQuizOutput.lessonContent;
-      if (typeof lessonContent === 'string') {
-          console.warn('[generateTailoredLessonsFlow] Lesson content was a string, attempting to parse or split. Received string:', lessonContent);
-          const contentString = lessonContent as string;
-          try {
-            const parsed = JSON.parse(contentString);
-            if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
-              lessonContent = parsed;
-              console.log('[generateTailoredLessonsFlow] Successfully parsed string content into array.');
-            } else {
-              console.warn('[generateTailoredLessonsFlow] Parsed string content was not an array of strings. Splitting by sentence.');
-              lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
-            }
-          } catch (e) {
-             console.warn('[generateTailoredLessonsFlow] Failed to parse string content as JSON. Splitting by sentence. Error:', e);
-             lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
-          }
-          console.log('[generateTailoredLessonsFlow] Processed string content. New sentence count:', lessonContent.length);
-      } else if (!Array.isArray(lessonContent) || !lessonContent.every(item => typeof item === 'string')) {
-          console.warn("[generateTailoredLessonsFlow] Lesson content was not a valid array of strings, attempting to coerce. Received (type " + typeof lessonContent + "):", JSON.stringify(lessonContent));
-          if (lessonContent && typeof (lessonContent as any).toString === 'function') {
-            const singleSentence = (lessonContent as any).toString();
-            lessonContent = singleSentence.match(/[^.!?]+[.!?]+/g) || [singleSentence];
+      console.log('[generateTailoredLessonsFlow] Received output from generateLessonPrompt. Title:', textAndQuizOutput.lessonTitle, 'Content sentence count:', textAndQuizOutput.lessonContent?.length, 'Quiz question count:', textAndQuizOutput.quiz?.length);
+
+    } catch (promptError: any) {
+      console.error("[generateTailoredLessonsFlow] Error directly from generateLessonPrompt execution:", promptError.message ? promptError.message : JSON.stringify(promptError), "Details:", JSON.stringify(promptError, Object.getOwnPropertyNames(promptError)));
+      if (promptError.message && (promptError.message.includes('fetchCurriculumInfoTool') || promptError.message.includes('tool'))) {
+          throw new Error(`Error during curriculum information fetching: ${promptError.message}. Please check tool logs and API configurations.`);
+      }
+      throw promptError; 
+    }
+    
+    let lessonContent = textAndQuizOutput.lessonContent;
+    if (typeof lessonContent === 'string') {
+        console.warn('[generateTailoredLessonsFlow] Lesson content was a string, attempting to parse or split. Received string:', lessonContent);
+        const contentString = lessonContent as string;
+        try {
+          const parsed = JSON.parse(contentString);
+          if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
+            lessonContent = parsed;
+            console.log('[generateTailoredLessonsFlow] Successfully parsed string content into array.');
           } else {
-            lessonContent = ["Default lesson content as the received format was unusable."];
+            console.warn('[generateTailoredLessonsFlow] Parsed string content was not an array of strings. Splitting by sentence.');
+            lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
           }
-          console.log('[generateTailoredLessonsFlow] Coerced invalid content into sentence count:', lessonContent.length);
-      }
-      
-      if (lessonContent.length === 0) {
-          console.warn("[generateTailoredLessonsFlow] Lesson content array was empty after processing. Using fallback.");
-          lessonContent = ["Let's start our lesson! This is a default sentence because content generation was empty."]; 
-      }
-      
-      const imageGenerationPromises: Promise<{ sentences: string[]; imageDataUri: string | null }>[] = [];
-      console.log(`[generateTailoredLessonsFlow] Starting image generation for ${Math.ceil(lessonContent.length / 2)} pairs of sentences.`);
-
-      for (let i = 0; i < lessonContent.length; i += 2) {
-        const pageSentences = lessonContent.slice(i, i + 2).map(s => cleanSentence(s)).filter(s => s.length > 0);
-        
-        if (pageSentences.length > 0) {
-            imageGenerationPromises.push(
-            (async () => {
-                let imageDataUri: string | null = null;
-                try {
-                const imageInput: GenerateImageInput = {
-                    sentences: pageSentences,
-                    childAge: input.childAge,
-                    interests: input.interests,
-                };
-                // console.log(`[generateTailoredLessonsFlow] Generating image for sentences: "${pageSentences.join(' ')}"`);
-                const imageResult = await generateImageForSentence(imageInput);
-                imageDataUri = imageResult.imageDataUri;
-                // console.log(`[generateTailoredLessonsFlow] Image generated successfully for: "${pageSentences.join(' ')}"`);
-                } catch (imgErr: any) {
-                console.error(`[generateTailoredLessonsFlow] Failed to generate image for sentences: "${pageSentences.join(' ')}"`, imgErr.message ? imgErr.message : JSON.stringify(imgErr));
-                }
-                return { sentences: pageSentences, imageDataUri };
-            })()
-            );
+        } catch (e) {
+           console.warn('[generateTailoredLessonsFlow] Failed to parse string content as JSON. Splitting by sentence. Error:', e);
+           lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
         }
+        console.log('[generateTailoredLessonsFlow] Processed string content. New sentence count:', lessonContent.length);
+    } else if (!Array.isArray(lessonContent) || !lessonContent.every(item => typeof item === 'string')) {
+        console.warn("[generateTailoredLessonsFlow] Lesson content was not a valid array of strings, attempting to coerce. Received (type " + typeof lessonContent + "):", JSON.stringify(lessonContent));
+        if (lessonContent && typeof (lessonContent as any).toString === 'function') {
+          const singleSentence = (lessonContent as any).toString();
+          lessonContent = singleSentence.match(/[^.!?]+[.!?]+/g) || [singleSentence];
+        } else {
+          lessonContent = ["Default lesson content as the received format was unusable."];
+        }
+        console.log('[generateTailoredLessonsFlow] Coerced invalid content into sentence count:', lessonContent.length);
+    }
+    
+    if (lessonContent.length === 0) {
+        console.warn("[generateTailoredLessonsFlow] Lesson content array was empty after processing. Using fallback.");
+        lessonContent = ["Let's start our lesson! This is a default sentence because content generation was empty."]; 
+    }
+    
+    const imageGenerationPromises: Promise<{ sentences: string[]; imageDataUri: string | null }>[] = [];
+    console.log(`[generateTailoredLessonsFlow] Starting image generation for ${Math.ceil(lessonContent.length / 2)} pairs of sentences.`);
+
+    for (let i = 0; i < lessonContent.length; i += 2) {
+      const pageSentences = lessonContent.slice(i, i + 2).map(s => cleanSentence(s)).filter(s => s.length > 0);
+      
+      if (pageSentences.length > 0) {
+          console.log(`[generateTailoredLessonsFlow] Preparing to generate image for sentences: "${pageSentences.join(' ')}"`);
+          imageGenerationPromises.push(
+          (async () => {
+              let imageDataUri: string | null = null;
+              try {
+              const imageInput: GenerateImageInput = {
+                  sentences: pageSentences,
+                  childAge: input.childAge,
+                  interests: input.interests,
+              };
+              console.log(`[generateTailoredLessonsFlow] Calling generateImageForSentence with input:`, JSON.stringify(imageInput));
+              const imageResult = await generateImageForSentence(imageInput);
+              imageDataUri = imageResult.imageDataUri;
+              console.log(`[generateTailoredLessonsFlow] Image generated successfully for: "${pageSentences.join(' ')}" (URI length: ${imageDataUri?.length})`);
+              } catch (imgErr: any) {
+              console.error(`[generateTailoredLessonsFlow] Failed to generate image for sentences: "${pageSentences.join(' ')}"`, imgErr.message ? imgErr.message : JSON.stringify(imgErr));
+              }
+              return { sentences: pageSentences, imageDataUri };
+          })()
+          );
       }
+    }
 
-      const resolvedLessonPages = await Promise.all(imageGenerationPromises);
-      console.log('[generateTailoredLessonsFlow] All image generation promises resolved. Page count:', resolvedLessonPages.length);
+    const resolvedLessonPages = await Promise.all(imageGenerationPromises);
+    console.log('[generateTailoredLessonsFlow] All image generation promises resolved. Page count:', resolvedLessonPages.length);
 
-      let quiz = textAndQuizOutput.quiz;
-      if (!Array.isArray(quiz) || !quiz.every(q => q && typeof q.questionText === 'string' && Array.isArray(q.options) && typeof q.correctAnswerIndex === 'number' && typeof q.explanation === 'string')) {
-        console.warn("[generateTailoredLessonsFlow] Generated quiz data is not in the expected format or is missing explanations. Using an empty quiz. Received:", JSON.stringify(quiz));
-        quiz = []; 
-      } else {
-        console.log('[generateTailoredLessonsFlow] Quiz data seems valid. Question count:', quiz.length);
-      }
+    let quiz = textAndQuizOutput.quiz;
+    if (!Array.isArray(quiz) || !quiz.every(q => q && typeof q.questionText === 'string' && Array.isArray(q.options) && typeof q.correctAnswerIndex === 'number' && typeof q.explanation === 'string')) {
+      console.warn("[generateTailoredLessonsFlow] Generated quiz data is not in the expected format or is missing explanations. Using an empty quiz. Received:", JSON.stringify(quiz));
+      quiz = []; 
+    } else {
+      console.log('[generateTailoredLessonsFlow] Quiz data seems valid. Question count:', quiz.length);
+    }
 
-      const finalOutput = {
-        lessonTitle: textAndQuizOutput.lessonTitle || `Lesson on ${input.lessonTopic}`,
-        lessonFormat: textAndQuizOutput.lessonFormat || "Informational",
-        subject: textAndQuizOutput.subject || "General Knowledge",
-        lessonPages: resolvedLessonPages.filter(page => page.sentences.length > 0),
-        quiz: quiz,
-      };
-      console.log('[generateTailoredLessonsFlow] Successfully assembled final lesson output. Title:', finalOutput.lessonTitle, 'Pages:', finalOutput.lessonPages.length, 'Quiz items:', finalOutput.quiz.length);
-      return finalOutput;
+    const finalOutput = {
+      lessonTitle: textAndQuizOutput.lessonTitle || `Lesson on ${input.lessonTopic}`,
+      lessonFormat: textAndQuizOutput.lessonFormat || "Informational",
+      subject: textAndQuizOutput.subject || "General Knowledge",
+      lessonPages: resolvedLessonPages.filter(page => page.sentences.length > 0),
+      quiz: quiz,
+    };
+    console.log('[generateTailoredLessonsFlow] Successfully assembled final lesson output. Title:', finalOutput.lessonTitle, 'Pages:', finalOutput.lessonPages.length, 'Quiz items:', finalOutput.quiz.length, 'Output object keys:', Object.keys(finalOutput).join(', '));
+    return finalOutput;
 
-    } catch (error: any) {
-      console.error("[generateTailoredLessonsFlow] Critical error during lesson generation flow:", error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    } catch (error: any) { // Catch errors from the entire flow
+      console.error("[generateTailoredLessonsFlow] CRITICAL error during main lesson generation flow:", error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       let errorMessage = "Lesson generation failed due to an internal server error.";
 
       if (error && error.message) {
@@ -416,21 +418,28 @@ const generateTailoredLessonsFlow = ai.defineFlow(
 );
 
 export async function generateTailoredLessons(input: GenerateTailoredLessonsInput): Promise<GenerateTailoredLessonsOutput> {
-  return generateTailoredLessonsFlow(input);
+  console.log('[generateTailoredLessons wrapper] Called with input:', JSON.stringify(input, null, 2));
+  try {
+    const result = await generateTailoredLessonsFlow(input);
+    console.log('[generateTailoredLessons wrapper] Successfully generated lesson. Title:', result.lessonTitle);
+    return result;
+  } catch (error: any) {
+    console.error("[generateTailoredLessons wrapper] Error during lesson generation flow:", error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    let errorMessage = "Failed to generate tailored lesson due to an internal server error from wrapper.";
+    if (error && error.message) {
+      errorMessage = String(error.message);
+    }
+    throw new Error(errorMessage);
+  }
 }
 
 function cleanSentence(sentence: string): string {
     let cleaned = sentence.trim();
-    // Ensure sentence ends with punctuation, but don't add if it already has some sort of end.
     if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
         cleaned += '.';
     }
-    // Capitalize first letter if it's not already.
     if (cleaned.length > 0 && cleaned[0] !== cleaned[0].toUpperCase()) {
         cleaned = cleaned[0].toUpperCase() + cleaned.substring(1);
     }
     return cleaned;
 }
-
-
-    

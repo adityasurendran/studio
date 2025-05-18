@@ -1,5 +1,5 @@
 /src/app/subscribe/page.tsx
-"use client"; // Keep this page as a client component for Suspense wrapper
+// Remove "use client"; to make this a Server Component
 
 import { Suspense } from 'react';
 import SubscribePageContent from './subscribe-page-content';
