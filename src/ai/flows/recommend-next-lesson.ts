@@ -67,34 +67,48 @@ Output Format:
 `,
 });
 
-const recommendNextLessonFlow = ai.defineFlow(
+const recommendNextLessonFlowInternal = ai.defineFlow(
   {
-    name: 'recommendNextLessonFlow',
+    name: 'recommendNextLessonFlowInternal',
     inputSchema: RecommendNextLessonInputSchema,
     outputSchema: RecommendNextLessonOutputSchema,
   },
   async (input) => {
+    console.log('[recommendNextLessonFlowInternal] Flow started with input:', JSON.stringify(input, null, 2));
     try {
       const { output } = await recommendNextLessonPrompt(input);
       if (!output) {
+        console.error('[recommendNextLessonFlowInternal] AI model returned no output. Input:', JSON.stringify(input, null, 2));
         throw new Error('AI model did not return a recommendation.');
       }
       // Ensure confidence is a number if present, or undefined
       if (output.confidence !== undefined && typeof output.confidence !== 'number') {
         output.confidence = undefined;
       }
+      console.log('[recommendNextLessonFlowInternal] Successfully received output from prompt.');
       return output;
     } catch (error: any) {
-      console.error("[recommendNextLessonFlow] Error during next lesson recommendation:", error);
-      let errorMessage = "Next lesson recommendation failed due to an internal server error.";
-      if (error && error.message) {
-        errorMessage = String(error.message);
-      }
+      console.error(`[recommendNextLessonFlowInternal] Error during prompt execution:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)), "Input:", JSON.stringify(input, null, 2));
+      let errorMessage = "Next lesson recommendation failed during AI prompt execution.";
+      if (error && error.message) errorMessage = error.message;
       throw new Error(errorMessage);
     }
   }
 );
 
 export async function recommendNextLesson(input: RecommendNextLessonInput): Promise<RecommendNextLessonOutput> {
-  return recommendNextLessonFlow(input);
+  console.log('[recommendNextLesson] Attempting to recommend next lesson with input:', JSON.stringify(input, null, 2));
+  try {
+    const result = await recommendNextLessonFlowInternal(input);
+    console.log('[recommendNextLesson] Successfully recommended next lesson:', result.recommendedTopic);
+    return result;
+  } catch (error: any) {
+    console.error("[recommendNextLesson] Error during next lesson recommendation flow:", error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    let errorMessage = "Next lesson recommendation failed due to an internal server error.";
+    if (error && error.message) {
+      errorMessage = String(error.message);
+    }
+    throw new Error(errorMessage);
+  }
 }
+

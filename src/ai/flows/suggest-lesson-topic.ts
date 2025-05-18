@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Suggests a lesson topic for a child based on their profile and learning history.
@@ -60,30 +61,44 @@ Output Format:
 `,
 });
 
-const suggestLessonTopicFlow = ai.defineFlow(
+const suggestLessonTopicFlowInternal = ai.defineFlow(
   {
-    name: 'suggestLessonTopicFlow',
+    name: 'suggestLessonTopicFlowInternal',
     inputSchema: SuggestLessonTopicInputSchema,
     outputSchema: SuggestLessonTopicOutputSchema,
   },
   async (input) => {
+    console.log('[suggestLessonTopicFlowInternal] Flow started with input:', JSON.stringify(input, null, 2));
     try {
       const { output } = await suggestTopicPrompt(input);
       if (!output) {
+        console.error('[suggestLessonTopicFlowInternal] AI model returned no output. Input:', JSON.stringify(input, null, 2));
         throw new Error('AI model did not return a suggestion.');
       }
+      console.log('[suggestLessonTopicFlowInternal] Successfully received output from prompt.');
       return output;
     } catch (error: any) {
-      console.error("[suggestLessonTopicFlow] Error during topic suggestion:", error);
-      let errorMessage = "Topic suggestion failed due to an internal server error.";
-      if (error && error.message) {
-        errorMessage = String(error.message);
-      }
+      console.error(`[suggestLessonTopicFlowInternal] Error during prompt execution:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)), "Input:", JSON.stringify(input, null, 2));
+      let errorMessage = "Topic suggestion failed during AI prompt execution.";
+      if (error && error.message) errorMessage = error.message;
       throw new Error(errorMessage);
     }
   }
 );
 
 export async function suggestLessonTopic(input: SuggestLessonTopicInput): Promise<SuggestLessonTopicOutput> {
-  return suggestLessonTopicFlow(input);
+  console.log('[suggestLessonTopic] Attempting to suggest topic with input:', JSON.stringify(input, null, 2));
+  try {
+    const result = await suggestLessonTopicFlowInternal(input);
+    console.log('[suggestLessonTopic] Successfully suggested topic:', result.suggestedTopic);
+    return result;
+  } catch (error: any) {
+     console.error("[suggestLessonTopic] Error during topic suggestion flow:", error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    let errorMessage = "Topic suggestion failed due to an internal server error.";
+    if (error && error.message) {
+      errorMessage = String(error.message);
+    }
+    throw new Error(errorMessage);
+  }
 }
+

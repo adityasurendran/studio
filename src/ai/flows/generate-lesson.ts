@@ -113,7 +113,8 @@ const fetchCurriculumInfoTool = ai.defineTool(
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[fetchCurriculumInfoTool] Google Custom Search API error: ${response.status} - ${errorText}. Query: ${query}`);
-        console.log(`TOAST (Server Log): Curriculum Search Error - Could not fetch curriculum data (Status: ${response.status}). Using general knowledge. (Variant: destructive)`);
+        // Do not toast from server-side flow
+        console.log(`SERVER LOG: Curriculum Search Error - Could not fetch curriculum data (Status: ${response.status}). Using general knowledge.`);
         return { summary: placeholderSummary, sourceHints: placeholderSources };
       }
       const searchData = await response.json();
@@ -122,7 +123,7 @@ const fetchCurriculumInfoTool = ai.defineTool(
 
       if (!searchData.items || searchData.items.length === 0) {
         console.warn(`[fetchCurriculumInfoTool] No search results found for query: ${query}`);
-        console.log("TOAST (Server Log): Curriculum Search - No specific curriculum details found via search for this topic. Using general knowledge.");
+        console.log("SERVER LOG: Curriculum Search - No specific curriculum details found via search for this topic. Using general knowledge.");
         return { 
             summary: `No specific search results found for '${input.lessonTopic}' within '${input.curriculumName}' for a ${input.childAge}-year-old. The lesson will be based on general knowledge, focusing on foundational concepts appropriate for the age.`, 
             sourceHints: ["General educational knowledge." ]
@@ -144,7 +145,7 @@ const fetchCurriculumInfoTool = ai.defineTool(
 
       if (!summarizedText) {
         console.error("[fetchCurriculumInfoTool] Failed to summarize search results. Using raw snippets.");
-        console.log("TOAST (Server Log): Curriculum Data - Using raw search snippets as AI summarization failed. (Variant: default)");
+        console.log("SERVER LOG: Curriculum Data - Using raw search snippets as AI summarization failed.");
         return { summary: snippets.substring(0, 2000), sourceHints }; // Truncate if too long
       }
 
@@ -156,7 +157,7 @@ const fetchCurriculumInfoTool = ai.defineTool(
 
     } catch (error: any) {
       console.error(`[fetchCurriculumInfoTool] Error during curriculum search or summarization: ${error.message}`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
-      console.log(`TOAST (Server Log): Curriculum Search Failed - An error occurred: ${error.message}. Using general knowledge. (Variant: destructive)`);
+      console.log(`SERVER LOG: Curriculum Search Failed - An error occurred: ${error.message}. Using general knowledge.`);
       return { summary: placeholderSummary, sourceHints: placeholderSources };
     }
   }
@@ -282,7 +283,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
         textAndQuizOutput = result.output;
 
         if (!textAndQuizOutput) {
-            console.error('[generateTailoredLessonsFlow] CRITICAL: Output from generateLessonPrompt was null or undefined. This indicates a problem with the prompt execution or the AI model response.');
+            console.error('[generateTailoredLessonsFlow] CRITICAL: Output from generateLessonPrompt was null or undefined. This indicates a problem with the prompt execution or the AI model response. Input:', JSON.stringify(input, null, 2), 'Raw result from prompt:', JSON.stringify(result, null, 2));
             throw new Error("Failed to generate lesson text and quiz. AI model returned no output from the main prompt.");
         }
         console.log('[generateTailoredLessonsFlow] Received output from generateLessonPrompt. Title:', textAndQuizOutput.lessonTitle, 'Content sentence count:', textAndQuizOutput.lessonContent?.length, 'Quiz question count:', textAndQuizOutput.quiz?.length);
@@ -298,21 +299,24 @@ const generateTailoredLessonsFlow = ai.defineFlow(
       
       let lessonContent = textAndQuizOutput.lessonContent;
       if (typeof lessonContent === 'string') {
-          console.warn('[generateTailoredLessonsFlow] Lesson content was a string, attempting to parse or split.');
+          console.warn('[generateTailoredLessonsFlow] Lesson content was a string, attempting to parse or split. Received string:', lessonContent);
           const contentString = lessonContent as string;
           try {
             const parsed = JSON.parse(contentString);
             if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
               lessonContent = parsed;
+              console.log('[generateTailoredLessonsFlow] Successfully parsed string content into array.');
             } else {
+              console.warn('[generateTailoredLessonsFlow] Parsed string content was not an array of strings. Splitting by sentence.');
               lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
             }
           } catch (e) {
+             console.warn('[generateTailoredLessonsFlow] Failed to parse string content as JSON. Splitting by sentence. Error:', e);
              lessonContent = contentString.match(/[^.!?]+[.!?]+/g) || [contentString];
           }
-          console.log('[generateTailoredLessonsFlow] Parsed/split string content into sentence count:', lessonContent.length);
+          console.log('[generateTailoredLessonsFlow] Processed string content. New sentence count:', lessonContent.length);
       } else if (!Array.isArray(lessonContent) || !lessonContent.every(item => typeof item === 'string')) {
-          console.warn("[generateTailoredLessonsFlow] Lesson content was not a valid array of strings, attempting to coerce. Received:", JSON.stringify(lessonContent));
+          console.warn("[generateTailoredLessonsFlow] Lesson content was not a valid array of strings, attempting to coerce. Received (type " + typeof lessonContent + "):", JSON.stringify(lessonContent));
           if (lessonContent && typeof (lessonContent as any).toString === 'function') {
             const singleSentence = (lessonContent as any).toString();
             lessonContent = singleSentence.match(/[^.!?]+[.!?]+/g) || [singleSentence];
@@ -374,7 +378,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
         lessonPages: resolvedLessonPages.filter(page => page.sentences.length > 0),
         quiz: quiz,
       };
-      console.log('[generateTailoredLessonsFlow] Successfully assembled final lesson output.');
+      console.log('[generateTailoredLessonsFlow] Successfully assembled final lesson output. Title:', finalOutput.lessonTitle, 'Pages:', finalOutput.lessonPages.length, 'Quiz items:', finalOutput.quiz.length);
       return finalOutput;
 
     } catch (error: any) {
@@ -398,13 +402,14 @@ const generateTailoredLessonsFlow = ai.defineFlow(
       const errorStringLower = errorMessage.toLowerCase();
       if (errorStringLower.includes("api key") || errorStringLower.includes("permission denied") || errorStringLower.includes("authentication") || errorStringLower.includes("quota") || errorStringLower.includes("billing")) {
          errorMessage = `Lesson generation failed: There might be an issue with the Google AI API Key configuration, permissions, or billing. Please check server logs and your Google Cloud/AI Studio project. Original error: ${errorMessage}`;
-      }
-      if (errorStringLower.includes("failed to parse") || errorStringLower.includes("json format")) {
+      } else if (errorStringLower.includes("failed to parse") || errorStringLower.includes("json format")) {
         errorMessage = `Lesson generation failed: The AI model's response was not in the expected format. Please try again. Original error: ${errorMessage}`;
-      }
-      if (errorStringLower.includes("tool") && (errorStringLower.includes("error") || errorStringLower.includes("failed"))) {
+      } else if (errorStringLower.includes("tool") && (errorStringLower.includes("error") || errorStringLower.includes("failed"))) {
         errorMessage = `Lesson generation failed: There was an issue using the curriculum research tool. This could be due to the tool's placeholder implementation or an internal error. Original error: ${errorMessage}`;
+      } else if (errorStringLower.includes("model") && (errorStringLower.includes("error") || errorStringLower.includes("failed") || errorStringLower.includes("unavailable"))) {
+        errorMessage = `Lesson generation failed: There seems to be an issue with the AI model itself. Please try again later. Original error: ${errorMessage}`;
       }
+      
       throw new Error(errorMessage);
     }
   }
@@ -416,12 +421,16 @@ export async function generateTailoredLessons(input: GenerateTailoredLessonsInpu
 
 function cleanSentence(sentence: string): string {
     let cleaned = sentence.trim();
+    // Ensure sentence ends with punctuation, but don't add if it already has some sort of end.
     if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
         cleaned += '.';
     }
+    // Capitalize first letter if it's not already.
     if (cleaned.length > 0 && cleaned[0] !== cleaned[0].toUpperCase()) {
         cleaned = cleaned[0].toUpperCase() + cleaned.substring(1);
     }
     return cleaned;
 }
 
+
+    
