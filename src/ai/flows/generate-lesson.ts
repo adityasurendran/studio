@@ -110,21 +110,23 @@ const fetchCurriculumInfoTool = ai.defineTool(
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[fetchCurriculumInfoTool] Google Custom Search API error: ${response.status} - ${errorText}. Query: ${query}`);
-        toast({
-          title: "Curriculum Search Error",
-          description: `Could not fetch curriculum data (Status: ${response.status}). Using general knowledge.`,
-          variant: "destructive",
-        });
+        // toast({ // Cannot call client-side toast from server flow
+        //   title: "Curriculum Search Error",
+        //   description: `Could not fetch curriculum data (Status: ${response.status}). Using general knowledge.`,
+        //   variant: "destructive",
+        // });
+        console.log(`TOAST: Curriculum Search Error - Could not fetch curriculum data (Status: ${response.status}). Using general knowledge. (Variant: destructive)`);
         return { summary: placeholderSummary, sourceHints: placeholderSources };
       }
       const searchData = await response.json();
 
       if (!searchData.items || searchData.items.length === 0) {
         console.warn(`[fetchCurriculumInfoTool] No search results found for query: ${query}`);
-        toast({
-            title: "Curriculum Search",
-            description: "No specific curriculum details found via search for this topic. Using general knowledge.",
-        });
+        // toast({ // Cannot call client-side toast from server flow
+        //     title: "Curriculum Search",
+        //     description: "No specific curriculum details found via search for this topic. Using general knowledge.",
+        // });
+        console.log("TOAST: Curriculum Search - No specific curriculum details found via search for this topic. Using general knowledge.");
         return { 
             summary: `No specific search results found for '${input.lessonTopic}' within '${input.curriculumName}' for a ${input.childAge}-year-old. The lesson will be based on general knowledge, focusing on foundational concepts appropriate for the age.`, 
             sourceHints: ["General educational knowledge." ]
@@ -138,17 +140,18 @@ const fetchCurriculumInfoTool = ai.defineTool(
       
       const { text: summarizedText } = await ai.generate({
         prompt: summarizationPromptText,
-        model: 'googleai/gemini-2.0-flash', // Or your preferred text model
+        model: 'googleai/gemini-2.0-flash', 
         config: { temperature: 0.3 } 
       });
 
       if (!summarizedText) {
         console.error("[fetchCurriculumInfoTool] Failed to summarize search results. Using raw snippets.");
-        toast({
-          title: "Curriculum Data",
-          description: "Using raw search snippets as AI summarization failed.",
-          variant: "default"
-        });
+        // toast({ // Cannot call client-side toast from server flow
+        //   title: "Curriculum Data",
+        //   description: "Using raw search snippets as AI summarization failed.",
+        //   variant: "default"
+        // });
+        console.log("TOAST: Curriculum Data - Using raw search snippets as AI summarization failed. (Variant: default)");
         return { summary: snippets.substring(0, 2000), sourceHints }; // Truncate if too long
       }
 
@@ -160,11 +163,12 @@ const fetchCurriculumInfoTool = ai.defineTool(
 
     } catch (error: any) {
       console.error(`[fetchCurriculumInfoTool] Error during curriculum search or summarization: ${error.message}`, error);
-      toast({
-          title: "Curriculum Search Failed",
-          description: `An error occurred: ${error.message}. Using general knowledge.`,
-          variant: "destructive",
-      });
+      // toast({ // Cannot call client-side toast from server flow
+      //     title: "Curriculum Search Failed",
+      //     description: `An error occurred: ${error.message}. Using general knowledge.`,
+      //     variant: "destructive",
+      // });
+      console.log(`TOAST: Curriculum Search Failed - An error occurred: ${error.message}. Using general knowledge. (Variant: destructive)`);
       return { summary: placeholderSummary, sourceHints: placeholderSources };
     }
   }
@@ -174,7 +178,7 @@ const fetchCurriculumInfoTool = ai.defineTool(
 
 const generateLessonPrompt = ai.definePrompt({
   name: 'generateLessonTextAndQuizPrompt', 
-  tools: [fetchCurriculumInfoTool], // Added the new tool
+  tools: [fetchCurriculumInfoTool], 
   input: {schema: GenerateTailoredLessonsInputSchema},
   output: {schema: z.object({
     lessonTitle: z.string().describe('The title of the generated lesson.'),
@@ -273,16 +277,6 @@ const generateLessonPrompt = ai.definePrompt({
   `,
 });
 
-// Helper function to show toast (can be moved to a utils file if used elsewhere)
-// For server-side components/flows, direct toast is not possible. Logging is primary.
-// This is a simple placeholder for potential client-side usage or for flows called from client.
-const toast = (options: {title: string, description: string, variant?: 'default' | 'destructive'}) => {
-    console.log(`TOAST: ${options.title} - ${options.description} (Variant: ${options.variant || 'default'})`);
-    // If this flow could be called from a client component that has access to a toast hook,
-    // you might pass the toast function down or use a shared service.
-    // For a pure server flow, console logging or structured logging is typical.
-};
-
 
 const generateTailoredLessonsFlow = ai.defineFlow(
   {
@@ -291,9 +285,21 @@ const generateTailoredLessonsFlow = ai.defineFlow(
     outputSchema: GenerateTailoredLessonsOutputSchema,
   },
   async (input) => {
+    console.log('[generateTailoredLessonsFlow] Starting lesson generation for topic:', input.lessonTopic, 'Curriculum:', input.curriculum);
     try {
-      const { output: textAndQuizOutput } = await generateLessonPrompt(input);
+      let textAndQuizOutput;
+      try {
+        console.log('[generateTailoredLessonsFlow] Calling generateLessonPrompt with input:', JSON.stringify(input, null, 2));
+        const result = await generateLessonPrompt(input);
+        textAndQuizOutput = result.output;
+        console.log('[generateTailoredLessonsFlow] Received output from generateLessonPrompt.');
+      } catch (promptError: any) {
+        console.error("[generateTailoredLessonsFlow] Error directly from generateLessonPrompt:", promptError.message ? promptError.message : promptError, "Details:", JSON.stringify(promptError, Object.getOwnPropertyNames(promptError)));
+        throw promptError; // Re-throw to be caught by the outer try-catch
+      }
+      
       if (!textAndQuizOutput) {
+        console.error('[generateTailoredLessonsFlow] Output from generateLessonPrompt was null or undefined.');
         throw new Error("Failed to generate lesson text and quiz. Output was null or undefined from the AI model.");
       }
 
@@ -356,7 +362,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
       let quiz = textAndQuizOutput.quiz;
       if (!Array.isArray(quiz) || !quiz.every(q => q && typeof q.questionText === 'string' && Array.isArray(q.options) && typeof q.correctAnswerIndex === 'number' && typeof q.explanation === 'string')) {
         console.warn("Generated quiz data is not in the expected format or is missing explanations. Using an empty quiz. Received:", quiz);
-        quiz = []; // Default to empty quiz if format is incorrect or explanations are missing
+        quiz = []; 
       }
 
 
@@ -368,7 +374,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
         quiz: quiz,
       };
     } catch (error: any) {
-      console.error("[generateTailoredLessonsFlow] Error during lesson generation:", error);
+      console.error("[generateTailoredLessonsFlow] Error during lesson generation:", error.message ? error.message : error, "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       let errorMessage = "Lesson generation failed due to an internal server error.";
 
       if (error && error.message) {
@@ -379,25 +385,22 @@ const generateTailoredLessonsFlow = ai.defineFlow(
         errorMessage = error;
       } else {
          try {
-          errorMessage = `Lesson generation failed with an unstringifiable error object. Raw error: ${JSON.stringify(error)}`;
+          errorMessage = `Lesson generation failed with an unstringifiable error object. Raw error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`;
         } catch (e) {
           errorMessage = "Lesson generation failed due to an unstringifiable error object and the error object itself could not be stringified.";
         }
       }
       
-      const errorString = errorMessage.toLowerCase();
-      if (errorString.includes("api key") || errorString.includes("permission denied") || errorString.includes("authentication") || errorString.includes("quota") || errorString.includes("billing")) {
+      const errorStringLower = errorMessage.toLowerCase();
+      if (errorStringLower.includes("api key") || errorStringLower.includes("permission denied") || errorStringLower.includes("authentication") || errorStringLower.includes("quota") || errorStringLower.includes("billing")) {
          errorMessage = `Lesson generation failed: There might be an issue with the Google AI API Key configuration, permissions, or billing. Please check server logs and your Google Cloud/AI Studio project. Original error: ${errorMessage}`;
       }
-      if (errorString.includes("failed to parse") || errorString.includes("json format")) {
+      if (errorStringLower.includes("failed to parse") || errorStringLower.includes("json format")) {
         errorMessage = `Lesson generation failed: The AI model's response was not in the expected format. Please try again. Original error: ${errorMessage}`;
       }
-       // Check if the error is related to the tool call itself
-      if (errorString.includes("tool") && (errorString.includes("error") || errorString.includes("failed"))) {
+      if (errorStringLower.includes("tool") && (errorStringLower.includes("error") || errorStringLower.includes("failed"))) {
         errorMessage = `Lesson generation failed: There was an issue using the curriculum research tool. This could be due to the tool's placeholder implementation or an internal error. Original error: ${errorMessage}`;
       }
-
-
       throw new Error(errorMessage);
     }
   }
@@ -409,14 +412,11 @@ export async function generateTailoredLessons(input: GenerateTailoredLessonsInpu
 
 function cleanSentence(sentence: string): string {
     let cleaned = sentence.trim();
-    // Ensure sentence ends with punctuation, but don't add if it already has one of . ! ?
     if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
         cleaned += '.';
     }
-    // Capitalize first letter if it's not already
     if (cleaned.length > 0 && cleaned[0] !== cleaned[0].toUpperCase()) {
         cleaned = cleaned[0].toUpperCase() + cleaned.substring(1);
     }
     return cleaned;
 }
-
