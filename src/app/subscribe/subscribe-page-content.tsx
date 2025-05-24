@@ -1,4 +1,3 @@
-/src/app/subscribe/subscribe-page-content.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";

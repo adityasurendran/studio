@@ -357,6 +357,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
                 console.log(`[generateTailoredLessonsFlow] Image generated successfully for: "${pageSentences.join(' ')}" (URI length: ${imageDataUri?.length})`);
                 } catch (imgErr: any) {
                 console.error(`[generateTailoredLessonsFlow] Failed to generate image for sentences: "${pageSentences.join(' ')}" for lesson "${textAndQuizOutput.lessonTitle}"`, imgErr.message ? imgErr.message : JSON.stringify(imgErr));
+                // imageDataUri remains null, allowing the lesson to proceed without this image.
                 }
                 return { sentences: pageSentences, imageDataUri };
             })()
@@ -463,3 +464,4 @@ function cleanSentence(sentence: string): string {
     }
     return cleaned;
 }
+    
