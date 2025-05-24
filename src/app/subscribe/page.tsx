@@ -1,4 +1,3 @@
-/src/app/subscribe/page.tsx
 // Remove "use client"; to make this a Server Component
 
 import { Suspense } from 'react';
@@ -6,7 +5,7 @@ import SubscribePageContent from './subscribe-page-content';
 import { Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'; // For skeleton
 import { Button } from '@/components/ui/button'; // For skeleton
-import { Sparkles, CreditCard } from 'lucide-react'; // For skeleton
+import { Sparkles } from 'lucide-react'; // For skeleton
 
 function SubscribePageSkeleton() {
   return (
