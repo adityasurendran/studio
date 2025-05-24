@@ -73,32 +73,42 @@ const suggestLessonTopicFlowInternal = ai.defineFlow(
       const { output } = await suggestTopicPrompt(input);
       if (!output) {
         console.error('[suggestLessonTopicFlowInternal] AI model returned no output. Input:', JSON.stringify(input, null, 2));
-        throw new Error('AI model did not return a suggestion.');
+        throw new Error('AI model did not return a lesson topic suggestion.');
       }
-      console.log('[suggestLessonTopicFlowInternal] Successfully received output from prompt.');
+      console.log('[suggestLessonTopicFlowInternal] Successfully received output from prompt:', JSON.stringify(output, null, 2));
       return output;
     } catch (error: any) {
-      console.error(`[suggestLessonTopicFlowInternal] Error during prompt execution:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)), "Input:", JSON.stringify(input, null, 2));
+      console.error(`[suggestLessonTopicFlowInternal] Error during prompt execution for input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       let errorMessage = "Topic suggestion failed during AI prompt execution.";
-      if (error && error.message) errorMessage = error.message;
+      if (error && error.message) errorMessage = `AI prompt for topic suggestion failed: ${error.message}`;
       throw new Error(errorMessage);
     }
   }
 );
 
 export async function suggestLessonTopic(input: SuggestLessonTopicInput): Promise<SuggestLessonTopicOutput> {
-  console.log('[suggestLessonTopic] Attempting to suggest topic with input:', JSON.stringify(input, null, 2));
+  console.log('[suggestLessonTopic wrapper] Called with input:', JSON.stringify(input, null, 2));
   try {
     const result = await suggestLessonTopicFlowInternal(input);
-    console.log('[suggestLessonTopic] Successfully suggested topic:', result.suggestedTopic);
+    console.log('[suggestLessonTopic wrapper] Successfully suggested topic:', result.suggestedTopic);
     return result;
   } catch (error: any) {
-     console.error("[suggestLessonTopic] Error during topic suggestion flow:", error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    let errorMessage = "Topic suggestion failed due to an internal server error.";
+     console.error(`[suggestLessonTopic wrapper] Error during topic suggestion flow for input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    let userFriendlyMessage = "Failed to suggest a lesson topic. ";
     if (error && error.message) {
-      errorMessage = String(error.message);
+        const lowerCaseMessage = error.message.toLowerCase();
+        if (lowerCaseMessage.includes("api key") || lowerCaseMessage.includes("permission denied") || lowerCaseMessage.includes("billing")) {
+            userFriendlyMessage += "There might be an issue with the API configuration or billing. Please check server logs.";
+        } else if (lowerCaseMessage.includes("model") && (lowerCaseMessage.includes("error") || lowerCaseMessage.includes("failed"))) {
+            userFriendlyMessage += "The AI model encountered an issue. Please try again later.";
+        } else if (lowerCaseMessage.includes("format") || lowerCaseMessage.includes("parse")) {
+            userFriendlyMessage += "The AI's response was not in the expected format. Please try again.";
+        } else {
+            userFriendlyMessage += "An internal server error occurred. Please try again.";
+        }
+    } else {
+        userFriendlyMessage += "An unknown internal server error occurred. Please try again.";
     }
-    throw new Error(errorMessage);
+    throw new Error(userFriendlyMessage);
   }
 }
-

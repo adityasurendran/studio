@@ -79,36 +79,47 @@ const recommendNextLessonFlowInternal = ai.defineFlow(
       const { output } = await recommendNextLessonPrompt(input);
       if (!output) {
         console.error('[recommendNextLessonFlowInternal] AI model returned no output. Input:', JSON.stringify(input, null, 2));
-        throw new Error('AI model did not return a recommendation.');
+        throw new Error('AI model did not return a recommendation for the next lesson.');
       }
       // Ensure confidence is a number if present, or undefined
       if (output.confidence !== undefined && typeof output.confidence !== 'number') {
         output.confidence = undefined;
       }
-      console.log('[recommendNextLessonFlowInternal] Successfully received output from prompt.');
+      console.log('[recommendNextLessonFlowInternal] Successfully received output from prompt:', JSON.stringify(output, null, 2));
       return output;
     } catch (error: any) {
-      console.error(`[recommendNextLessonFlowInternal] Error during prompt execution:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)), "Input:", JSON.stringify(input, null, 2));
+      console.error(`[recommendNextLessonFlowInternal] Error during prompt execution for input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       let errorMessage = "Next lesson recommendation failed during AI prompt execution.";
-      if (error && error.message) errorMessage = error.message;
+      if (error && error.message) errorMessage = `AI prompt for next lesson failed: ${error.message}`;
       throw new Error(errorMessage);
     }
   }
 );
 
 export async function recommendNextLesson(input: RecommendNextLessonInput): Promise<RecommendNextLessonOutput> {
-  console.log('[recommendNextLesson] Attempting to recommend next lesson with input:', JSON.stringify(input, null, 2));
+  console.log('[recommendNextLesson wrapper] Called with input:', JSON.stringify(input, null, 2));
   try {
     const result = await recommendNextLessonFlowInternal(input);
-    console.log('[recommendNextLesson] Successfully recommended next lesson:', result.recommendedTopic);
+    console.log('[recommendNextLesson wrapper] Successfully recommended next lesson:', result.recommendedTopic);
     return result;
-  } catch (error: any) {
-    console.error("[recommendNextLesson] Error during next lesson recommendation flow:", error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    let errorMessage = "Next lesson recommendation failed due to an internal server error.";
+  } catch (error: any)
+{
+    console.error(`[recommendNextLesson wrapper] Error during next lesson recommendation flow for input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    let userFriendlyMessage = "Failed to recommend the next lesson. ";
     if (error && error.message) {
-      errorMessage = String(error.message);
+        const lowerCaseMessage = error.message.toLowerCase();
+        if (lowerCaseMessage.includes("api key") || lowerCaseMessage.includes("permission denied") || lowerCaseMessage.includes("billing")) {
+            userFriendlyMessage += "There might be an issue with the API configuration or billing. Please check server logs.";
+        } else if (lowerCaseMessage.includes("model") && (lowerCaseMessage.includes("error") || lowerCaseMessage.includes("failed"))) {
+            userFriendlyMessage += "The AI model encountered an issue. Please try again later.";
+        } else if (lowerCaseMessage.includes("format") || lowerCaseMessage.includes("parse")) {
+            userFriendlyMessage += "The AI's response was not in the expected format. Please try again.";
+        } else {
+            userFriendlyMessage += "An internal server error occurred. Please try again.";
+        }
+    } else {
+        userFriendlyMessage += "An unknown internal server error occurred. Please try again.";
     }
-    throw new Error(errorMessage);
+    throw new Error(userFriendlyMessage);
   }
 }
-

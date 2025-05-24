@@ -293,7 +293,12 @@ const generateTailoredLessonsFlow = ai.defineFlow(
         console.log('[generateTailoredLessonsFlow] Received output from generateLessonPrompt. Title:', textAndQuizOutput.lessonTitle, 'Content sentence count:', textAndQuizOutput.lessonContent?.length, 'Quiz question count:', textAndQuizOutput.quiz?.length);
 
       } catch (promptError: any) {
-        console.error(`[generateTailoredLessonsFlow] Error directly from generateLessonPrompt execution for topic "${input.lessonTopic}", child age ${input.childAge}:`, promptError.message ? promptError.message : JSON.stringify(promptError), "Details:", JSON.stringify(promptError, Object.getOwnPropertyNames(promptError)));
+        let errorDetails = `Message: ${promptError.message || 'No message'}, Name: ${promptError.name || 'No name'}`;
+        if (promptError.stack) { errorDetails += `, Stack: ${promptError.stack}`; }
+        try { errorDetails += `, FullErrorObject: ${JSON.stringify(promptError, Object.getOwnPropertyNames(promptError))}`; } 
+        catch (e) { errorDetails += `, FullErrorObject: (Unstringifiable)`; }
+        console.error(`[generateTailoredLessonsFlow] Error directly from generateLessonPrompt execution for topic "${input.lessonTopic}", child age ${input.childAge}: ${errorDetails}`);
+        
         if (promptError.message && (promptError.message.includes('fetchCurriculumInfoTool') || promptError.message.includes('tool'))) {
             throw new Error(`Error during curriculum information fetching for topic "${input.lessonTopic}": ${promptError.message}. Please check tool logs and API configurations.`);
         }
@@ -387,7 +392,12 @@ const generateTailoredLessonsFlow = ai.defineFlow(
       return finalOutput;
 
     } catch (flowError: any) {
-      console.error(`[generateTailoredLessonsFlow] CRITICAL error during main lesson generation flow for topic "${input.lessonTopic}", child age ${input.childAge}:`, flowError.message ? flowError.message : JSON.stringify(flowError), "Details:", JSON.stringify(flowError, Object.getOwnPropertyNames(flowError)));
+      let errorDetails = `Message: ${flowError.message || 'No message'}, Name: ${flowError.name || 'No name'}`;
+      if (flowError.stack) { errorDetails += `, Stack: ${flowError.stack}`; }
+      try { errorDetails += `, FullErrorObject: ${JSON.stringify(flowError, Object.getOwnPropertyNames(flowError))}`; } 
+      catch (e) { errorDetails += `, FullErrorObject: (Unstringifiable)`; }
+      console.error(`[generateTailoredLessonsFlow] CRITICAL error during main lesson generation flow for topic "${input.lessonTopic}", child age ${input.childAge}: ${errorDetails}`);
+      
       let errorMessage = "Lesson generation failed due to an internal server error.";
 
       if (flowError && flowError.message) {
@@ -427,11 +437,14 @@ export async function generateTailoredLessons(input: GenerateTailoredLessonsInpu
     console.log('[generateTailoredLessons wrapper] Successfully generated lesson. Title:', result.lessonTitle);
     return result;
   } catch (error: any) {
-    console.error(`[generateTailoredLessons wrapper] Error during lesson generation flow for topic "${input.lessonTopic}", child age ${input.childAge}:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    // Construct a more user-friendly error message to be thrown up
+    let errorDetails = `Message: ${error.message || 'No message'}, Name: ${error.name || 'No name'}`;
+    if (error.stack) { errorDetails += `, Stack: ${error.stack}`; }
+    try { errorDetails += `, FullErrorObject: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`; } 
+    catch (e) { errorDetails += `, FullErrorObject: (Unstringifiable)`; }
+    console.error(`[generateTailoredLessons wrapper] Error during lesson generation flow for topic "${input.lessonTopic}", child age ${input.childAge}: ${errorDetails}`);
+
     let userFriendlyMessage = `Failed to generate lesson for topic "${input.lessonTopic}". `;
     if (error && error.message) {
-        // Check for common, more specific error messages
         const lowerCaseMessage = error.message.toLowerCase();
         if (lowerCaseMessage.includes("api key") || lowerCaseMessage.includes("permission denied") || lowerCaseMessage.includes("billing")) {
             userFriendlyMessage += "There might be an issue with the API configuration or billing. Please check server logs.";
@@ -447,18 +460,15 @@ export async function generateTailoredLessons(input: GenerateTailoredLessonsInpu
     } else {
         userFriendlyMessage += "An unknown internal server error occurred. Please try again.";
     }
-    // It's crucial that this re-thrown error is a new Error object so it's caught by the client
     throw new Error(userFriendlyMessage);
   }
 }
 
 function cleanSentence(sentence: string): string {
     let cleaned = sentence.trim();
-    // Ensure sentence ends with punctuation if it's not empty
     if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
         cleaned += '.';
     }
-    // Capitalize the first letter if it's not already
     if (cleaned.length > 0 && cleaned[0] !== cleaned[0].toUpperCase()) {
         cleaned = cleaned[0].toUpperCase() + cleaned.substring(1);
     }

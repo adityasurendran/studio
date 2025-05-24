@@ -29,22 +29,6 @@ export type SummarizeChildInsightsOutput = z.infer<
   typeof SummarizeChildInsightsOutputSchema
 >;
 
-export async function summarizeChildInsights(
-  input: SummarizeChildInsightsInput
-): Promise<SummarizeChildInsightsOutput> {
-  console.log('[summarizeChildInsightsFlow] Attempting to summarize insights for child:', input.childName);
-  try {
-    const result = await summarizeChildInsightsFlow(input);
-    console.log('[summarizeChildInsightsFlow] Successfully summarized insights for child:', input.childName);
-    return result;
-  } catch (error: any) {
-    console.error(`[summarizeChildInsightsFlow] Error generating summary for child ${input.childName}:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    let errorMessage = "Failed to generate child insights summary.";
-    if (error && error.message) errorMessage = error.message;
-    throw new Error(errorMessage);
-  }
-}
-
 const prompt = ai.definePrompt({
   name: 'summarizeChildInsightsPrompt',
   input: {schema: SummarizeChildInsightsInputSchema},
@@ -61,9 +45,9 @@ const prompt = ai.definePrompt({
   Summary:`,
 });
 
-const summarizeChildInsightsFlow = ai.defineFlow(
+const summarizeChildInsightsFlowInternal = ai.defineFlow( // Renamed to avoid conflict with exported wrapper
   {
-    name: 'summarizeChildInsightsFlowInternal', // Renamed for clarity if wrapper has same name
+    name: 'summarizeChildInsightsFlowInternal', 
     inputSchema: SummarizeChildInsightsInputSchema,
     outputSchema: SummarizeChildInsightsOutputSchema,
   },
@@ -72,17 +56,46 @@ const summarizeChildInsightsFlow = ai.defineFlow(
     try {
       const {output} = await prompt(input);
       if (!output) {
-        console.error('[summarizeChildInsightsFlowInternal] AI model returned no output. Input:', JSON.stringify(input, null, 2));
+        console.error('[summarizeChildInsightsFlowInternal] AI model returned no output for insights summary. Input:', JSON.stringify(input, null, 2));
         throw new Error('AI model returned no output for insights summary.');
       }
-      console.log('[summarizeChildInsightsFlowInternal] Successfully received output from prompt.');
+      console.log('[summarizeChildInsightsFlowInternal] Successfully received output from prompt:', JSON.stringify(output, null, 2));
       return output;
     } catch (error: any) {
-      console.error(`[summarizeChildInsightsFlowInternal] Error during prompt execution for child ${input.childName}:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      console.error(`[summarizeChildInsightsFlowInternal] Error during prompt execution for child ${input.childName}, input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       let errorMessage = "Failed during AI prompt for insights summary.";
-       if (error && error.message) errorMessage = error.message;
+       if (error && error.message) errorMessage = `AI prompt for insights summary failed: ${error.message}`;
       throw new Error(errorMessage);
     }
   }
 );
 
+export async function summarizeChildInsights(
+  input: SummarizeChildInsightsInput
+): Promise<SummarizeChildInsightsOutput> {
+  console.log('[summarizeChildInsights wrapper] Called with input:', JSON.stringify(input, null, 2));
+  try {
+    // Calling the renamed internal flow function
+    const result = await summarizeChildInsightsFlowInternal(input); 
+    console.log('[summarizeChildInsights wrapper] Successfully summarized insights for child:', input.childName);
+    return result;
+  } catch (error: any) {
+    console.error(`[summarizeChildInsights wrapper] Error generating summary for child ${input.childName}, input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    let userFriendlyMessage = `Failed to generate insights summary for ${input.childName}. `;
+    if (error && error.message) {
+        const lowerCaseMessage = error.message.toLowerCase();
+        if (lowerCaseMessage.includes("api key") || lowerCaseMessage.includes("permission denied") || lowerCaseMessage.includes("billing")) {
+            userFriendlyMessage += "There might be an issue with the API configuration or billing. Please check server logs.";
+        } else if (lowerCaseMessage.includes("model") && (lowerCaseMessage.includes("error") || lowerCaseMessage.includes("failed"))) {
+            userFriendlyMessage += "The AI model encountered an issue. Please try again later.";
+        } else if (lowerCaseMessage.includes("format") || lowerCaseMessage.includes("parse")) {
+            userFriendlyMessage += "The AI's response was not in the expected format. Please try again.";
+        } else {
+            userFriendlyMessage += "An internal server error occurred. Please try again.";
+        }
+    } else {
+        userFriendlyMessage += "An unknown internal server error occurred. Please try again.";
+    }
+    throw new Error(userFriendlyMessage);
+  }
+}
