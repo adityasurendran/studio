@@ -3,18 +3,18 @@
 
 import type { User } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from 'react';
-import { auth, functions as firebaseFunctions } from '@/lib/firebase'; // Ensure functions is imported
+import { auth, functions as firebaseFunctions } from '@/lib/firebase'; 
 import type { ParentProfile } from '@/types'; 
 import { httpsCallable } from 'firebase/functions';
-import { useToast } from '@/hooks/use-toast'; // Import useToast
+import { useToast } from '@/hooks/use-toast'; 
+// Removed Firestore imports as they were commented out and not used for subscription status here.
+// If you intend to use Firestore for profile storage, they would be needed.
 
-// For Firestore client-side (if needed, for now functions handle it)
-// import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
-// const db = getFirestore(auth.app); // Initialize Firestore if using client-side listeners
-
-const LOCAL_PIN_STORAGE_KEY = 'shannon_demo_pin_value'; // UNSAFE: Stores PIN directly for demo
+const LOCAL_PIN_STORAGE_KEY = 'shannon_demo_pin_value'; 
 const LOCAL_PIN_SETUP_KEY = 'shannon_demo_pin_is_setup';
 
+// Define the special "always free" account email
+const ALWAYS_FREE_EMAIL = "adityasurendran01@icloud.com";
 
 interface AuthContextType {
   currentUser: User | null;
@@ -25,6 +25,7 @@ interface AuthContextType {
   setupLocalPin: (pin: string) => void;
   verifyLocalPin: (pin: string) => boolean;
   clearLocalPin: () => void;
+  updateSubscriptionStatus: (isSubscribed: boolean) => Promise<void>; // Added for external updates
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,7 +49,6 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
-  // --- Local PIN Management (UNSAFE - FOR DEMO PURPOSES ONLY) ---
   const [isLocalPinSetup, setIsLocalPinSetup] = useState(false);
 
   useEffect(() => {
@@ -59,9 +59,6 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
 
   const setupLocalPin = useCallback((pin: string) => {
     if (typeof window !== 'undefined') {
-      // WARNING: Storing PIN directly in localStorage is highly insecure.
-      // This is for demonstration purposes ONLY.
-      // In a real application, PINs should be hashed server-side.
       localStorage.setItem(LOCAL_PIN_STORAGE_KEY, pin); 
       localStorage.setItem(LOCAL_PIN_SETUP_KEY, 'true');
       setIsLocalPinSetup(true);
@@ -88,29 +85,107 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
       toast({ title: "PIN Protection Disabled", description: "Local PIN protection has been disabled for this browser.", variant: "destructive" });
     }
   }, [toast]);
-  // --- End Local PIN Management ---
+
+  const updateSubscriptionStatus = useCallback(async (isSubscribed: boolean) => {
+    if (!currentUser) {
+      console.error("No user is currently signed in. Cannot update subscription status via function.");
+      toast({
+        title: "Authentication Error",
+        description: "You must be signed in to update your subscription.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // For the special free email, always set client-side to true
+    if (currentUser.email === ALWAYS_FREE_EMAIL) {
+        setParentProfile(prevProfile => {
+            if (!prevProfile) return { uid: currentUser.uid, email: currentUser.email, isSubscribed: true, pinEnabled: false };
+            return { ...prevProfile, isSubscribed: true };
+        });
+        toast({ title: "Special Account", description: "This account has permanent premium access." });
+        return;
+    }
+
+    try {
+      const updateUserSubscriptionFunction = httpsCallable(firebaseFunctions, 'updateUserSubscription');
+      await updateUserSubscriptionFunction({ isSubscribed });
+      
+      setParentProfile(prevProfile => {
+        if (!prevProfile) return null; // Should ideally not happen if user is logged in
+        return { ...prevProfile, isSubscribed };
+      });
+      toast({
+        title: "Subscription Updated",
+        description: `Subscription status set to: ${isSubscribed ? 'Active' : 'Inactive'}.`,
+      });
+    } catch (error: any) {
+      console.error("Error calling updateUserSubscription function:", error);
+      toast({
+        title: "Subscription Update Failed",
+        description: error.message || "Failed to update subscription status on the server. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [currentUser, toast]);
 
 
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(
       async (user) => {
+        setLoading(true);
+        setError(null);
         setCurrentUser(user);
         if (user) {
-          // This part is for fetching/listening to parent profile from Firestore
-          // It's important for subscription status but not directly for the local PIN
-          // const userDocRef = doc(db, "users", user.uid);
-          // const unsubscribeFirestore = onSnapshot(userDocRef, ...);
-          // return () => unsubscribeFirestore();
+          if (user.email === ALWAYS_FREE_EMAIL) {
+            // Grant free access to this special email
+            console.log(`User ${user.email} detected as ALWAYS_FREE_EMAIL. Granting subscription access.`);
+            setParentProfile({
+              uid: user.uid,
+              email: user.email,
+              isSubscribed: true, // Override: always subscribed
+              pinEnabled: false, // Default for new profile parts
+              // Potentially fetch other parent profile details if they exist, but override isSubscribed
+            });
+            setLoading(false);
+            return; // Skip Firebase function call for this user
+          }
           
-          // For now, assume parentProfile is fetched or defaults are set
-          // The actual `isSubscribed` field comes from Firestore, updated by webhooks
-           setParentProfile(prev => prev || { uid: user.uid, email: user.email, isSubscribed: false, pinEnabled: false });
+          // For regular users, call the Cloud Function to get their profile/subscription status
+          try {
+            // Assuming you have a Cloud Function to get user profile data including subscription
+            // For this example, we'll simulate fetching and creating a default if not found.
+            // In a real app, this would be replaced by an actual call to a function like 'getUserProfile'.
+            // For now, let's mock fetching a profile and checking its `isSubscribed` status.
+            // This part needs to be connected to your actual backend logic that reads from Firestore.
+            // For the demo, we'll set a default non-subscribed state for other users.
+            // If you have a function that fetches user data, it should be called here.
+            // e.g., const getUserProfile = httpsCallable(firebaseFunctions, 'getUserProfile');
+            // const profileResult = await getUserProfile();
+            // const fetchedProfile = profileResult.data as ParentProfile;
+            // setParentProfile(fetchedProfile);
+
+            // Placeholder: Simulating a non-subscribed user if not the special email
+            // In a real app, you fetch this from Firestore or your backend
+            setParentProfile(prev => ({
+                uid: user.uid,
+                email: user.email,
+                isSubscribed: prev?.isSubscribed || false, // Keep existing if re-auth, else default
+                pinEnabled: prev?.pinEnabled || false,
+            }));
+
+          } catch (err: any) {
+            console.error("Error fetching parent profile:", err);
+            setError(err);
+            setParentProfile({ uid: user.uid, email: user.email, isSubscribed: false, pinEnabled: false });
+          }
         } else {
           setParentProfile(null);
         }
         setLoading(false);
       },
       (err) => {
+        console.error("Auth state change error:", err);
         setError(err);
         setLoading(false);
       }
@@ -128,6 +203,7 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
     setupLocalPin,
     verifyLocalPin,
     clearLocalPin,
+    updateSubscriptionStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
