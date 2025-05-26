@@ -19,7 +19,8 @@ export default function HomePage() {
         Your dedicated partner in empowering children with learning difficulties through <span className="text-accent font-semibold">personalized</span> and <span className="text-accent font-semibold">engaging</span> AI-driven lessons.
       </p>
       
-      <div className="grid md:grid-cols-2 gap-8 w-full max-w-5xl mb-16">
+      {/* Increased max-width here for wider screens */}
+      <div className="grid md:grid-cols-2 gap-8 w-full max-w-7xl mb-16"> 
         <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 group border border-transparent hover:border-primary/30 rounded-lg overflow-hidden">
           <CardHeader className="bg-gradient-to-br from-primary/10 via-card to-card pb-4">
             <Users className="h-10 w-10 sm:h-12 sm:w-12 text-accent mx-auto mb-3"/>
@@ -28,10 +29,10 @@ export default function HomePage() {
           </CardHeader>
           <CardContent className="p-6">
             <Image 
-              src="https://picsum.photos/seed/parent-dashboard/400/250" 
+              src="https://picsum.photos/seed/parent-dashboard/600/400" 
               alt="Parent Dashboard Preview" 
-              width={400} 
-              height={250} 
+              width={600} // Increased placeholder width for better quality on larger cards
+              height={375} // Increased placeholder height
               className="rounded-md mb-6 w-full object-cover shadow-lg border-2 border-muted group-hover:border-accent/50 transition-all"
               data-ai-hint="parent child computer"
             />
@@ -54,10 +55,10 @@ export default function HomePage() {
           </CardHeader>
           <CardContent className="p-6">
              <Image 
-              src="https://picsum.photos/seed/child-learning-fun/400/250" 
+              src="https://picsum.photos/seed/child-learning-fun/600/400" 
               alt="Child Learning Preview" 
-              width={400} 
-              height={250} 
+              width={600} // Increased placeholder width
+              height={375} // Increased placeholder height
               className="rounded-md mb-6 w-full object-cover shadow-lg border-2 border-muted group-hover:border-primary/50 transition-all"
               data-ai-hint="child learning fun"
             />
@@ -73,7 +74,8 @@ export default function HomePage() {
         </Card>
       </div>
 
-      <div className="mt-10 p-8 bg-card rounded-xl shadow-2xl border-t-4 border-primary max-w-3xl">
+      {/* Increased max-width here for wider screens */}
+      <div className="mt-10 p-8 bg-card rounded-xl shadow-2xl border-t-4 border-primary max-w-5xl">
         <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">Our Mission</h2>
         <p className="text-lg text-foreground leading-relaxed">
           Shannon is dedicated to providing <span className="font-semibold">100% free, high-quality</span> educational resources for children facing learning challenges. We believe every child deserves the chance to learn, grow, and succeed at their own pace.

@@ -5,7 +5,7 @@ import AuthGuard from '@/components/auth-guard';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, PlusSquare, BookOpen, Settings, LogOut, Palette, Sparkles, Brain, History, Search, Trophy, FastForward, FileEdit, Shield } from 'lucide-react'; 
+import { Home, Users, PlusSquare, BookOpen, Settings, LogOut, Palette, Sparkles, Brain, History as HistoryIcon, Search, Trophy, FastForward, FileEdit, Shield } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
@@ -42,7 +42,7 @@ export default function DashboardLayout({
     { href: '/dashboard', label: 'Overview', icon: Home },
     { href: '/dashboard/profiles', label: 'Child Profiles', icon: Users },
     { href: '/dashboard/lessons/new', label: 'New Lesson', icon: PlusSquare, disabled: !activeChild },
-    { href: '/dashboard/lessons', label: 'Lesson History', icon: History, disabled: !activeChild },
+    { href: '/dashboard/lessons', label: 'Lesson History', icon: HistoryIcon, disabled: !activeChild },
     { href: '/dashboard/discover', label: 'Explore Topics', icon: Search, disabled: !activeChild },
     { href: '/dashboard/recommendations', label: 'Next Lesson', icon: FastForward, disabled: !activeChild || !activeChild.lessonAttempts || activeChild.lessonAttempts.length === 0 },
     { href: '/dashboard/create-custom', label: 'Custom Content', icon: FileEdit, disabled: !activeChild },
@@ -110,10 +110,12 @@ export default function DashboardLayout({
           </div>
         </Sidebar>
         <SidebarInset className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
-          {children}
+          {/* Ensure children of SidebarInset can take full width */}
+          <div className="w-full h-full">
+            {children}
+          </div>
         </SidebarInset>
       </div>
     </AuthGuard>
   );
 }
-
