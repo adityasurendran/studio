@@ -23,7 +23,7 @@ export type RecommendNextLessonInput = z.infer<typeof RecommendNextLessonInputSc
 const RecommendNextLessonOutputSchema = z.object({
   recommendedTopic: z.string().describe('A concise and specific lesson topic recommendation representing a logical next step in learning.'),
   reasoning: z.string().describe('A detailed explanation of why this topic is recommended, linking to the child\'s history, curriculum, and potential areas for growth or reinforcement.'),
-  confidence: z.number().optional().min(0).max(1).describe('An optional confidence score (0-1) for the recommendation.'),
+  confidence: z.number().min(0).max(1).optional().describe('An optional confidence score (0-1) for the recommendation.'),
 });
 export type RecommendNextLessonOutput = z.infer<typeof RecommendNextLessonOutputSchema>;
 
@@ -83,12 +83,20 @@ const recommendNextLessonFlowInternal = ai.defineFlow(
       }
       // Ensure confidence is a number if present, or undefined
       if (output.confidence !== undefined && typeof output.confidence !== 'number') {
+        console.warn(`[recommendNextLessonFlowInternal] Confidence value was not a number, received: ${output.confidence}. Setting to undefined.`);
         output.confidence = undefined;
+      } else if (output.confidence !== undefined) {
+        output.confidence = Math.max(0, Math.min(1, output.confidence)); // Clamp to 0-1
       }
       console.log('[recommendNextLessonFlowInternal] Successfully received output from prompt:', JSON.stringify(output, null, 2));
       return output;
     } catch (error: any) {
-      console.error(`[recommendNextLessonFlowInternal] Error during prompt execution for input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      let errorDetails = `Message: ${error.message || 'No message'}, Name: ${error.name || 'No name'}`;
+      if (error.stack) { errorDetails += `, Stack: ${error.stack}`; }
+      try { errorDetails += `, FullErrorObject: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`; } 
+      catch (e) { errorDetails += `, FullErrorObject: (Unstringifiable)`; }
+      console.error(`[recommendNextLessonFlowInternal] Error during prompt execution for input: ${JSON.stringify(input, null, 2)}. ${errorDetails}`);
+      
       let errorMessage = "Next lesson recommendation failed during AI prompt execution.";
       if (error && error.message) errorMessage = `AI prompt for next lesson failed: ${error.message}`;
       throw new Error(errorMessage);
@@ -104,7 +112,12 @@ export async function recommendNextLesson(input: RecommendNextLessonInput): Prom
     return result;
   } catch (error: any)
 {
-    console.error(`[recommendNextLesson wrapper] Error during next lesson recommendation flow for input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    let errorDetails = `Message: ${error.message || 'No message'}, Name: ${error.name || 'No name'}`;
+    if (error.stack) { errorDetails += `, Stack: ${error.stack}`; }
+    try { errorDetails += `, FullErrorObject: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`; } 
+    catch (e) { errorDetails += `, FullErrorObject: (Unstringifiable)`; }
+    console.error(`[recommendNextLesson wrapper] Error during next lesson recommendation flow for input: ${JSON.stringify(input, null, 2)}. ${errorDetails}`);
+
     let userFriendlyMessage = "Failed to recommend the next lesson. ";
     if (error && error.message) {
         const lowerCaseMessage = error.message.toLowerCase();
@@ -123,3 +136,4 @@ export async function recommendNextLesson(input: RecommendNextLessonInput): Prom
     throw new Error(userFriendlyMessage);
   }
 }
+
