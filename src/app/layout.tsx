@@ -7,6 +7,7 @@ import Header from '@/components/header';
 import { ChildProfilesProvider } from '@/contexts/child-profiles-context';
 import { ActiveChildProfileProvider } from '@/contexts/active-child-profile-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import ServiceWorkerRegistrator from '@/components/service-worker-registrator';
 
 
 const geistSans = Geist({
@@ -32,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ServiceWorkerRegistrator />
         <AuthProvider>
           <ChildProfilesProvider>
             <ActiveChildProfileProvider>

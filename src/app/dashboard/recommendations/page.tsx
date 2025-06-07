@@ -10,26 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Sparkles, FastForward, Lightbulb, ArrowRight, AlertTriangle, Users, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { recommendNextLesson, type RecommendNextLessonInput, type RecommendNextLessonOutput } from '@/ai/flows/recommend-next-lesson';
-import { formatDistanceToNow } from 'date-fns';
+import { formatLessonHistorySummary } from '@/lib/lesson-summary';
 
 
-function formatLessonHistorySummary(attempts?: LessonAttempt[]): string {
-  if (!attempts || attempts.length === 0) {
-    return "No lesson history available yet.";
-  }
-  // Show up to 5 most recent attempts for the summary
-  return attempts
-    .slice(-5) 
-    .reverse()
-    .map(attempt => 
-      `Lesson: "${attempt.lessonTitle}" (Topic: ${attempt.lessonTopic || 'N/A'}, Subject: ${attempt.subject || 'N/A'})` +
-      `${attempt.quizTotalQuestions > 0 ? `, Score: ${attempt.quizScore}% (${attempt.questionsAnsweredCorrectly}/${attempt.quizTotalQuestions} correct)` : ', No quiz'}` +
-      `${attempt.pointsAwarded ? `, Points: +${attempt.pointsAwarded}`: ''}` +
-      `, About ${formatDistanceToNow(new Date(attempt.timestamp), { addSuffix: true })}.` +
-      `${attempt.choseToRelearn ? ' Chose to relearn.' : ''}`
-    )
-    .join('\n');
-}
 
 
 export default function RecommendationsPage() {

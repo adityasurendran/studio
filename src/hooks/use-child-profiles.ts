@@ -15,7 +15,8 @@ const predefinedBadges: Omit<Badge, 'dateEarned'>[] = [
   { id: 'five-lessons', name: "Consistent Learner", description: "Completed 5 lessons!", iconName: "Award" },
   { id: 'high-scorer', name: "High Achiever", description: "Scored 80% or more on 3 quizzes!", iconName: "TrendingUp" },
   { id: 'points-milestone-100', name: "Century Club", description: "Earned 100 points!", iconName: "Star" },
-  { id: 'points-milestone-500', name: "Point Powerhouse", description: "Earned 500 points!", iconName: "ZapIcon" }, 
+  { id: 'points-milestone-500', name: "Point Powerhouse", description: "Earned 500 points!", iconName: "ZapIcon" },
+  { id: 'custom-avatar', name: 'Stylist', description: 'Created a custom avatar!', iconName: 'Smile' },
 ];
 
 export function useChildProfiles() {
@@ -23,15 +24,15 @@ export function useChildProfiles() {
   const { toast } = useToast(); 
 
   const addProfile = useCallback((profileData: Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory' | 'points' | 'badges'>) => {
-    const newProfile: ChildProfile = { 
-      ...profileData, 
+    const newProfile: ChildProfile = {
+      ...profileData,
       id: uuidv4(),
-      language: profileData.language || 'en', 
+      language: profileData.language || 'en',
       lessonAttempts: [],
       savedLessons: [],
       points: 0,
       badges: [],
-      avatarSeed: profileData.avatarSeed || '', 
+      avatarSeed: profileData.avatarSeed || '',
       learningStyle: profileData.learningStyle || 'balanced_mixed', 
       fontSizePreference: profileData.fontSizePreference || 'medium', 
       preferredActivities: profileData.preferredActivities || '',
@@ -41,6 +42,14 @@ export function useChildProfiles() {
       dailyUsageLimitMinutes: profileData.dailyUsageLimitMinutes, 
       weeklyUsageLimitMinutes: profileData.weeklyUsageLimitMinutes, 
     };
+    const badges = [...newProfile.badges];
+    if (newProfile.avatarSeed) {
+      const badge = predefinedBadges.find(b => b.id === 'custom-avatar');
+      if (badge) {
+        badges.push({ ...badge, dateEarned: new Date().toISOString() });
+      }
+    }
+    newProfile.badges = badges;
     setProfiles(prevProfiles => [...prevProfiles, newProfile]);
     return newProfile;
   }, [setProfiles]);
@@ -48,25 +57,35 @@ export function useChildProfiles() {
   const updateProfile = useCallback((updatedProfile: ChildProfile) => {
     setProfiles(prevProfiles =>
       prevProfiles.map(p => (
-        p.id === updatedProfile.id 
-        ? { 
-            ...p, 
-            ...updatedProfile, 
-            language: updatedProfile.language || p.language || 'en', 
+        p.id === updatedProfile.id
+        ? {
+            ...p,
+            ...updatedProfile,
+            language: updatedProfile.language || p.language || 'en',
             lessonAttempts: updatedProfile.lessonAttempts || p.lessonAttempts || [],
             savedLessons: updatedProfile.savedLessons || p.savedLessons || [],
             points: updatedProfile.points ?? p.points ?? 0,
-            badges: updatedProfile.badges || p.badges || [],
-            avatarSeed: updatedProfile.avatarSeed, 
+            badges: (() => {
+              const base = updatedProfile.badges || p.badges || [];
+              const hasAvatarBadge = base.some(b => b.id === 'custom-avatar');
+              if (!hasAvatarBadge && updatedProfile.avatarSeed) {
+                const badge = predefinedBadges.find(b => b.id === 'custom-avatar');
+                if (badge) {
+                  return [...base, { ...badge, dateEarned: new Date().toISOString() }];
+                }
+              }
+              return base;
+            })(),
+            avatarSeed: updatedProfile.avatarSeed,
             learningStyle: updatedProfile.learningStyle || p.learningStyle || 'balanced_mixed',
             fontSizePreference: updatedProfile.fontSizePreference || p.fontSizePreference || 'medium',
             preferredActivities: updatedProfile.preferredActivities || p.preferredActivities || '',
             recentMood: updatedProfile.recentMood || p.recentMood || 'neutral',
             lessonHistory: updatedProfile.lessonHistory || p.lessonHistory || '',
             enableLeaderboard: updatedProfile.enableLeaderboard ?? p.enableLeaderboard ?? false,
-            dailyUsageLimitMinutes: updatedProfile.dailyUsageLimitMinutes, 
-            weeklyUsageLimitMinutes: updatedProfile.weeklyUsageLimitMinutes, 
-          } 
+            dailyUsageLimitMinutes: updatedProfile.dailyUsageLimitMinutes,
+            weeklyUsageLimitMinutes: updatedProfile.weeklyUsageLimitMinutes,
+          }
         : p
       ))
     );
