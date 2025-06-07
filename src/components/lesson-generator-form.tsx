@@ -17,6 +17,7 @@ import LessonDisplay from './lesson-display';
 import { Loader2, Wand2, Smile, History, Target, RefreshCw, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
+import { useUsageTracker } from '@/hooks/use-usage-tracker';
 
 const lessonGenerationSchema = z.object({
   lessonTopic: z.string().min(3, "Please specify a lesson topic (min 3 characters).").max(100, "Topic too long (max 100 chars)."),
@@ -45,6 +46,7 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
   const [isLoading, setIsLoading] = useState(false);
   const [lastSuccessfulInput, setLastSuccessfulInput] = useState<GenerateTailoredLessonsInput | null>(null);
   const { addLessonAttempt, addSavedLesson, updateProfile } = useChildProfilesContext();
+  const { isWithinLimit } = useUsageTracker();
 
   useEffect(() => {
     form.reset({
@@ -82,6 +84,15 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
   };
 
   const handleFormSubmit: SubmitHandler<LessonGenerationFormData> = async (data) => {
+    if (!isWithinLimit(childProfile.id, childProfile.dailyUsageLimitMinutes, childProfile.weeklyUsageLimitMinutes)) {
+      toast({
+        title: 'Usage Limit Reached',
+        description: `${childProfile.name} has reached their allowed screen time.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const input: GenerateTailoredLessonsInput = {
       childName: childProfile.name,
       childAge: childProfile.age,

@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { recommendNextLesson, type RecommendNextLessonInput } from '@/ai/flows/recommend-next-lesson';
 import { formatDistanceToNow } from 'date-fns';
+import { useUsageTracker } from '@/hooks/use-usage-tracker';
+import { formatLessonHistorySummary } from '@/lib/lesson-summary';
 
 interface LessonDisplayProps {
   lesson: GeneratedLesson;
@@ -24,23 +26,6 @@ interface LessonDisplayProps {
   onRestartLesson: () => void; 
 }
 
-// Helper function to format lesson history summary
-function formatLessonHistorySummaryForRecommendations(attempts?: LessonAttempt[]): string {
-  if (!attempts || attempts.length === 0) {
-    return "No lesson history available yet.";
-  }
-  return attempts
-    .slice(-5) // Take last 5
-    .reverse() // Newest first
-    .map(attempt => 
-      `Lesson: "${attempt.lessonTitle}" (Topic: ${attempt.lessonTopic || 'N/A'}, Subject: ${attempt.subject || 'N/A'})` +
-      `${attempt.quizTotalQuestions > 0 ? `, Score: ${attempt.quizScore}% (${attempt.questionsAnsweredCorrectly}/${attempt.quizTotalQuestions} correct)` : ', No quiz'}` +
-      `${attempt.pointsAwarded ? `, Points: +${attempt.pointsAwarded}`: ''}` +
-      `, About ${formatDistanceToNow(new Date(attempt.timestamp), { addSuffix: true })}.` +
-      `${attempt.choseToRelearn ? ' Chose to relearn.' : ''}`
-    )
-    .join('\n');
-}
 
 
 export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQuizComplete, onRestartLesson }: LessonDisplayProps) {
@@ -52,6 +37,8 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   const [answeredCorrectly, setAnsweredCorrectly] = useState(0);
   const [showExplanationForQuestionIndex, setShowExplanationForQuestionIndex] = useState<number | null>(null);
   const [attemptedQuestions, setAttemptedQuestions] = useState<Set<number>>(new Set());
+
+  const { startSession, endSession } = useUsageTracker();
   
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speakingTextIdentifier, setSpeakingTextIdentifier] = useState<string | null>(null);
@@ -63,6 +50,10 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
 
 
   useEffect(() => {
+    if (childProfile) {
+      startSession(childProfile.id);
+    }
+
     setView('lesson');
     setCurrentPageIndex(0);
     setCurrentQuestionIndex(0);
@@ -80,15 +71,18 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
       }
       setIsSpeaking(false);
       setSpeakingTextIdentifier(null);
+      if (childProfile) {
+        endSession(childProfile.id);
+      }
     };
-  }, [lesson]);
+  }, [lesson, childProfile]);
 
   useEffect(() => {
     if (view === 'results' && quizScore >= 60 && childProfile && childProfile.lessonAttempts && childProfile.lessonAttempts.length > 0 && !isFetchingRecommendation && !nextRecommendedTopic) {
       const fetchRecommendation = async () => {
         setIsFetchingRecommendation(true);
         try {
-          const historySummary = formatLessonHistorySummaryForRecommendations(childProfile.lessonAttempts);
+          const historySummary = formatLessonHistorySummary(childProfile.lessonAttempts);
           const input: RecommendNextLessonInput = {
             childAge: childProfile.age,
             interests: childProfile.interests,
