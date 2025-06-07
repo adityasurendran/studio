@@ -65,7 +65,7 @@ export default function PinDialog({ mode, isOpen, setIsOpen, onSuccess, title, d
         return;
       }
       onSuccess(pin);
-      toast({ title: "PIN Setup Successful", description: "Your PIN has been set.", icon: <CheckCircle className="h-5 w-5 text-green-500" /> });
+      toast({ title: "PIN Setup Successful", description: "Your PIN has been set." });
     } else { // mode === 'enter'
       onSuccess(pin); // The calling component will verify the pin
     }
