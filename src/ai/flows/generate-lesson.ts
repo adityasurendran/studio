@@ -464,7 +464,7 @@ export async function generateTailoredLessons(input: GenerateTailoredLessonsInpu
   }
 }
 
-function cleanSentence(sentence: string): string {
+export function cleanSentence(sentence: string): string {
     let cleaned = sentence.trim();
     if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
         cleaned += '.';
