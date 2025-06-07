@@ -28,14 +28,6 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
     name: 'generateImageForSentenceFlowInternal',
     inputSchema: GenerateImageInputSchema,
     outputSchema: GenerateImageOutputSchema,
-    config: {
-      safetySettings: [
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      ],
-    }
   },
   async (input) => {
     let promptText = `Create a child-friendly, simple, and colorful illustration for a children's learning app. This illustration should visually depict the scene or concept described by the following text, but it is CRITICAL that you DO NOT include ANY text, letters, words, numbers, or symbols in the image itself: "${input.sentences.join(' ')}"`;
@@ -51,10 +43,16 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
     try {
       console.log('[generateImageForSentenceFlowInternal] Attempting to generate image. Prompt text length:', promptText.length, 'Sentences:', input.sentences.join(' '));
       const { media } = await ai.generate({
-        model: 'googleai/gemini-2.0-flash-exp', 
+        model: 'googleai/gemini-2.0-flash-exp',
         prompt: promptText,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          ],
         },
       });
 
