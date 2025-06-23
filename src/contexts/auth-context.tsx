@@ -44,7 +44,7 @@ interface AuthProviderProps {
 
 export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
+  const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null); // Initialize with null
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
