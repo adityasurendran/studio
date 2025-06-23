@@ -430,7 +430,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
   }
 );
 
-export async function generateTailoredLessons(input: GenerateTailoredLessonsInput): Promise<GenerateTailoredLessonsOutput> {
+export function generateTailoredLessons(input: GenerateTailoredLessonsInput): Promise<GenerateTailoredLessonsOutput> {
   console.log('[generateTailoredLessons wrapper] Called with input:', JSON.stringify(input, null, 2));
   try {
     const result = await generateTailoredLessonsFlow(input);
