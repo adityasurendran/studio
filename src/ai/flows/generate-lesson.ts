@@ -343,7 +343,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
       console.log(`[generateTailoredLessonsFlow] Starting image generation for ${Math.ceil(lessonContent.length / 2)} pairs of sentences for lesson "${textAndQuizOutput.lessonTitle}".`);
 
       for (let i = 0; i < lessonContent.length; i += 2) {
-        const pageSentences = lessonContent.slice(i, i + 2).map(s => cleanSentence(s)).filter(s => s.length > 0);
+        const pageSentences = await Promise.all(lessonContent.slice(i, i + 2).map(async s => await cleanSentence(s))).filter(s => s.length > 0);
         
         if (pageSentences.length > 0) {
             console.log(`[generateTailoredLessonsFlow] Preparing to generate image for sentences: "${pageSentences.join(' ')}"`);
@@ -464,7 +464,7 @@ export async function generateTailoredLessons(input: GenerateTailoredLessonsInpu
   }
 }
 
-export function cleanSentence(sentence: string): string {
+export async function cleanSentence(sentence: string): Promise<string> {
     let cleaned = sentence.trim();
     if (cleaned.length > 0 && !/[.!?]$/.test(cleaned)) {
         cleaned += '.';
