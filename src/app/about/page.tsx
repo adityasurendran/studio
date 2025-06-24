@@ -8,8 +8,8 @@ import Image from "next/image";
 
 export default function AboutPage() {
   return (
-    <div className="container mx-auto max-w-5xl py-12 px-4">
-      <Card className="shadow-xl border-t-4 border-primary overflow-hidden">
+    <div className="w-full max-w-screen-xl mx-auto py-12 px-4">
+      <Card className="shadow-xl border-t-4 border-primary overflow-hidden w-full">
         <CardHeader className="text-center bg-gradient-to-br from-primary/10 via-card to-accent/5 p-8 md:p-12">
           <div className="mx-auto mb-6 transform transition-transform hover:scale-110">
             <Logo className="h-32 w-32 md:h-40 md:w-40 text-primary" />
@@ -31,7 +31,7 @@ export default function AboutPage() {
             </p>
           </section>
 
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center w-full">
             <div>
               <h3 className="text-2xl font-semibold text-primary mb-4 flex items-center gap-2">
                 <Zap className="h-7 w-7" /> What We Do

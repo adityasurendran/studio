@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFunctions, type Functions } from 'firebase/functions'; // Added Functions
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -36,5 +37,6 @@ if (!getApps().length) {
 
 const auth: Auth = getAuth(app);
 const functions: Functions = getFunctions(app); // Initialize Functions
+const db: Firestore = getFirestore(app);
 
-export { app, auth, functions }; // Export functions
+export { app, auth, functions, db }; // Export functions

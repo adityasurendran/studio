@@ -1,7 +1,7 @@
 // src/app/dashboard/lessons/page.tsx
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
 import type { ChildProfile, GeneratedLesson, LessonAttempt } from '@/types';
@@ -11,13 +11,25 @@ import { AlertTriangle, Loader2, BookOpen, ChevronLeft, History, Eye, Layers, Fi
 import LessonDisplay from '@/components/lesson-display';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useToast } from '@/hooks/use-toast';
+import { subscribeToLessons } from '@/lib/firestore-lessons';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function LessonHistoryPage() {
   const { activeChild, isLoading: activeChildLoading } = useActiveChildProfile();
+  const { currentUser } = useAuth();
+  const [lessons, setLessons] = useState<GeneratedLesson[]>([]);
   const [selectedLessonToView, setSelectedLessonToView] = useState<GeneratedLesson | null>(null);
   // addLessonAttempt is not directly used on this page for new attempts, but context might be used for other things.
   // const { addLessonAttempt } = useChildProfilesContext(); 
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const unsubscribe = subscribeToLessons(currentUser.uid, (fetchedLessons) => {
+      setLessons(fetchedLessons);
+    });
+    return () => unsubscribe && unsubscribe();
+  }, [currentUser]);
 
   if (activeChildLoading) {
     return (
@@ -89,8 +101,6 @@ export default function LessonHistoryPage() {
     );
   }
 
-  const savedLessons = activeChild.savedLessons || [];
-
   return (
     <div className="space-y-8">
       <Card className="shadow-xl border-t-4 border-primary">
@@ -100,13 +110,13 @@ export default function LessonHistoryPage() {
             <div>
                 <CardTitle className="text-3xl font-bold text-primary">Lesson History for {activeChild.name}</CardTitle>
                 <CardDescription className="text-lg text-muted-foreground">
-                Review previously generated lessons. {savedLessons.length} saved lesson(s) found.
+                Review previously generated lessons. {lessons.length} saved lesson(s) found.
                 </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {savedLessons.length === 0 ? (
+          {lessons.length === 0 ? (
             <div className="text-center py-12">
               <BookOpen className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
               <p className="text-2xl text-muted-foreground mb-4">
@@ -124,7 +134,7 @@ export default function LessonHistoryPage() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Show newest lessons first */}
-              {savedLessons.slice().reverse().map((lesson, index) => ( 
+              {lessons.slice().reverse().map((lesson, index) => ( 
                 <Card 
                   key={lesson.lessonTitle + '-' + index} // Use a more unique key if possible, like a lesson ID if you add one
                   className="hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col bg-card overflow-hidden group border hover:border-primary/50"

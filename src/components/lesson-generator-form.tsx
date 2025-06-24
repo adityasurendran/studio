@@ -18,6 +18,9 @@ import { Loader2, Wand2, Smile, History, Target, RefreshCw, Sparkles } from 'luc
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useUsageTracker } from '@/hooks/use-usage-tracker';
+import { saveLesson } from '@/lib/firestore-lessons';
+import { useAuth } from '@/hooks/use-auth';
+import { v4 as uuidv4 } from 'uuid';
 
 const lessonGenerationSchema = z.object({
   lessonTopic: z.string().min(3, "Please specify a lesson topic (min 3 characters).").max(100, "Topic too long (max 100 chars)."),
@@ -47,6 +50,7 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
   const [lastSuccessfulInput, setLastSuccessfulInput] = useState<GenerateTailoredLessonsInput | null>(null);
   const { addLessonAttempt, addSavedLesson, updateProfile } = useChildProfilesContext();
   const { isWithinLimit } = useUsageTracker();
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     form.reset({
@@ -64,8 +68,11 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
     setGeneratedLesson(null); 
     try {
       const lesson = await generateTailoredLessons(input);
-      setGeneratedLesson(lesson);
-      addSavedLesson(childProfile.id, lesson);
+      const lessonWithId = { ...lesson, id: uuidv4() };
+      if (currentUser) {
+        await saveLesson(currentUser.uid, lessonWithId);
+      }
+      setGeneratedLesson(lessonWithId);
       setLastSuccessfulInput(input); 
       toast({
         title: isRegeneration ? "Lesson Regenerated!" : "Lesson Generated!",

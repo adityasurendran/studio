@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
@@ -8,7 +7,7 @@ import Logo from "@/components/logo";
 
 export default function HomePage() {
   return (
-    <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center">
+    <div className="w-full max-w-screen-xl mx-auto px-4 py-12 flex flex-col items-center text-center">
       <div className="mb-8">
         <Logo className="h-20 w-20 sm:h-24 sm:w-24 text-primary animate-pulse" />
       </div>
@@ -19,8 +18,7 @@ export default function HomePage() {
         Your dedicated partner in empowering children with learning difficulties through <span className="text-accent font-semibold">personalized</span> and <span className="text-accent font-semibold">engaging</span> AI-driven lessons.
       </p>
       
-      {/* Increased max-width here for wider screens */}
-      <div className="grid md:grid-cols-2 gap-8 w-full max-w-7xl mb-16"> 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mb-16"> 
         <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 group border border-transparent hover:border-primary/30 rounded-lg overflow-hidden">
           <CardHeader className="bg-gradient-to-br from-primary/10 via-card to-card pb-4">
             <Users className="h-10 w-10 sm:h-12 sm:w-12 text-accent mx-auto mb-3"/>
@@ -74,8 +72,7 @@ export default function HomePage() {
         </Card>
       </div>
 
-      {/* Increased max-width here for wider screens */}
-      <div className="mt-10 p-8 bg-card rounded-xl shadow-2xl border-t-4 border-primary max-w-5xl">
+      <div className="mt-10 p-8 bg-card rounded-xl shadow-2xl border-t-4 border-primary w-full max-w-5xl">
         <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">Our Mission</h2>
         <p className="text-lg text-foreground leading-relaxed">
           Shannon is dedicated to providing <span className="font-semibold">100% free, high-quality</span> educational resources for children facing learning challenges. We believe every child deserves the chance to learn, grow, and succeed at their own pace.
