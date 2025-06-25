@@ -99,7 +99,7 @@ export default function DashboardOverviewPage() {
           {activeChild ? (
             <div className="p-6 bg-gradient-to-br from-primary/10 via-card to-secondary/10 rounded-lg shadow-lg text-center border border-primary/30">
               <Avatar className="w-28 h-28 mx-auto mb-4 border-4 border-primary shadow-xl">
-                <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(activeChild.avatarSeed || activeChild.name)}.png?size=120`} alt={activeChild.name} />
+                <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(activeChild.avatarSeed?.trim() || activeChild.name)}.png?size=120`} alt={activeChild.name} />
                 <AvatarFallback className="text-4xl bg-secondary/50 text-secondary-foreground">{activeChild.name[0].toUpperCase()}</AvatarFallback>
               </Avatar>
               <h2 className="text-3xl font-semibold text-primary">
@@ -335,7 +335,7 @@ export default function DashboardOverviewPage() {
                 onClick={() => setActiveChildId(profile.id)}
               >
                 <Avatar className="w-14 h-14 group-hover:scale-105 transition-transform border-2 border-muted group-hover:border-primary">
-                    <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(profile.avatarSeed || profile.name)}.png?size=56`} alt={profile.name} />
+                    <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(profile.avatarSeed?.trim() || profile.name)}.png?size=56`} alt={profile.name} />
                     <AvatarFallback className="text-xl">{profile.name[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">

@@ -117,6 +117,17 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     }
   }, [view, quizScore, childProfile, isFetchingRecommendation, nextRecommendedTopic, toast]);
 
+  useEffect(() => {
+    // Show a toast if any lesson page is missing an image and a 429 error is likely (rate limit)
+    if (lesson.lessonPages.some(page => !page.imageDataUri)) {
+      // This is a heuristic; ideally, you'd check for a 429 error flag on the page object
+      toast({
+        title: "Image Generation Rate Limit",
+        description: "You've made too many image requests. Please wait a few minutes and try again.",
+        variant: "destructive"
+      });
+    }
+  }, [lesson.lessonPages, toast]);
 
   const handleSpeak = useCallback((textToSpeak: string, identifier: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -393,7 +404,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
             )}
             </div>
             
-            <div className={cn("text-center min-h-[5em] w-full bg-card p-4 rounded-md shadow relative", fontClass, themeClass === 'dark-theme-lesson' ? 'text-slate-100' : 'text-foreground')}>
+            <div className={cn("text-center min-h-[5em] w-full bg-card p-4 rounded-md shadow relative", fontClass, "text-gray-900")}>
               {currentLessonPage.sentences.map((sentence, sIdx) => (<p key={sIdx} className={cn("leading-relaxed", sIdx > 0 ? "mt-2" : "")}>{sentence}</p>))}
               {currentLessonPage.sentences.length === 0 && <p>Loading content...</p>}
               {lessonPageSentences.trim() && (

@@ -14,6 +14,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Save, XCircle, Image as ImageIcon, Users, Type, Smile, ToyBrick, BarChartHorizontalBig, Languages, Clock } from 'lucide-react'; // Changed FontSize to Type
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -122,7 +123,25 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                 <FormItem>
                   <FormLabel className="flex items-center gap-1.5"><ImageIcon className="h-4 w-4 text-muted-foreground" /> Avatar Customization</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., happy bear, blue star, child's name" {...field} />
+                    <div className="space-y-3">
+                      <Input placeholder="e.g., happy bear, blue star, child's name" {...field} />
+                      {/* Avatar Preview */}
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <Avatar className="h-12 w-12 border-2 border-primary/20">
+                          <AvatarImage 
+                            src={`https://avatar.vercel.sh/${encodeURIComponent((field.value?.trim() || form.getValues('name') || 'preview').toLowerCase())}.png?size=48`} 
+                            alt="Avatar preview" 
+                          />
+                          <AvatarFallback className="text-lg">
+                            {(field.value?.trim() || form.getValues('name') || 'P')[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="text-sm text-muted-foreground">
+                          <p className="font-medium">Avatar Preview</p>
+                          <p className="text-xs">Based on: "{field.value?.trim() || form.getValues('name') || 'child name'}"</p>
+                        </div>
+                      </div>
+                    </div>
                   </FormControl>
                   <FormDescription>Enter a word or short phrase to create a unique avatar. If left blank, the child&apos;s name will be used.</FormDescription>
                   <FormMessage />

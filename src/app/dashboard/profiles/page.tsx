@@ -99,42 +99,103 @@ export default function ManageProfilesPage() {
   };
 
 
-  const handleAddProfile = (data: ProfileFormData) => {
-    const newProfile = addProfile(data);
-    toast({ title: "Profile Created", description: `${data.name}'s profile has been successfully created.` });
-    setShowForm(false);
-    setActiveChildId(newProfile.id); 
-  };
-
-  const handleUpdateProfile = (data: ProfileFormData) => {
-    if (editingProfile) {
-      updateProfile({ ...editingProfile, ...data, points: editingProfile.points, badges: editingProfile.badges }); 
-      toast({ title: "Profile Updated", description: `${data.name}'s profile has been successfully updated.` });
-      setEditingProfile(null);
+  const handleAddProfile = async (data: ProfileFormData) => {
+    try {
+      const newProfile = await addProfile(data);
+      toast({ title: "Profile Created", description: `${data.name}'s profile has been successfully created.` });
       setShowForm(false);
+      setActiveChildId(newProfile.id); 
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to create profile. Please try again.", 
+        variant: "destructive" 
+      });
     }
   };
 
-  const handleDeleteProfile = (profileId: string) => {
+  const handleUpdateProfile = async (data: ProfileFormData) => {
+    if (editingProfile) {
+      try {
+        // Process the avatarSeed properly - use the form data if provided, otherwise use the name
+        const processedAvatarSeed = data.avatarSeed?.trim() || data.name;
+        
+        await updateProfile({ 
+          ...editingProfile, 
+          name: data.name,
+          age: data.age,
+          learningDifficulties: data.learningDifficulties,
+          screenIssues: data.screenIssues,
+          theme: data.theme,
+          language: data.language,
+          curriculum: data.curriculum,
+          interests: data.interests,
+          avatarSeed: processedAvatarSeed, // Ensure avatarSeed is properly set
+          learningStyle: data.learningStyle,
+          fontSizePreference: data.fontSizePreference,
+          preferredActivities: data.preferredActivities,
+          recentMood: data.recentMood,
+          lessonHistory: data.lessonHistory,
+          enableLeaderboard: data.enableLeaderboard,
+          dailyUsageLimitMinutes: data.dailyUsageLimitMinutes,
+          weeklyUsageLimitMinutes: data.weeklyUsageLimitMinutes,
+          // Keep existing points and badges unchanged
+          points: editingProfile.points, 
+          badges: editingProfile.badges 
+        }); 
+        toast({ title: "Profile Updated", description: `${data.name}'s profile has been successfully updated.` });
+        setEditingProfile(null);
+        setShowForm(false);
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        toast({ 
+          title: "Error", 
+          description: "Failed to update profile. Please try again.", 
+          variant: "destructive" 
+        });
+      }
+    }
+  };
+
+  const handleDeleteProfile = async (profileId: string) => {
     const profile = profiles.find(p => p.id === profileId);
     if (profile) {
-      deleteProfile(profileId);
-      toast({ title: "Profile Deleted", description: `${profile.name}'s profile has been deleted.`, variant: "destructive" });
-      if (activeChild?.id === profileId) {
-        setActiveChildId(null); 
+      try {
+        await deleteProfile(profileId);
+        toast({ title: "Profile Deleted", description: `${profile.name}'s profile has been deleted.`, variant: "destructive" });
+        if (activeChild?.id === profileId) {
+          setActiveChildId(null); 
+        }
+      } catch (error) {
+        console.error('Error deleting profile:', error);
+        toast({ 
+          title: "Error", 
+          description: "Failed to delete profile. Please try again.", 
+          variant: "destructive" 
+        });
       }
     }
     setProfileToDelete(null); 
   };
   
-  const handleToggleLeaderboard = (profileId: string, checked: boolean) => {
+  const handleToggleLeaderboard = async (profileId: string, checked: boolean) => {
     const profile = profiles.find(p => p.id === profileId);
     if (profile) {
-      updateProfile({ ...profile, enableLeaderboard: checked });
-      toast({
-        title: "Leaderboard Setting Updated",
-        description: `${profile.name} will ${checked ? 'now' : 'no longer'} appear on leaderboards.`,
-      });
+      try {
+        await updateProfile({ ...profile, enableLeaderboard: checked });
+        toast({
+          title: "Leaderboard Setting Updated",
+          description: `${profile.name} will ${checked ? 'now' : 'no longer'} appear on leaderboards.`,
+        });
+      } catch (error) {
+        console.error('Error updating leaderboard setting:', error);
+        toast({ 
+          title: "Error", 
+          description: "Failed to update leaderboard setting. Please try again.", 
+          variant: "destructive" 
+        });
+      }
     }
   };
   
@@ -202,7 +263,7 @@ export default function ManageProfilesPage() {
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-4">
                         <Avatar className={`h-16 w-16 border-2 ${activeChild?.id === profile.id ? 'border-primary' : 'border-muted'}`}>
-                            <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(profile.avatarSeed || profile.name)}.png?size=64`} alt={profile.name} />
+                            <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(profile.avatarSeed?.trim() || profile.name)}.png?size=64`} alt={profile.name} />
                             <AvatarFallback className="text-2xl">{profile.name[0].toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>

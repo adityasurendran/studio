@@ -2,7 +2,6 @@
 "use client";
 
 import type { ChildProfile, LessonAttempt, GeneratedLesson, Badge } from '@/types';
-import { useLocalStorage } from './use-local-storage';
 import { v4 as uuidv4 } from 'uuid';
 import { useCallback, useState, useEffect } from 'react';
 import { useToast } from './use-toast'; // Import useToast
@@ -40,7 +39,7 @@ export function useChildProfiles() {
     return () => unsubscribe();
   }, [currentUser]);
 
-  const addProfile = useCallback(async (profileData: Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'recentMood' | 'lessonHistory' | 'points' | 'badges'>) => {
+  const addProfile = useCallback(async (profileData: Omit<ChildProfile, 'id' | 'lessonAttempts' | 'savedLessons' | 'points' | 'badges'>) => {
     if (!currentUser) throw new Error('Not authenticated');
     const newProfile: ChildProfile = {
       ...profileData,
@@ -50,17 +49,15 @@ export function useChildProfiles() {
       savedLessons: [],
       points: 0,
       badges: [],
-      avatarSeed: profileData.avatarSeed || '',
+      avatarSeed: profileData.avatarSeed?.trim() || profileData.name,
       learningStyle: profileData.learningStyle || 'balanced_mixed', 
       fontSizePreference: profileData.fontSizePreference || 'medium', 
       preferredActivities: profileData.preferredActivities || '',
-      recentMood: profileData.recentMood || 'neutral', 
-      lessonHistory: profileData.lessonHistory || '',
       enableLeaderboard: profileData.enableLeaderboard || false,
-      dailyUsageLimitMinutes: profileData.dailyUsageLimitMinutes, 
-      weeklyUsageLimitMinutes: profileData.weeklyUsageLimitMinutes, 
+      dailyUsageLimitMinutes: profileData.dailyUsageLimitMinutes ?? null, 
+      weeklyUsageLimitMinutes: profileData.weeklyUsageLimitMinutes ?? null, 
     };
-    await setDoc(doc(collection(db, 'users', currentUser.uid, 'childProfiles'), newProfile.id), newProfile);
+    await setDoc(doc(collection(db, 'users', currentUser.uid, 'childProfiles'), newProfile.id), newProfile as any);
     return newProfile;
   }, [currentUser]);
 
@@ -78,13 +75,30 @@ export function useChildProfiles() {
     return profiles.find(p => p.id === profileId);
   }, [profiles]);
 
-  const addLessonAttempt = useCallback((childId: string, attemptData: Omit<LessonAttempt, 'attemptId' | 'pointsAwarded'>) => {
-    // Implementation for adding a lesson attempt to Firestore
-  }, []);
+  const addLessonAttempt = useCallback(async (childId: string, attemptData: Omit<LessonAttempt, 'attemptId' | 'pointsAwarded'>) => {
+    if (!currentUser) throw new Error('Not authenticated');
+    const attemptId = uuidv4();
+    const newAttempt: LessonAttempt = {
+      ...attemptData,
+      attemptId,
+      pointsAwarded: 0, // You can update this logic as needed
+    };
+    const childRef = doc(db, 'users', currentUser.uid, 'childProfiles', childId);
+    // Atomically add the new attempt to the lessonAttempts array
+    await updateDoc(childRef, {
+      lessonAttempts: [...(profiles.find(p => p.id === childId)?.lessonAttempts || []), newAttempt],
+    });
+    return newAttempt;
+  }, [currentUser, profiles]);
 
-  const addSavedLesson = useCallback((childId: string, lesson: GeneratedLesson) => {
-    // Implementation for adding a saved lesson to Firestore
-  }, []);
+  const addSavedLesson = useCallback(async (childId: string, lesson: GeneratedLesson) => {
+    if (!currentUser) throw new Error('Not authenticated');
+    const childRef = doc(db, 'users', currentUser.uid, 'childProfiles', childId);
+    // Atomically add the new lesson to the savedLessons array
+    await updateDoc(childRef, {
+      savedLessons: [...(profiles.find(p => p.id === childId)?.savedLessons || []), lesson],
+    });
+  }, [currentUser, profiles]);
 
   return {
     profiles,

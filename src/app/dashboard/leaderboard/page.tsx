@@ -68,7 +68,7 @@ export default function LeaderboardPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10 border">
-                            <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(profile.avatarSeed || profile.name)}.png?size=40`} alt={profile.name} />
+                            <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(profile.avatarSeed?.trim() || profile.name)}.png?size=40`} alt={profile.name} />
                             <AvatarFallback>{profile.name[0].toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <span className="text-lg">{profile.name}</span>
