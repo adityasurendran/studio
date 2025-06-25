@@ -6,6 +6,34 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+/* OpenDyslexic font support */
+.font-dyslexic {
+  font-family: var(--font-opendyslexic), var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Dyslexia-friendly typography utilities */
+.dyslexic-friendly {
+  font-family: var(--font-opendyslexic), var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+  letter-spacing: 0.05em;
+  word-spacing: 0.1em;
+}
+
+.dyslexic-friendly h1,
+.dyslexic-friendly h2,
+.dyslexic-friendly h3,
+.dyslexic-friendly h4,
+.dyslexic-friendly h5,
+.dyslexic-friendly h6 {
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.dyslexic-friendly p {
+  line-height: 1.6;
+  margin-bottom: 1em;
+}
+
 @layer base {
   :root {
     --background: 220 20% 98%; /* Very light, slightly cool off-white */

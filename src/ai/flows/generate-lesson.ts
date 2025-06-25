@@ -47,6 +47,7 @@ const GenerateTailoredLessonsOutputSchema = z.object({
   lessonFormat: z.string().describe('The format of the lesson (e.g., story, quiz, activity).'),
   subject: z.string().describe('The subject of the lesson (e.g. Math, English, Science).'),
   quiz: z.array(QuizQuestionSchema).describe('An array of 3-5 multiple-choice quiz questions related to the lesson content.'),
+  kinestheticActivities: z.array(z.string()).optional().describe('An array of hands-on activities and games for kinesthetic learners. Each activity should be specific, actionable, and related to the lesson content.'),
 });
 export type GenerateTailoredLessonsOutput = z.infer<typeof GenerateTailoredLessonsOutputSchema>;
 
@@ -174,6 +175,7 @@ const generateLessonPrompt = ai.definePrompt({
     lessonFormat: z.string().describe('The format of the lesson (e.g., story, quiz, activity, informational).'),
     subject: z.string().describe('The subject of the lesson (e.g. Math, English, Science).'),
     quiz: z.array(QuizQuestionSchema).describe('An array of 3-5 multiple-choice quiz questions, with 2-4 options each, based on the lesson content. Ensure questions are appropriate for the child\'s age and curriculum. Each question MUST include a child-friendly explanation.'),
+    kinestheticActivities: z.array(z.string()).optional().describe('An array of hands-on activities and games for kinesthetic learners. Each activity should be specific, actionable, and related to the lesson content.'),
   })},
   prompt: `You are an AI assistant specializing in creating educational content for children, including those with learning difficulties. Your task is to generate a detailed and informative lesson AND a short quiz based on that lesson.
 
@@ -206,7 +208,32 @@ const generateLessonPrompt = ai.definePrompt({
       - Reading/Writing learners: Focus on clear, well-structured text. The quiz itself caters well to this. If mood is 'sad', ensure text is broken into smaller, less overwhelming chunks.
   7.  Lesson Format: The 'lessonFormat' field in your output should reflect the dominant style and activity preferences, influenced by mood if suitable (e.g., "Calming Story with Drawing Prompts" for a sad mood, "Exciting Space Adventure Quiz" for a happy mood with interest in space). If a standard informational approach is best based on curriculum, use "Informational ({{{curriculum}}} Aligned)". This description should also be in '{{{targetLanguage}}}'.
 
-  Your output must be a JSON object with the following fields: "lessonTitle", "lessonContent" (an array of concise sentences), "lessonFormat", "subject", AND "quiz". All text values must be in '{{{targetLanguage}}}'.
+  KINESTHETIC LEARNING ENHANCEMENT:
+  If the learning style is 'kinesthetic' OR if the child's preferred activities include kinesthetic elements (like 'building', 'experiments', 'movement', 'hands-on', 'dancing', 'sports', 'crafts', 'cooking', 'gardening', 'role-play', 'drama', 'construction', 'manipulatives', 'games', 'physical activities'), you MUST include a "kinestheticActivities" array with 5-8 specific, actionable activities that the child can do to reinforce the lesson content. These activities should be:
+  - Age-appropriate and safe for the child's age ({{{childAge}}})
+  - Related directly to the lesson topic ({{{lessonTopic}}})
+  - Include movement, touch, manipulation, or physical interaction
+  - Use common household materials when possible
+  - Provide clear step-by-step instructions
+  - Be educational and reinforce the curriculum concepts
+  - Consider the child's interests ({{{interests}}}) and mood ({{{recentMood}}})
+  - Be written in the target language ({{{targetLanguage}}})
+
+  Examples of kinesthetic activities include:
+  - Role-playing scenarios related to the topic
+  - Building models with blocks, clay, or craft materials
+  - Movement games that demonstrate concepts
+  - Hands-on experiments with safe materials
+  - Dance or movement sequences that represent concepts
+  - Physical sorting or matching activities
+  - Cooking or food preparation activities
+  - Gardening or nature exploration
+  - Sports or physical games that incorporate learning
+  - Craft projects that demonstrate concepts
+  - Interactive games with physical components
+  - Manipulative-based learning activities
+
+  Your output must be a JSON object with the following fields: "lessonTitle", "lessonContent" (an array of concise sentences), "lessonFormat", "subject", "quiz", AND "kinestheticActivities" (if the child is a kinesthetic learner or prefers kinesthetic activities). All text values must be in '{{{targetLanguage}}}'.
   The "quiz" field must be an array of 3-5 multiple-choice question objects. Each question object should have:
     - "questionText": string (The question itself, in '{{{targetLanguage}}}')
     - "options": string[] (An array of 2 to 4 answer choices, in '{{{targetLanguage}}}')
@@ -231,9 +258,9 @@ const generateLessonPrompt = ai.definePrompt({
   5.  Relevance: All content (lesson and quiz) MUST directly relate to teaching the 'Lesson Topic': {{{lessonTopic}}} in a manner consistent with the specified 'Curriculum Focus' ({{{curriculum}}}'), 'Child Age' ({{{childAge}}}), 'Learning Style' ({{{learningStyle}}}), 'Recent Mood' ({{{recentMood}}}), and 'Preferred Activities' ({{{preferredActivities}}}), all presented in '{{{targetLanguage}}}' and grounded by the 'fetchCurriculumInfoTool' output.
   6.  Tone: Maintain an encouraging, positive, and child-friendly tone throughout the lesson and quiz, further modulated by the 'Recent Mood' instruction, and expressed in '{{{targetLanguage}}}'.
 
-  Example (If lesson topic is "The Water Cycle", age is 10, curriculum is "CBSE Grade 5 Environmental Science", mood is "neutral", learningStyle is "visual", preferredActivities is "Storytelling, Drawing", targetLanguage is "en". Assume fetchCurriculumInfoTool provides key CBSE Grade 5 concepts for Water Cycle):
+  Example (If lesson topic is "The Water Cycle", age is 10, curriculum is "CBSE Grade 5 Environmental Science", mood is "neutral", learningStyle is "kinesthetic", preferredActivities is "Building, Experiments, Movement", targetLanguage is "en". Assume fetchCurriculumInfoTool provides key CBSE Grade 5 concepts for Water Cycle):
   {
-    "lessonTitle": "The Amazing Journey of Water: A Visual Story (CBSE Grade 5)",
+    "lessonTitle": "The Amazing Journey of Water: Hands-On Adventure (CBSE Grade 5)",
     "lessonContent": [
       "Water is one of the most precious resources on our planet, essential for all forms of life. Imagine it sparkling blue in a vast ocean!",
       "As per your CBSE Grade 5 science syllabus, water exists in three main states: solid (like ice), liquid (like river water), and gas (like invisible water vapor).",
@@ -242,8 +269,18 @@ const generateLessonPrompt = ai.definePrompt({
       // ... (25-35 sentences total, ensuring curriculum points from the tool are covered) ...
       "Understanding the water cycle helps us appreciate the interconnectedness of Earth's systems and the critical importance of water conservation, as emphasized in the CBSE curriculum. It's like a beautiful, never-ending story of water's incredible journey all around us."
     ],
-    "lessonFormat": "Visually Descriptive Story (CBSE Aligned, Drawing Inspired)",
+    "lessonFormat": "Interactive Hands-On Adventure (CBSE Aligned, Movement & Building Focused)",
     "subject": "Environmental Science (CBSE Grade 5)",
+    "kinestheticActivities": [
+      "Water Cycle Dance: Create a dance where you move like water - flow like a river, float like a cloud, fall like rain, and freeze like ice. Each movement represents a different stage of the water cycle.",
+      "Mini Water Cycle in a Jar: Fill a clear jar with warm water, cover with plastic wrap, and place ice cubes on top. Watch as condensation forms and drips back down, creating a mini water cycle.",
+      "Water Cycle Obstacle Course: Set up stations around your room - 'Ocean' (blue blanket), 'Cloud' (cotton balls), 'Mountain' (pillows), and 'River' (blue paper). Move between stations acting out the water cycle journey.",
+      "Building a Water Cycle Model: Use cardboard, cotton balls, blue paper, and clear plastic to build a 3D model showing evaporation, condensation, precipitation, and collection.",
+      "Water Movement Game: Use a spray bottle to simulate rain, a fan to show wind moving clouds, and your hands to demonstrate water flowing downhill.",
+      "Role-Play Water Molecules: Each person becomes a water molecule, moving through different states and environments, changing how they move based on temperature and location.",
+      "Water Conservation Relay: Set up stations with different water-saving activities - turn off taps, collect rainwater, and demonstrate water reuse.",
+      "Weather Station Building: Create simple weather instruments using household materials to measure and track water cycle elements like humidity and precipitation."
+    ],
     "quiz": [
       {
         "questionText": "According to your CBSE science understanding, what are the three main states of water, which you can often see around you?",
@@ -387,6 +424,7 @@ const generateTailoredLessonsFlow = ai.defineFlow(
         subject: textAndQuizOutput.subject || "General Knowledge",
         lessonPages: resolvedLessonPages.filter(page => page.sentences.length > 0),
         quiz: quiz,
+        kinestheticActivities: textAndQuizOutput.kinestheticActivities || [],
       };
       console.log('[generateTailoredLessonsFlow] Successfully assembled final lesson output. Title:', finalOutput.lessonTitle, 'Pages:', finalOutput.lessonPages.length, 'Quiz items:', finalOutput.quiz.length, 'Output object keys:', Object.keys(finalOutput).join(', '));
       return finalOutput;

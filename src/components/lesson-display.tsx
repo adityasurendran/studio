@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle, Printer, Loader2 } from 'lucide-react'; 
+import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle, Printer, Loader2, Activity } from 'lucide-react'; 
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -595,6 +595,37 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
           )}
           {totalQuizQuestions === 0 && (
              <p className="text-xl text-green-600 mt-4 font-medium">Well done on completing the lesson!</p>
+          )}
+          
+          {/* Kinesthetic Activities Section */}
+          {lesson.kinestheticActivities && lesson.kinestheticActivities.length > 0 && (
+            <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <Activity className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                  Hands-On Activities for {childProfile?.name || 'You'}!
+                </h3>
+              </div>
+              <p className="text-blue-600 dark:text-blue-200 mb-4 text-lg">
+                Here are some fun activities you can do to learn more about <strong>{lessonTopic}</strong> through movement and hands-on exploration:
+              </p>
+              <div className="space-y-3">
+                {lesson.kinestheticActivities.map((activity, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-600 shadow-sm">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">
+                      {index + 1}
+                    </div>
+                    <p className="text-gray-700 dark:text-gray-200 leading-relaxed">{activity}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-800/30 rounded-lg border border-blue-300 dark:border-blue-600">
+                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                  💡 Tip: These activities are designed to help you learn through movement and touch. 
+                  Try them with a parent or friend for extra fun!
+                </p>
+              </div>
+            </div>
           )}
           
            {/* Main action button area */}

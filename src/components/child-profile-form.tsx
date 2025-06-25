@@ -219,11 +219,13 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                       <SelectItem value="visual">Visual (learns by seeing)</SelectItem>
                       <SelectItem value="auditory">Auditory (learns by hearing)</SelectItem>
                       <SelectItem value="reading_writing">Reading/Writing (learns by reading and writing)</SelectItem>
-                      <SelectItem value="kinesthetic">Kinesthetic (learns by doing)</SelectItem>
+                      <SelectItem value="kinesthetic">Kinesthetic (learns by doing and moving)</SelectItem>
                       <SelectItem value="balanced_mixed">Balanced / Mixed</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>How does the child learn best? This helps in tailoring lesson delivery.</FormDescription>
+                  <FormDescription>
+                    How does the child learn best? Kinesthetic learners benefit from hands-on activities, movement, and physical interaction. This helps in tailoring lesson delivery and generating appropriate activities.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -235,9 +237,11 @@ export default function ChildProfileForm({ profile, onSubmit, onCancel, isEditin
                 <FormItem>
                   <FormLabel className="flex items-center gap-1.5"><ToyBrick className="h-4 w-4 text-muted-foreground" /> Preferred Activities (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="e.g., Interactive games, Storytelling, Drawing tasks, Building blocks, Experiments" {...field} />
+                    <Textarea placeholder="e.g., Building blocks, Experiments, Movement games, Role-play, Crafts, Cooking, Gardening, Sports, Dance, Hands-on projects" {...field} />
                   </FormControl>
-                  <FormDescription>List types of activities the child enjoys. This can help shape lesson format and suggestions.</FormDescription>
+                  <FormDescription>
+                    List types of activities the child enjoys. For kinesthetic learners, consider: building, experiments, movement, role-play, crafts, cooking, gardening, sports, dance, hands-on projects, manipulatives, physical games, construction, drama, or interactive activities.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

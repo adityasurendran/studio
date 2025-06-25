@@ -18,6 +18,7 @@ export interface GeneratedLesson {
   lessonFormat: string; // e.g., "story", "quiz", "activity"
   subject: string; // e.g. "Math", "English", "Science"
   quiz: QuizQuestion[]; 
+  kinestheticActivities?: string[]; // Optional array of hands-on activities for kinesthetic learners
 }
 
 export interface LessonAttempt {
