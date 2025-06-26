@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { BookOpen, Layers, Type, Palette, ChevronLeft, ChevronRight, ImageOff, CheckCircle, AlertTriangle, RotateCcw, Send, HelpCircle, Check, X, PartyPopper, Award, Brain, Volume2, StopCircle, Printer, Loader2, Activity } from 'lucide-react'; 
 import Image from 'next/image';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { recommendNextLesson, type RecommendNextLessonInput } from '@/ai/flows/recommend-next-lesson';
@@ -418,6 +418,10 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
                     {isSpeaking && speakingTextIdentifier === lessonPageIdentifier ? <StopCircle className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
                   </Button>
               )}
+              {/* ElevenLabs Audio Player */}
+              {lessonPageSentences.trim() && (
+                <ElevenLabsAudioPlayer text={lessonPageSentences} />
+              )}
             </div>
         </CardContent>
 
@@ -696,5 +700,45 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
   }
   
   return <Card className="border-t-4 border-muted"><CardContent className="p-6">Loading lesson content...</CardContent></Card>;
+}
+
+function ElevenLabsAudioPlayer({ text }: { text: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAudio = async () => {
+    setLoading(true);
+    setError(null);
+    setAudioUrl(null);
+    try {
+      const res = await fetch(`/api/tts?text=${encodeURIComponent(text)}`);
+      if (!res.ok) throw new Error('Failed to fetch audio');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setAudioUrl(url);
+      setTimeout(() => {
+        audioRef.current?.play();
+      }, 100); // slight delay to ensure audio loads
+    } catch (e: any) {
+      setError(e.message || 'Error generating audio');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center mt-4">
+      <Button onClick={fetchAudio} disabled={loading} variant="outline" size="sm" className="mb-2">
+        {loading ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : <Volume2 className="h-5 w-5 mr-2" />}
+        {loading ? 'Generating Audio...' : 'Play with AI Voice'}
+      </Button>
+      {audioUrl && (
+        <audio ref={audioRef} src={audioUrl} controls className="w-full mt-2" />
+      )}
+      {error && <p className="text-destructive text-xs mt-1">{error}</p>}
+    </div>
+  );
 }
 
