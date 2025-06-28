@@ -14,7 +14,7 @@ const faqs = [
   {
     question: "What is Shannon?",
     answer:
-      "Shannon is a free, AI-powered learning application designed to help children, especially those with learning difficulties, by providing personalized and engaging lessons. Our goal is to make quality education accessible to every child.",
+      "Shannon is an AI-powered learning application designed to help children, especially those with learning difficulties, by providing personalized and engaging lessons. Our goal is to make quality education accessible to all.",
     icon: BookOpen,
   },
   {
@@ -22,12 +22,6 @@ const faqs = [
     answer:
       "Shannon is primarily for children aged 2-18 who may benefit from tailored educational content. It's particularly helpful for children with learning difficulties, as lessons can be adapted to their specific needs, pace, and interests. Parents use the app to manage profiles and track progress.",
     icon: Users,
-  },
-  {
-    question: "Is Shannon free to use?",
-    answer:
-      "Yes, Shannon is 100% free to use. We are committed to providing accessible education and believe that cost should not be a barrier to learning.",
-    icon: ShieldCheck,
   },
   {
     question: "How are lessons generated?",
@@ -67,7 +61,7 @@ export default function FAQPage() {
             Frequently Asked Questions
           </CardTitle>
           <CardDescription className="text-lg text-muted-foreground mt-2">
-            Find answers to common questions about Shannon. If you don&apos;t see your question here, feel free to contact us.
+            Find answers to common questions about Shannon. If you don&apos;t see your question here, contact us.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-6 py-8">

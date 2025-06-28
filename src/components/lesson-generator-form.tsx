@@ -169,7 +169,7 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
     setLastSuccessfulInput(null); // Clear last successful input
     toast({
         title: "Ready for a New Lesson",
-        description: "The previous lesson view has been cleared. Feel free to generate a new lesson or adjust the topic."
+        description: "The previous lesson view has been cleared. You can generate a new lesson or adjust the topic."
     });
   };
 

@@ -13,9 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 const LOCAL_PIN_STORAGE_KEY = 'shannon_demo_pin_value'; 
 const LOCAL_PIN_SETUP_KEY = 'shannon_demo_pin_is_setup';
 
-// Define the special "always free" account email
-const ALWAYS_FREE_EMAIL = "adityasurendran01@icloud.com";
-
 interface AuthContextType {
   currentUser: User | null;
   parentProfile: ParentProfile | null; 
@@ -97,16 +94,6 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
       return;
     }
 
-    // For the special free email, always set client-side to true
-    if (currentUser.email === ALWAYS_FREE_EMAIL) {
-        setParentProfile(prevProfile => {
-            if (!prevProfile) return { uid: currentUser.uid, email: currentUser.email, isSubscribed: true, pinEnabled: false };
-            return { ...prevProfile, isSubscribed: true };
-        });
-        toast({ title: "Special Account", description: "This account has permanent premium access." });
-        return;
-    }
-
     try {
       const updateUserSubscriptionFunction = httpsCallable(firebaseFunctions, 'updateUserSubscription');
       await updateUserSubscriptionFunction({ isSubscribed });
@@ -137,34 +124,8 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
         setError(null);
         setCurrentUser(user);
         if (user) {
-          if (user.email === ALWAYS_FREE_EMAIL) {
-            // Grant free access to this special email
-            console.log(`User ${user.email} detected as ALWAYS_FREE_EMAIL. Granting subscription access.`);
-            setParentProfile({
-              uid: user.uid,
-              email: user.email,
-              isSubscribed: true, // Override: always subscribed
-              pinEnabled: false, // Default for new profile parts
-              // Potentially fetch other parent profile details if they exist, but override isSubscribed
-            });
-            setLoading(false);
-            return; // Skip Firebase function call for this user
-          }
-          
           // For regular users, call the Cloud Function to get their profile/subscription status
           try {
-            // Assuming you have a Cloud Function to get user profile data including subscription
-            // For this example, we'll simulate fetching and creating a default if not found.
-            // In a real app, this would be replaced by an actual call to a function like 'getUserProfile'.
-            // For now, let's mock fetching a profile and checking its `isSubscribed` status.
-            // This part needs to be connected to your actual backend logic that reads from Firestore.
-            // For the demo, we'll set a default non-subscribed state for other users.
-            // If you have a function that fetches user data, it should be called here.
-            // e.g., const getUserProfile = httpsCallable(firebaseFunctions, 'getUserProfile');
-            // const profileResult = await getUserProfile();
-            // const fetchedProfile = profileResult.data as ParentProfile;
-            // setParentProfile(fetchedProfile);
-
             // Placeholder: Simulating a non-subscribed user if not the special email
             // In a real app, you fetch this from Firestore or your backend
             setParentProfile(prev => ({

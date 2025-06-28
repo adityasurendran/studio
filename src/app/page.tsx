@@ -75,7 +75,7 @@ export default function HomePage() {
       <div className="mt-10 p-8 bg-card rounded-xl shadow-2xl border-t-4 border-primary w-full max-w-5xl">
         <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">Our Mission</h2>
         <p className="text-lg text-foreground leading-relaxed">
-          Shannon is dedicated to providing <span className="font-semibold">100% free, high-quality</span> educational resources for children facing learning challenges. We believe every child deserves the chance to learn, grow, and succeed at their own pace.
+          Shannon is dedicated to providing <span className="font-semibold">high-quality</span> educational resources for children facing learning challenges. We believe every child deserves the chance to learn, grow, and succeed at their own pace.
         </p>
       </div>
     </div>

@@ -179,7 +179,6 @@ export default function SubscribePageContent() {
               <li>Detailed progress tracking & history</li>
               <li>Quiz generation with explanations</li>
               <li>Support for various learning difficulties</li>
-              <li>Ad-free experience</li>
             </ul>
           </Card>
           

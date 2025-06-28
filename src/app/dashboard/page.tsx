@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
-import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy, Search, Eye, Star, Rocket, Target, Zap as ZapIcon, Trophy, FastForward } from 'lucide-react';
+import { Users, UserPlus, BookOpen, CheckCircle, Smile, Brain, Sparkles, History as HistoryIcon, TrendingUp, Award, Loader2, BarChart3, Percent, BookCopy, Search, Eye, Star, Rocket, Target, Zap as ZapIcon, Trophy, FastForward, GraduationCap } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -116,6 +116,11 @@ export default function DashboardOverviewPage() {
                 <Link href="/dashboard/lessons/new" passHref>
                   <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-8 py-6 text-lg">
                     <BookOpen className="mr-2 h-6 w-6" /> Generate New Lesson
+                  </Button>
+                </Link>
+                <Link href="/dashboard/lessons/book-based" passHref>
+                  <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-8 py-6 text-lg">
+                    <GraduationCap className="mr-2 h-6 w-6" /> Book-Based Lessons
                   </Button>
                 </Link>
                 <Link href="/dashboard/discover" passHref>
@@ -292,6 +297,14 @@ export default function DashboardOverviewPage() {
           description="Generate tailored lessons based on your child's needs and interests."
           link="/dashboard/lessons/new"
           linkLabel="Create Lesson"
+          disabled={!activeChild}
+        />
+        <FeatureCard
+          icon={<GraduationCap className="h-10 w-10 text-primary" />}
+          title="Book-Based Lessons"
+          description="Generate lessons from our curated collection of Irish Junior Cycle textbooks."
+          link="/dashboard/lessons/book-based"
+          linkLabel="Browse Subjects"
           disabled={!activeChild}
         />
         <FeatureCard
