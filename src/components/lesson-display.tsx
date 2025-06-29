@@ -375,327 +375,309 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     const lessonPageSentences = currentLessonPage.sentences.join(' ');
     const lessonPageIdentifier = `lesson-page-${currentPageIndex}`;
     return (
-      <Card className={cn("w-full shadow-xl transition-all duration-300 flex flex-col border-t-4 border-primary", themeClass)}>
-        <CardHeader className="pb-3">
-            <div className="flex items-center gap-3 mb-2">
-              <BookOpen className="h-10 w-10 text-primary" />
-              <CardTitle className="text-3xl md:text-4xl font-bold text-primary">{lesson.lessonTitle}</CardTitle>
+      <div className={cn("lesson-display", themeClass)}>
+        {/* Lesson View */}
+        {view === 'lesson' && currentLessonPage && (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Lesson Header */}
+            <div className="text-center space-y-2 sm:space-y-3">
+              <div className="flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base text-muted-foreground">
+                <Layers className="h-4 w-4" />
+                <span>Page {currentPageIndex + 1} of {totalLessonPages}</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary px-2">{currentLessonPage.title}</h2>
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground border-t pt-3 mt-2">
-                <div className="flex items-center gap-1.5"><Layers className="h-4 w-4 text-primary/80" /><span>Subject: <strong>{lesson.subject}</strong></span></div>
-                <div className="flex items-center gap-1.5"><Type className="h-4 w-4 text-primary/80" /><span>Format: <strong>{lesson.lessonFormat}</strong></span></div>
-                {childProfile?.theme && (<div className="flex items-center gap-1.5"><Palette className="h-4 w-4 text-primary/80" /><span>Theme: <strong className="capitalize">{childProfile.theme}</strong></span></div>)}
-            </div>
-        </CardHeader>
-        
-        <CardContent className={cn("flex-grow flex flex-col items-center justify-start p-4 md:p-6 space-y-4")}>
-            <div className="w-full aspect-[16/10] bg-muted/30 rounded-lg overflow-hidden flex items-center justify-center mb-4 shadow-inner border max-h-[450px]">
-            {currentLessonPage.imageDataUri ? (
-                <Image src={currentLessonPage.imageDataUri} alt={`Illustration for page ${currentPageIndex + 1}`} width={600} height={375} className="object-contain w-full h-full" priority={currentPageIndex < 2}/>
-            ) : (
-                <div className="text-center text-muted-foreground p-4 flex flex-col items-center justify-center h-full">
-                    <ImageOff className="h-20 w-20 mx-auto mb-2" />
-                    <p className="text-lg font-medium">Image not displayed for this page.</p>
-                    {lesson.lessonFormat === "Custom Text-Based Lesson" ?
-                        <p className="text-sm">Custom lessons do not include AI-generated images.</p> :
-                        <p className="text-sm">This might be due to content filters or a generation issue.</p>
-                    }
-                </div>
-            )}
-            </div>
-            
-            <div className={cn("text-center min-h-[5em] w-full bg-card p-4 rounded-md shadow relative", fontClass, "text-gray-900")}>
-              {currentLessonPage.sentences.map((sentence, sIdx) => (<p key={sIdx} className={cn("leading-relaxed", sIdx > 0 ? "mt-2" : "")}>{sentence}</p>))}
-              {currentLessonPage.sentences.length === 0 && <p>Loading content...</p>}
-              {lessonPageSentences.trim() && (
-                  <Button 
-                    onClick={() => handleSpeak(lessonPageSentences, lessonPageIdentifier)} 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute top-2 right-2 text-primary hover:text-accent" 
-                    aria-label={isSpeaking && speakingTextIdentifier === lessonPageIdentifier ? "Stop reading" : "Read aloud"}
-                  >
-                    {isSpeaking && speakingTextIdentifier === lessonPageIdentifier ? <StopCircle className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
-                  </Button>
-              )}
-              {/* ElevenLabs Audio Player */}
-              {lessonPageSentences.trim() && (
-                <ElevenLabsAudioPlayer text={lessonPageSentences} />
-              )}
-            </div>
-        </CardContent>
 
-        <CardFooter className="flex flex-col sm:flex-row items-center justify-between p-4 border-t gap-3">
-            <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground">Page {currentPageIndex + 1} of {totalLessonPages}</p>
-                <Button variant="outline" size="sm" onClick={handlePrintLesson} className="shadow-sm hover:shadow-md">
-                    <Printer className="mr-1.5 h-4 w-4" /> Print Lesson
-                </Button>
-            </div>
-            <div className="flex gap-3">
-            <Button onClick={handlePreviousPage} disabled={currentPageIndex === 0} variant="outline" size="lg" className="shadow-sm hover:shadow-md transition-shadow"><ChevronLeft className="mr-2 h-5 w-5" /> Previous</Button>
-            <Button onClick={handleNextPage} variant="default" size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all transform hover:scale-105">
-                {currentPageIndex === totalLessonPages - 1 ? (totalQuizQuestions > 0 ? 'Start Quiz' : 'Finish Lesson') : 'Next Page'}
-                {currentPageIndex < totalLessonPages - 1 && <ChevronRight className="ml-2 h-5 w-5" />}
-            </Button>
-            </div>
-        </CardFooter>
-        <style jsx global>{`
-        .dark-theme-lesson { background-color: hsl(var(--background)); color: hsl(var(--foreground)); } 
-        .dark-theme-lesson .text-primary { color: hsl(var(--primary)); }
-        .dark-theme-lesson .text-muted-foreground { color: hsl(var(--muted-foreground)); }
-        .colorful-theme-lesson { background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1)); color: hsl(var(--foreground)); }
-        .colorful-theme-lesson .text-primary { color: hsl(var(--primary)); }
-        .simple-theme-lesson { background-color: hsl(var(--card)); color: hsl(var(--card-foreground)); border-color: hsl(var(--border)); }
-      `}</style>
-      </Card>
-    );
-  }
-
-  if (view === 'quiz' && currentQuizQuestion) {
-    const isExplanationVisible = showExplanationForQuestionIndex === currentQuestionIndex;
-    const hasSelectedAnswer = selectedAnswers[currentQuestionIndex] !== undefined;
-    const questionTextIdentifier = `quiz-question-${currentQuestionIndex}`;
-    const explanationTextIdentifier = `quiz-explanation-${currentQuestionIndex}`;
-
-    return (
-      <Card className={cn("w-full shadow-xl border-t-4 border-accent", themeClass)}>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <Brain className="h-10 w-10 text-accent" />
-            <CardTitle className="text-3xl md:text-4xl font-bold text-accent">Quiz Time: {lesson.lessonTitle}</CardTitle>
-          </div>
-          <p className="text-muted-foreground mt-2">Question {currentQuestionIndex + 1} of {totalQuizQuestions}</p>
-          <Progress value={((currentQuestionIndex + 1) / totalQuizQuestions) * 100} className="w-full mt-3 h-3" />
-        </CardHeader>
-        <CardContent className={cn("p-4 md:p-6 space-y-6", fontClass)}>
-          <div className="relative">
-            <p className="font-semibold text-xl md:text-2xl leading-tight pr-10">{currentQuizQuestion.questionText}</p>
-            {currentQuizQuestion.questionText.trim() && (
-                 <Button 
-                    onClick={() => handleSpeak(currentQuizQuestion.questionText, questionTextIdentifier)} 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute top-0 right-0 text-primary hover:text-accent" 
-                    aria-label={isSpeaking && speakingTextIdentifier === questionTextIdentifier ? "Stop reading question" : "Read question aloud"}
-                  >
-                    {isSpeaking && speakingTextIdentifier === questionTextIdentifier ? <StopCircle className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                </Button>
-            )}
-          </div>
-          <RadioGroup
-            value={selectedAnswers[currentQuestionIndex]?.toString()}
-            onValueChange={(value) => handleAnswerSelection(currentQuestionIndex, parseInt(value))}
-            className="space-y-3"
-            disabled={isExplanationVisible}
-          >
-            {currentQuizQuestion.options.map((option, idx) => (
-              <Label
-                key={idx} 
-                htmlFor={`q${currentQuestionIndex}-opt${idx}`}
-                className={cn(
-                  "flex items-center space-x-3 p-4 border-2 rounded-lg hover:border-primary/70 transition-all cursor-pointer text-base md:text-lg",
-                  selectedAnswers[currentQuestionIndex] === idx ? "border-primary bg-primary/10" : "border-input bg-card",
-                  isExplanationVisible && selectedAnswers[currentQuestionIndex] === idx && selectedAnswers[currentQuestionIndex] !== currentQuizQuestion.correctAnswerIndex && "border-destructive bg-destructive/10 text-destructive", 
-                  isExplanationVisible && idx === currentQuizQuestion.correctAnswerIndex && "border-green-600 bg-green-500/10 text-green-700 dark:text-green-400",
-                  isExplanationVisible && "cursor-default opacity-80"
-                )}
-              >
-                <RadioGroupItem value={idx.toString()} id={`q${currentQuestionIndex}-opt${idx}`} disabled={isExplanationVisible} className="h-5 w-5"/>
-                <span className="flex-1">{option}</span>
-                {isExplanationVisible && selectedAnswers[currentQuestionIndex] === idx && selectedAnswers[currentQuestionIndex] !== currentQuizQuestion.correctAnswerIndex && <X className="h-6 w-6 text-destructive flex-shrink-0" />}
-                {isExplanationVisible && idx === currentQuizQuestion.correctAnswerIndex && <Check className="h-6 w-6 text-green-600 flex-shrink-0" />}
-              </Label>
-            ))}
-          </RadioGroup>
-
-          {isExplanationVisible && (
-            <Card className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-400 dark:border-blue-600 rounded-lg shadow-md">
-              <CardHeader className="p-0 pb-2 mb-2 border-b border-blue-300 dark:border-blue-700 relative">
-                <CardTitle className="text-xl font-semibold text-blue-700 dark:text-blue-300 flex items-center pr-10">
-                  <HelpCircle className="h-6 w-6 mr-2"/> Let&apos;s understand this!
-                </CardTitle>
-                {currentQuizQuestion.explanation.trim() && (
-                    <Button 
-                        onClick={() => handleSpeak(currentQuizQuestion.explanation, explanationTextIdentifier)} 
-                        variant="ghost" 
-                        size="icon" 
-                        className="absolute top-0 right-0 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                        aria-label={isSpeaking && speakingTextIdentifier === explanationTextIdentifier ? "Stop reading explanation" : "Read explanation aloud"}
+            {/* Lesson Content */}
+            <Card className="shadow-lg">
+              <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                {/* Image Section */}
+                {currentLessonPage.imageDataUri && (
+                  <div className="relative aspect-video w-full max-w-2xl mx-auto">
+                    <Image
+                      src={currentLessonPage.imageDataUri}
+                      alt={currentLessonPage.title}
+                      fill
+                      className="rounded-lg object-cover shadow-md"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 800px"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm hover:bg-background"
+                      onClick={() => handleSpeak(currentLessonPage.title, `lesson-image-${currentPageIndex}`)}
                     >
-                        {isSpeaking && speakingTextIdentifier === explanationTextIdentifier ? <StopCircle className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                      {isSpeaking && speakingTextIdentifier === `lesson-image-${currentPageIndex}` ? (
+                        <StopCircle className="h-4 w-4" />
+                      ) : (
+                        <Volume2 className="h-4 w-4" />
+                      )}
                     </Button>
+                  </div>
                 )}
-              </CardHeader>
-              <CardContent className="p-0 text-sm md:text-base text-blue-600 dark:text-blue-200 space-y-2">
-                <p>
-                  The correct answer is: <strong className="font-semibold">{currentQuizQuestion.options[currentQuizQuestion.correctAnswerIndex]}</strong>
-                </p>
-                <p className="leading-relaxed">{currentQuizQuestion.explanation}</p>
+
+                {/* Text Content */}
+                <div className="space-y-3 sm:space-y-4">
+                  {currentLessonPage.content.map((contentBlock, blockIndex) => (
+                    <div key={blockIndex} className="space-y-2 sm:space-y-3">
+                      {contentBlock.type === 'heading' && (
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <Type className="h-5 w-5 sm:h-6 sm:w-6 text-primary mt-1 flex-shrink-0" />
+                          <div className="flex-1">
+                            <h3 className={cn("font-bold text-primary", fontClass)}>{contentBlock.text}</h3>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="mt-1 h-8 px-2 text-xs"
+                              onClick={() => handleSpeak(contentBlock.text, `lesson-heading-${currentPageIndex}-${blockIndex}`)}
+                            >
+                              {isSpeaking && speakingTextIdentifier === `lesson-heading-${currentPageIndex}-${blockIndex}` ? (
+                                <StopCircle className="h-3 w-3" />
+                              ) : (
+                                <Volume2 className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {contentBlock.type === 'paragraph' && (
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className={cn("leading-relaxed", fontClass)}>{contentBlock.text}</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="mt-1 h-8 px-2 text-xs"
+                              onClick={() => handleSpeak(contentBlock.text, `lesson-paragraph-${currentPageIndex}-${blockIndex}`)}
+                            >
+                              {isSpeaking && speakingTextIdentifier === `lesson-paragraph-${currentPageIndex}-${blockIndex}` ? (
+                                <StopCircle className="h-3 w-3" />
+                              ) : (
+                                <Volume2 className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-end p-4 border-t">
-          {isExplanationVisible ? (
-             <Button onClick={handleTryAgainOrContinueFromExplanation} size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all transform hover:scale-105">
-                Try Again <RotateCcw className="ml-2 h-5 w-5" />
-            </Button>
-          ) : (
-            <Button onClick={handleSubmitAnswer} disabled={!hasSelectedAnswer} size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all transform hover:scale-105">
-              {currentQuestionIndex === totalQuizQuestions - 1 && attemptedQuestions.size === totalQuizQuestions -1 ? 'Submit Quiz' : 'Check Answer'} <Send className="ml-2 h-5 w-5" />
-            </Button>
-          )}
-        </CardFooter>
-      </Card>
-    );
-  }
 
-
-  if (view === 'results') {
-    const isSuccess = quizScore >= 60;
-    const currentAttemptData = {
-        lessonTitle: lesson.lessonTitle,
-        lessonTopic: lessonTopic,
-        subject: lesson.subject, // Add subject here
-        quizScore: quizScore,
-        quizTotalQuestions: totalQuizQuestions,
-        questionsAnsweredCorrectly: answeredCorrectly,
-        timestamp: new Date().toISOString(),
-    };
-
-    return (
-      <Card className={cn("w-full shadow-xl text-center border-t-4", themeClass, isSuccess ? "border-green-500" : "border-destructive")}>
-        <CardHeader className="pb-2 pt-8">
-          <CardTitle className="text-4xl md:text-5xl font-bold text-primary">
-            {totalQuizQuestions > 0 ? "Quiz Results!" : "Lesson Complete!"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className={cn("p-6 space-y-6", fontClass)}>
-          {totalQuizQuestions > 0 ? (
-            isSuccess ? (
-              <div className="flex flex-col items-center text-green-500">
-                <Award className="h-28 w-28 animate-bounce text-green-500" />
-                <p className="text-3xl font-semibold mt-4">Great Job, {childProfile?.name || 'Learner'}!</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center text-destructive">
-                <AlertTriangle className="h-28 w-28 text-destructive" />
-                <p className="text-3xl font-semibold mt-4">Keep Practicing!</p>
-              </div>
-            )
-          ) : (
-            <div className="flex flex-col items-center text-primary">
-              <PartyPopper className="h-28 w-28 text-accent animate-pulse" />
-              <p className="text-3xl font-semibold mt-4">Lesson Finished!</p>
-            </div>
-          )}
-          
-          {totalQuizQuestions > 0 && (
-            <div className="py-4 px-6 bg-card border rounded-lg shadow-inner max-w-sm mx-auto">
-                <p className="text-5xl font-bold text-primary">{quizScore}%</p>
-                <p className="text-muted-foreground mt-1">You answered {answeredCorrectly} out of {totalQuizQuestions} questions correctly.</p>
-            </div>
-          )}
-          {totalQuizQuestions === 0 && (
-             <p className="text-xl text-green-600 mt-4 font-medium">Well done on completing the lesson!</p>
-          )}
-          
-          {/* Kinesthetic Activities Section */}
-          {lesson.kinestheticActivities && lesson.kinestheticActivities.length > 0 && (
-            <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Activity className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                <h3 className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                  Hands-On Activities for {childProfile?.name || 'You'}!
-                </h3>
-              </div>
-              <p className="text-blue-600 dark:text-blue-200 mb-4 text-lg">
-                Here are some fun activities you can do to learn more about <strong>{lessonTopic}</strong> through movement and hands-on exploration:
-              </p>
-              <div className="space-y-3">
-                {lesson.kinestheticActivities.map((activity, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-600 shadow-sm">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">
-                      {index + 1}
-                    </div>
-                    <p className="text-gray-700 dark:text-gray-200 leading-relaxed">{activity}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-800/30 rounded-lg border border-blue-300 dark:border-blue-600">
-                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                  💡 Tip: These activities are designed to help you learn through movement and touch. 
-                  Try them with a parent or friend for extra fun!
-                </p>
-              </div>
-            </div>
-          )}
-          
-           {/* Main action button area */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            {isFetchingRecommendation && quizScore >= 60 && (
-              <Button variant="default" size="lg" className="bg-accent text-accent-foreground" disabled>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Fetching Next Suggestion...
-              </Button>
-            )}
-
-            {!isFetchingRecommendation && nextRecommendedTopic && quizScore >= 60 && (
+            {/* Navigation */}
+            <div className="flex justify-between items-center gap-3 sm:gap-4">
               <Button
-                onClick={() => {
-                  onQuizComplete({ ...currentAttemptData, choseToRelearn: false });
-                  router.push(`/dashboard/lessons/new?topic=${encodeURIComponent(nextRecommendedTopic)}`);
-                }}
-                variant="default"
-                size="lg"
-                className="bg-green-600 hover:bg-green-700 text-white shadow-lg hover:scale-105"
+                variant="outline"
+                onClick={handlePreviousPage}
+                disabled={currentPageIndex === 0}
+                className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3"
               >
-                Next Lesson: {nextRecommendedTopic.substring(0, 25)}{nextRecommendedTopic.length > 25 ? '...' : ''} <ChevronRight className="ml-2 h-5 w-5"/>
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Previous</span>
               </Button>
-            )}
-            
-            {/* Fallback / default continue button if no specific next topic or still fetching (and quiz was good) or no quiz*/}
-            {(!(isFetchingRecommendation || (nextRecommendedTopic && quizScore >= 60)) && (isSuccess || totalQuizQuestions === 0)) && (
-                <Button 
-                    onClick={() => {
-                        onQuizComplete({ ...currentAttemptData, choseToRelearn: false });
-                        onRestartLesson();
-                    }} 
-                    variant="default" size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg">
-                    {totalQuizQuestions > 0 ? 'Generate New Lesson' : 'Back to Dashboard'} <ChevronRight className="ml-2 h-5 w-5"/>
-                </Button>
-            )}
-          </div>
-
-          {/* For poor scores, offer relearn or different topic */}
-          {!isSuccess && totalQuizQuestions > 0 && (
-            <div className="mt-6 p-4 bg-secondary/50 rounded-lg shadow-sm border">
-              <p className="mb-3 text-lg text-foreground">This topic might need a little more review.</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button 
-                  onClick={() => {
-                    onQuizComplete({ ...currentAttemptData, choseToRelearn: true });
-                    handleRestartLessonInternal(); // This resets the form for the same topic
-                  }} 
-                  variant="default" size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90"
+              
+              <div className="flex items-center gap-2 sm:gap-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePrintLesson}
+                  className="h-10 w-10 sm:h-11 sm:w-11"
+                  title="Print Lesson"
                 >
-                  <RotateCcw className="mr-2 h-5 w-5"/> Learn This Topic Again
+                  <Printer className="h-4 w-4" />
                 </Button>
-                <Button 
-                  onClick={() => {
-                    onQuizComplete({ ...currentAttemptData, choseToRelearn: false });
-                    onRestartLesson(); // This clears form for a new topic
-                  }} 
-                  variant="outline" size="lg"
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={onRestartLesson}
+                  className="h-10 w-10 sm:h-11 sm:w-11"
+                  title="Restart Lesson"
                 >
-                  Choose a Different Topic
+                  <RotateCcw className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
-          )}
 
-        </CardContent>
-      </Card>
+              <Button
+                onClick={handleNextPage}
+                className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                <span className="hidden sm:inline">
+                  {currentPageIndex === totalLessonPages - 1 ? 'Start Quiz' : 'Next'}
+                </span>
+                <span className="sm:hidden">
+                  {currentPageIndex === totalLessonPages - 1 ? 'Quiz' : 'Next'}
+                </span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Quiz View */}
+        {view === 'quiz' && currentQuizQuestion && (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="text-center space-y-2 sm:space-y-3">
+              <div className="flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base text-muted-foreground">
+                <Activity className="h-4 w-4" />
+                <span>Question {currentQuestionIndex + 1} of {totalQuizQuestions}</span>
+              </div>
+              <Progress value={((currentQuestionIndex + 1) / totalQuizQuestions) * 100} className="w-full max-w-md mx-auto" />
+            </div>
+
+            <Card className="shadow-lg">
+              <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                <div className="space-y-3 sm:space-y-4">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-primary">{currentQuizQuestion.questionText}</h3>
+                  
+                  <RadioGroup
+                    value={selectedAnswers[currentQuestionIndex]?.toString() || ''}
+                    onValueChange={(value) => handleAnswerSelection(currentQuestionIndex, parseInt(value))}
+                    className="space-y-3"
+                  >
+                    {currentQuizQuestion.options.map((option, optionIndex) => (
+                      <div key={optionIndex} className="flex items-center space-x-3">
+                        <RadioGroupItem value={optionIndex.toString()} id={`option-${optionIndex}`} />
+                        <Label htmlFor={`option-${optionIndex}`} className={cn("text-base sm:text-lg cursor-pointer", fontClass)}>
+                          {option}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                <div className="flex justify-between items-center gap-3 sm:gap-4 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                    disabled={currentQuestionIndex === 0}
+                    className="px-4 sm:px-6 py-2 sm:py-3"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Previous</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={handleSubmitAnswer}
+                    disabled={selectedAnswers[currentQuestionIndex] === undefined}
+                    className="px-6 sm:px-8 py-2 sm:py-3 bg-accent text-accent-foreground hover:bg-accent/90"
+                  >
+                    <span className="hidden sm:inline">
+                      {currentQuestionIndex === totalQuizQuestions - 1 ? 'Finish Quiz' : 'Next Question'}
+                    </span>
+                    <span className="sm:hidden">
+                      {currentQuestionIndex === totalQuizQuestions - 1 ? 'Finish' : 'Next'}
+                    </span>
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Results View */}
+        {view === 'results' && (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="text-center space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-center gap-2 sm:gap-3">
+                {quizScore >= 80 ? (
+                  <PartyPopper className="h-8 w-8 sm:h-10 sm:w-10 text-green-500" />
+                ) : quizScore >= 60 ? (
+                  <Award className="h-8 w-8 sm:h-10 sm:w-10 text-yellow-500" />
+                ) : (
+                  <Brain className="h-8 w-8 sm:h-10 sm:w-10 text-blue-500" />
+                )}
+              </div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">Quiz Complete!</h2>
+              <p className="text-lg sm:text-xl text-muted-foreground">
+                You scored <span className="font-bold text-accent">{quizScore}%</span> ({answeredCorrectly} out of {totalQuizQuestions} correct)
+              </p>
+            </div>
+
+            <Card className="shadow-lg">
+              <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                <div className="space-y-3 sm:space-y-4">
+                  {lesson.quiz?.map((question, questionIndex) => (
+                    <div key={questionIndex} className="border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
+                      <div className="flex items-start gap-2 sm:gap-3">
+                        {selectedAnswers[questionIndex] === question.correctAnswer ? (
+                          <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-500 mt-1 flex-shrink-0" />
+                        ) : (
+                          <X className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 mt-1 flex-shrink-0" />
+                        )}
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-base sm:text-lg">{question.questionText}</h4>
+                          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                            Your answer: <span className={selectedAnswers[questionIndex] === question.correctAnswer ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                              {question.options[selectedAnswers[questionIndex] || 0]}
+                            </span>
+                          </p>
+                          {selectedAnswers[questionIndex] !== question.correctAnswer && (
+                            <p className="text-sm sm:text-base text-green-600 font-medium mt-1">
+                              Correct answer: {question.options[question.correctAnswer]}
+                            </p>
+                          )}
+                          {question.explanation && (
+                            <div className="mt-2 sm:mt-3">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowExplanationForQuestionIndex(showExplanationForQuestionIndex === questionIndex ? null : questionIndex)}
+                                className="text-xs sm:text-sm h-8 px-2"
+                              >
+                                <HelpCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                {showExplanationForQuestionIndex === questionIndex ? 'Hide' : 'Show'} Explanation
+                              </Button>
+                              {showExplanationForQuestionIndex === questionIndex && (
+                                <p className="text-sm sm:text-base text-muted-foreground mt-2 p-2 sm:p-3 bg-muted rounded-md">
+                                  {question.explanation}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
+                  <Button
+                    onClick={onRestartLesson}
+                    variant="outline"
+                    className="flex-1 px-4 sm:px-6 py-2 sm:py-3"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Start New Lesson</span>
+                    <span className="sm:hidden">New Lesson</span>
+                  </Button>
+                  
+                  {nextRecommendedTopic && (
+                    <Button
+                      onClick={() => router.push(`/dashboard/lessons/new?topic=${encodeURIComponent(nextRecommendedTopic)}`)}
+                      className="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Try: {nextRecommendedTopic}</span>
+                      <span className="sm:hidden">Next: {nextRecommendedTopic.substring(0, 15)}...</span>
+                    </Button>
+                  )}
+                  
+                  {isFetchingRecommendation && (
+                    <Button disabled className="flex-1 px-4 sm:px-6 py-2 sm:py-3">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <span className="hidden sm:inline">Finding next lesson...</span>
+                      <span className="sm:hidden">Finding...</span>
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     );
   }
   

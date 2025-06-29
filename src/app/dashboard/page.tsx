@@ -30,8 +30,8 @@ export default function DashboardOverviewPage() {
   if (activeChildLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-[calc(100vh-var(--header-height,4rem)-3rem)] text-center p-4">
-        <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
-        <p className="text-xl text-muted-foreground">Loading dashboard...</p>
+        <Loader2 className="h-12 w-12 sm:h-16 sm:w-16 animate-spin text-primary mb-4" />
+        <p className="text-lg sm:text-xl text-muted-foreground">Loading dashboard...</p>
       </div>
     );
   }
@@ -84,69 +84,69 @@ export default function DashboardOverviewPage() {
   const progressStats = getProgressStats();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 px-3 sm:px-4">
       <Card className="shadow-xl border-primary/20">
-        <CardHeader className="pb-4">
+        <CardHeader className="pb-4 px-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <Sparkles className="h-10 w-10 text-primary" />
+            <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
             <div>
-              <CardTitle className="text-4xl font-bold text-primary">Dashboard</CardTitle>
-              <CardDescription className="text-lg text-muted-foreground">Welcome back! Let&apos;s continue the learning adventure.</CardDescription>
+              <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">Dashboard</CardTitle>
+              <CardDescription className="text-base sm:text-lg text-muted-foreground">Welcome back! Let&apos;s continue the learning adventure.</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           {activeChild ? (
-            <div className="p-6 bg-gradient-to-br from-primary/10 via-card to-secondary/10 rounded-lg shadow-lg text-center border border-primary/30">
-              <Avatar className="w-28 h-28 mx-auto mb-4 border-4 border-primary shadow-xl">
+            <div className="p-4 sm:p-6 bg-gradient-to-br from-primary/10 via-card to-secondary/10 rounded-lg shadow-lg text-center border border-primary/30">
+              <Avatar className="w-20 h-20 sm:w-28 sm:h-28 mx-auto mb-4 border-4 border-primary shadow-xl">
                 <AvatarImage src={`https://avatar.vercel.sh/${encodeURIComponent(activeChild.avatarSeed?.trim() || activeChild.name)}.png?size=120`} alt={activeChild.name} />
-                <AvatarFallback className="text-4xl bg-secondary/50 text-secondary-foreground">{activeChild.name[0].toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="text-2xl sm:text-4xl bg-secondary/50 text-secondary-foreground">{activeChild.name[0].toUpperCase()}</AvatarFallback>
               </Avatar>
-              <h2 className="text-3xl font-semibold text-primary">
+              <h2 className="text-2xl sm:text-3xl font-semibold text-primary">
                 {activeChild.name}
               </h2>
               <p className="text-muted-foreground mt-1 mb-3">Ready for a new lesson!</p>
-              <div className="text-sm text-foreground mb-6 space-y-1 bg-card/50 p-3 rounded-md border max-w-sm mx-auto">
+              <div className="text-xs sm:text-sm text-foreground mb-4 sm:mb-6 space-y-1 bg-card/50 p-3 rounded-md border max-w-sm mx-auto">
                   <p><span className="font-medium text-primary/80">Age:</span> {activeChild.age}</p>
                   <p><span className="font-medium text-primary/80">Curriculum:</span> {activeChild.curriculum}</p>
                    {activeChild.learningStyle && <p><span className="font-medium text-primary/80">Learning Style:</span> <span className="capitalize">{activeChild.learningStyle.replace(/_/g, ' ')}</span></p>}
                    {activeChild.fontSizePreference && <p><span className="font-medium text-primary/80">Font Size:</span> <span className="capitalize">{activeChild.fontSizePreference}</span></p>}
               </div>
-              <div className="flex flex-wrap justify-center gap-3">
+              <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3">
                 <Link href="/dashboard/lessons/new" passHref>
-                  <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-8 py-6 text-lg">
-                    <BookOpen className="mr-2 h-6 w-6" /> Generate New Lesson
+                  <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto">
+                    <BookOpen className="mr-2 h-5 w-5 sm:h-6 sm:w-6" /> Generate New Lesson
                   </Button>
                 </Link>
                 <Link href="/dashboard/lessons/book-based" passHref>
-                  <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-8 py-6 text-lg">
-                    <GraduationCap className="mr-2 h-6 w-6" /> Book-Based Lessons
+                  <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto">
+                    <GraduationCap className="mr-2 h-5 w-5 sm:h-6 sm:w-6" /> Book-Based Lessons
                   </Button>
                 </Link>
                 <Link href="/dashboard/discover" passHref>
-                  <Button size="lg" variant="outline" className="text-primary border-primary hover:bg-primary/10 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-8 py-6 text-lg">
-                    <Search className="mr-2 h-6 w-6" /> Explore Topics
+                  <Button size="lg" variant="outline" className="text-primary border-primary hover:bg-primary/10 shadow-md hover:shadow-lg transition-all duration-150 transform hover:scale-105 px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg w-full sm:w-auto">
+                    <Search className="mr-2 h-5 w-5 sm:h-6 sm:w-6" /> Explore Topics
                   </Button>
                 </Link>
               </div>
             </div>
           ) : profiles.length > 0 ? (
-            <div className="text-center p-8 bg-card rounded-lg border border-dashed border-primary/50">
-              <Users className="h-16 w-16 text-primary mx-auto mb-4" />
-              <p className="text-xl text-foreground mb-4">Please select an active child profile to begin.</p>
+            <div className="text-center p-6 sm:p-8 bg-card rounded-lg border border-dashed border-primary/50">
+              <Users className="h-12 w-12 sm:h-16 sm:w-16 text-primary mx-auto mb-4" />
+              <p className="text-lg sm:text-xl text-foreground mb-4">Please select an active child profile to begin.</p>
               <Link href="/dashboard/profiles" passHref>
                 <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  <Users className="mr-2 h-5 w-5" /> Go to Profiles
+                  <Users className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Go to Profiles
                 </Button>
               </Link>
             </div>
           ) : (
-            <div className="text-center p-8 bg-card rounded-lg border border-dashed border-accent/50">
-              <UserPlus className="h-16 w-16 text-accent mx-auto mb-4" />
-              <p className="text-xl text-foreground mb-4">No child profiles found. Let&apos;s add one!</p>
+            <div className="text-center p-6 sm:p-8 bg-card rounded-lg border border-dashed border-accent/50">
+              <UserPlus className="h-12 w-12 sm:h-16 sm:w-16 text-accent mx-auto mb-4" />
+              <p className="text-lg sm:text-xl text-foreground mb-4">No child profiles found. Let&apos;s add one!</p>
               <Link href="/dashboard/profiles?action=add" passHref>
                 <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                  <UserPlus className="mr-2 h-5 w-5" /> Add Child Profile
+                  <UserPlus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Add Child Profile
                 </Button>
               </Link>
             </div>
@@ -156,14 +156,14 @@ export default function DashboardOverviewPage() {
 
       {activeChild && (
         <Card className="shadow-lg">
-          <CardHeader>
+          <CardHeader className="px-4 sm:px-6">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-8 w-8 text-primary" />
-              <CardTitle className="text-2xl text-primary">Progress & Rewards for {activeChild.name}</CardTitle>
+              <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              <CardTitle className="text-xl sm:text-2xl text-primary">Progress & Rewards for {activeChild.name}</CardTitle>
             </div>
             <CardDescription>A snapshot of {activeChild.name}&apos;s learning journey, points, and badges.</CardDescription>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-center px-4 sm:px-6">
             <StatCard icon={<Star className="text-yellow-400 fill-yellow-400" />} label="Total Points" value={progressStats.totalPoints.toString()} />
             <StatCard icon={<TrendingUp className="text-accent"/>} label="Lessons Attempted" value={progressStats.totalLessonsAttempted.toString()} />
             <StatCard icon={<Award className="text-green-500"/>} label="Average Quiz Score" value={`${progressStats.averageQuizScore}%`} />
@@ -173,8 +173,8 @@ export default function DashboardOverviewPage() {
               value={`${progressStats.accuracy}%`} 
               description={progressStats.totalQuestionsAttempted > 0 ? `(${progressStats.totalCorrectAnswers} / ${progressStats.totalQuestionsAttempted} correct)` : "(No quiz questions attempted yet)"}
             />
-            <div className="md:col-span-full lg:col-span-1 lg:row-span-2">
-                 <h4 className="text-lg font-semibold text-left mb-2 text-primary flex items-center gap-2"> <Award className="h-5 w-5"/> Badges Earned:</h4>
+            <div className="sm:col-span-2 lg:col-span-1 lg:row-span-2">
+                 <h4 className="text-base sm:text-lg font-semibold text-left mb-2 text-primary flex items-center gap-2"> <Award className="h-4 w-4 sm:h-5 sm:w-5"/> Badges Earned:</h4>
                 {progressStats.badges.length > 0 ? (
                      <div className="flex flex-wrap gap-2 justify-center sm:justify-start p-2 bg-secondary/30 rounded-md border min-h-[60px]">
                     <TooltipProvider>
@@ -183,8 +183,8 @@ export default function DashboardOverviewPage() {
                          return (
                             <Tooltip key={badge.id}>
                                 <TooltipTrigger asChild>
-                                    <span className="p-2.5 bg-card rounded-full shadow-md hover:bg-accent/10 transition-colors cursor-default">
-                                        <IconComponent className="h-6 w-6 text-accent" />
+                                    <span className="p-2 sm:p-2.5 bg-card rounded-full shadow-md hover:bg-accent/10 transition-colors cursor-default">
+                                        <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
                                     </span>
                                 </TooltipTrigger>
                                 <TooltipContent className="bg-popover text-popover-foreground shadow-xl text-left">
@@ -196,12 +196,14 @@ export default function DashboardOverviewPage() {
                          );
                         })}
                         {progressStats.badges.length > 8 && (
-                             <span className="p-2.5 bg-card rounded-full shadow-md text-sm font-semibold text-accent flex items-center justify-center h-11 w-11">+{progressStats.badges.length - 8}</span>
+                             <span className="p-2 sm:p-2.5 bg-card rounded-full shadow-md text-xs sm:text-sm font-semibold text-accent flex items-center justify-center h-9 w-9 sm:h-11 sm:w-11">+{progressStats.badges.length - 8}</span>
                         )}
                     </TooltipProvider>
                     </div>
                 ) : (
-                    <p className="text-muted-foreground text-left text-sm italic p-2 bg-secondary/30 rounded-md border">No badges earned yet. Keep learning!</p>
+                    <div className="text-center p-4 bg-secondary/30 rounded-md border min-h-[60px] flex items-center justify-center">
+                        <p className="text-sm text-muted-foreground">No badges earned yet. Keep learning!</p>
+                    </div>
                 )}
             </div>
             <div className="md:col-span-full lg:col-span-2">

@@ -45,6 +45,14 @@ export const ActiveChildProfileProvider = ({ children }: { children: ReactNode }
     setIsLoading(false);
   }, [activeChildId, getProfileById, setActiveChildIdInStorage, profiles]);
 
+  // Auto-select the only profile if there is exactly one and none is active
+  useEffect(() => {
+    if (!activeChildId && profiles.length === 1) {
+      setActiveChildIdInStorage(profiles[0].id);
+    }
+    // Do not unset if more than one profile or already set
+  }, [activeChildId, profiles, setActiveChildIdInStorage]);
+
   const setActiveChildId = (id: string | null) => {
     setActiveChildIdInStorage(id);
   };

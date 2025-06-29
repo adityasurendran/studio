@@ -51,30 +51,30 @@ const faqs = [
 
 export default function FAQPage() {
   return (
-    <div className="w-full max-w-screen-xl mx-auto py-12 px-4">
+    <div className="w-full max-w-screen-xl mx-auto py-8 sm:py-12 px-3 sm:px-4">
       <Card className="shadow-xl border-t-4 border-primary w-full">
-        <CardHeader className="text-center">
-          <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-4">
-            <HelpCircle className="h-16 w-16 text-primary" />
+        <CardHeader className="text-center p-4 sm:p-6">
+          <div className="mx-auto bg-primary/10 p-3 sm:p-4 rounded-full w-fit mb-3 sm:mb-4">
+            <HelpCircle className="h-12 w-12 sm:h-16 sm:w-16 text-primary" />
           </div>
-          <CardTitle className="text-4xl font-bold text-primary">
+          <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
             Frequently Asked Questions
           </CardTitle>
-          <CardDescription className="text-lg text-muted-foreground mt-2">
+          <CardDescription className="text-base sm:text-lg text-muted-foreground mt-2">
             Find answers to common questions about Shannon. If you don&apos;t see your question here, contact us.
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-6 py-8">
-          <Accordion type="single" collapsible className="w-full space-y-4">
+        <CardContent className="px-3 sm:px-6 py-6 sm:py-8">
+          <Accordion type="single" collapsible className="w-full space-y-3 sm:space-y-4">
             {faqs.map((faq, index) => (
               <AccordionItem value={`item-${index}`} key={index} className="bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <AccordionTrigger className="p-6 text-lg font-semibold text-left hover:no-underline text-primary hover:text-accent focus:text-accent">
-                  <div className="flex items-center gap-3">
-                    <faq.icon className="h-6 w-6 text-primary/80 flex-shrink-0" />
-                    <span>{faq.question}</span>
+                <AccordionTrigger className="p-4 sm:p-6 text-base sm:text-lg font-semibold text-left hover:no-underline text-primary hover:text-accent focus:text-accent">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <faq.icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary/80 flex-shrink-0" />
+                    <span className="text-left">{faq.question}</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="p-6 pt-0 text-base text-muted-foreground leading-relaxed">
+                <AccordionContent className="px-4 sm:px-6 pb-4 sm:pb-6 text-sm sm:text-base text-muted-foreground leading-relaxed">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>

@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateTailoredLessons, type GenerateTailoredLessonsInput } from '@/ai/flows/generate-lesson';
 import { useState, useEffect } from 'react';
 import LessonDisplay from './lesson-display';
-import { Loader2, Wand2, Smile, History, Target, RefreshCw, Sparkles } from 'lucide-react';
+import { Loader2, Wand2, Smile, History, Target, RefreshCw, Sparkles, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useUsageTracker } from '@/hooks/use-usage-tracker';
@@ -175,30 +175,30 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
 
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 px-3 sm:px-4">
       <Card className="w-full max-w-3xl mx-auto shadow-xl border-t-4 border-primary">
-        <CardHeader className="pb-4">
+        <CardHeader className="pb-4 px-4 sm:px-6">
             <div className="flex items-center gap-3">
-                <Wand2 className="h-10 w-10 text-primary" />
+                <Wand2 className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
                 <div>
-                    <CardTitle className="text-3xl font-bold text-primary">Lesson Generator</CardTitle>
-                    <CardDescription className="text-lg text-muted-foreground mt-1">
+                    <CardTitle className="text-2xl sm:text-3xl font-bold text-primary">Lesson Generator</CardTitle>
+                    <CardDescription className="text-base sm:text-lg text-muted-foreground mt-1">
                         Craft a new AI-powered lesson for <strong className="text-accent">{childProfile.name}</strong> (Age: {childProfile.age}).
                     </CardDescription>
                 </div>
             </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 sm:space-y-6">
                 <FormField
                   control={form.control}
                   name="lessonTopic"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-lg"><Target className="text-primary"/> What should {childProfile.name} learn about today?</FormLabel>
+                      <FormLabel className="flex items-center gap-2 text-base sm:text-lg"><Target className="text-primary h-4 w-4 sm:h-5 sm:w-5"/> What should {childProfile.name} learn about today?</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Addition up to 10, The Solar System, Types of Dinosaurs" {...field} className="h-12 text-base"/>
+                        <Input placeholder="e.g., Addition up to 10, The Solar System, Types of Dinosaurs" {...field} className="h-11 sm:h-12 text-base"/>
                       </FormControl>
                       <FormDescription>Be specific for the best results. This will guide the lesson content.</FormDescription>
                       <FormMessage />
@@ -210,10 +210,10 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
                 name="recentMood"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-lg"><Smile className="text-primary"/> Recent Mood</FormLabel>
+                    <FormLabel className="flex items-center gap-2 text-base sm:text-lg"><Smile className="text-primary h-4 w-4 sm:h-5 sm:w-5"/> Recent Mood</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                        <SelectTrigger className="h-12 text-base">
+                        <SelectTrigger className="h-11 sm:h-12 text-base">
                             <SelectValue placeholder="Select child's current mood" />
                         </SelectTrigger>
                         </FormControl>
@@ -235,7 +235,7 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
                 name="lessonHistory"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-lg"><History className="text-primary"/> Brief Lesson History / Context (Optional)</FormLabel>
+                    <FormLabel className="flex items-center gap-2 text-base sm:text-lg"><History className="text-primary h-4 w-4 sm:h-5 sm:w-5"/> Brief Lesson History / Context (Optional)</FormLabel>
                     <FormControl>
                         <Textarea
                         placeholder="e.g., Recently worked on subtraction. Struggled with counting by 5s. Enjoyed a story about space."
@@ -250,14 +250,14 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
                 )}
                 />
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-lg py-3 shadow-md hover:shadow-lg transition-all transform hover:scale-105" size="lg" disabled={isLoading}>
+                    <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-base sm:text-lg py-3 sm:py-4 shadow-md hover:shadow-lg transition-all transform hover:scale-105" size="lg" disabled={isLoading}>
                     {isLoading && !lastSuccessfulInput ? ( 
                         <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generating Lesson...
+                        <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> Generating Lesson...
                         </>
                     ) : (
                         <>
-                        <Sparkles className="mr-2 h-5 w-5" /> Generate Lesson
+                        <Sparkles className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Generate Lesson
                         </>
                     )}
                     </Button>
@@ -266,17 +266,17 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
                             type="button" 
                             variant="outline" 
                             onClick={handleRegenerateLastLesson} 
-                            className="w-full text-lg py-3 shadow-sm hover:shadow-md hover:border-primary hover:text-primary" 
+                            className="w-full text-base sm:text-lg py-3 sm:py-4 shadow-sm hover:shadow-md hover:border-primary hover:text-primary" 
                             size="lg"
                             disabled={isLoading}
                         >
                             {isLoading && lastSuccessfulInput ? (
                                 <>
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Regenerating...
+                                <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> Regenerating...
                                 </>
                             ) : (
                                 <>
-                                <RefreshCw className="mr-2 h-5 w-5" /> Regenerate Last
+                                <RefreshCw className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Regenerate Last
                                 </>
                             )}
                         </Button>
@@ -287,11 +287,27 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
         </CardContent>
       </Card>
 
+      {/* Error message if lesson generation fails */}
+      {!isLoading && lastSuccessfulInput && !generatedLesson && (
+        <Card className="w-full max-w-2xl mx-auto mt-6 border-t-4 border-destructive shadow-lg">
+          <CardHeader className="flex flex-row items-center gap-3 pb-2">
+            <AlertTriangle className="h-7 w-7 text-destructive" />
+            <CardTitle className="text-lg text-destructive">Lesson Generation Failed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-destructive text-base mb-2">Sorry, we couldn't generate a lesson. Please try again, adjust the topic, or check your internet connection.</p>
+            <Button onClick={handleRegenerateLastLesson} variant="outline" className="text-destructive border-destructive hover:bg-destructive/10">
+              <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {isLoading && (
-        <div className="text-center py-10 px-4 my-8 bg-card rounded-lg shadow-lg border">
-          <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto mb-6" />
-          <p className="mt-4 text-xl text-muted-foreground leading-relaxed">
-            <span className="font-semibold text-primary block text-2xl mb-2">Hang tight!</span> Our AI is crafting a special lesson
+        <div className="text-center py-8 sm:py-10 px-4 my-6 sm:my-8 bg-card rounded-lg shadow-lg border">
+          <Loader2 className="h-12 w-12 sm:h-16 sm:w-16 animate-spin text-primary mx-auto mb-4 sm:mb-6" />
+          <p className="mt-4 text-base sm:text-xl text-muted-foreground leading-relaxed">
+            <span className="font-semibold text-primary block text-xl sm:text-2xl mb-2">Hang tight!</span> Our AI is crafting a special lesson
             <br />
             and illustrating it for <strong className="text-accent">{childProfile.name}</strong>.
             <br />
@@ -301,13 +317,13 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
       )}
 
       {generatedLesson && !isLoading && ( 
-        <div className="mt-10">
+        <div className="mt-8 sm:mt-10">
             <Card className="shadow-xl">
-                <CardHeader>
-                    <CardTitle className="text-2xl font-semibold text-center text-primary">Generated Lesson Preview</CardTitle>
+                <CardHeader className="px-4 sm:px-6">
+                    <CardTitle className="text-xl sm:text-2xl font-semibold text-center text-primary">Generated Lesson Preview</CardTitle>
                     <CardDescription className="text-center text-muted-foreground">Review the lesson below. You can restart if needed.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 sm:px-6">
                     <LessonDisplay 
                         lesson={generatedLesson} 
                         childProfile={childProfile}
