@@ -21,6 +21,7 @@ interface AuthContextType {
   verifyPin: (pin: string) => Promise<boolean>;
   clearPin: () => Promise<void>;
   updateSubscriptionStatus: (isSubscribed: boolean) => Promise<void>;
+  developerMode: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,6 +45,9 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
   const [error, setError] = useState<Error | null>(null);
   const [isPinSetup, setIsPinSetup] = useState(false);
   const { toast } = useToast();
+
+  // Developer mode detection
+  const developerMode = currentUser?.email === 'aditya@shannon.adityasurendran.com';
 
   // Check if PIN is setup for current user
   const checkPinSetup = useCallback(async (userId: string) => {
@@ -216,6 +220,7 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
     verifyPin,
     clearPin,
     updateSubscriptionStatus,
+    developerMode,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

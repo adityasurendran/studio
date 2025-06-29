@@ -12,6 +12,8 @@ import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { LessonAttempt, Badge as BadgeType } from '@/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAuthContext } from '@/contexts/auth-context';
+import { useState } from 'react';
 
 // Helper to get Lucide icon component by name
 const getLucideIcon = (iconName?: string) => {
@@ -22,10 +24,57 @@ const getLucideIcon = (iconName?: string) => {
   return icons[iconName] || Award;
 };
 
+function DeveloperToolsPanel() {
+  const [competitionMode, setCompetitionMode] = useState(false);
+  const [testStatus, setTestStatus] = useState<string | null>(null);
+  const [emailStatus, setEmailStatus] = useState<string | null>(null);
+
+  // Placeholder handlers
+  const handleToggleCompetition = () => {
+    setCompetitionMode((prev) => !prev);
+    // TODO: Actually toggle global competition mode
+  };
+  const handleRunTests = () => {
+    setTestStatus('Running...');
+    // TODO: Call backend or trigger test runner
+    setTimeout(() => setTestStatus('All tests passed!'), 1200);
+  };
+  const handleSendTestEmail = () => {
+    setEmailStatus('Sending...');
+    // TODO: Call backend/email endpoint
+    setTimeout(() => setEmailStatus('Test email sent!'), 1000);
+  };
+
+  return (
+    <Card className="border-4 border-dashed border-primary shadow-lg mb-8">
+      <CardHeader>
+        <CardTitle className="text-xl text-primary">Developer Tools</CardTitle>
+        <CardDescription>Only visible to developer account</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Button variant={competitionMode ? 'default' : 'outline'} onClick={handleToggleCompetition}>
+            {competitionMode ? 'Competition Mode: ON' : 'Competition Mode: OFF'}
+          </Button>
+        </div>
+        <div className="flex items-center gap-4">
+          <Button onClick={handleRunTests}>Run Tests</Button>
+          {testStatus && <span className="text-sm text-muted-foreground">{testStatus}</span>}
+        </div>
+        <div className="flex items-center gap-4">
+          <Button onClick={handleSendTestEmail}>Send Test Email Report</Button>
+          {emailStatus && <span className="text-sm text-muted-foreground">{emailStatus}</span>}
+        </div>
+        {/* Add more dev tools here as needed */}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function DashboardOverviewPage() {
   const { profiles } = useChildProfilesContext();
   const { activeChild, setActiveChildId, isLoading: activeChildLoading } = useActiveChildProfile();
+  const { developerMode } = useAuthContext();
 
   if (activeChildLoading) {
     return (
@@ -85,6 +134,7 @@ export default function DashboardOverviewPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 px-3 sm:px-4">
+      {developerMode && <DeveloperToolsPanel />}
       <Card className="shadow-xl border-primary/20">
         <CardHeader className="pb-4 px-4 sm:px-6">
           <div className="flex items-center gap-3">
