@@ -109,7 +109,7 @@ export default function DashboardLayout({
               </SidebarMenuButton>
           </div>
         </Sidebar>
-        <SidebarInset className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
+        <SidebarInset className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-6 bg-background">
           {/* Ensure children of SidebarInset can take full width */}
           <div className="w-full h-full">
             {children}

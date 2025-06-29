@@ -69,7 +69,7 @@ export default function RootLayout({
               <SidebarProvider>
                 <div className="flex flex-col min-h-screen">
                   <Header />
-                  <main className="flex-grow">{children}</main>
+                  <main className="flex-grow w-full px-2 sm:px-4 md:px-8">{children}</main>
                 </div>
                 <Toaster />
               </SidebarProvider>

@@ -84,8 +84,8 @@ export default function Header() {
   );
 
   return (
-    <header className="bg-card shadow-md sticky top-0 z-50 h-[var(--header-height,4rem)] flex items-center">
-      <div className="container mx-auto px-3 sm:px-4 flex justify-between items-center">
+    <header className="bg-card shadow-md sticky top-0 z-50 h-[var(--header-height,4rem)] flex items-center w-full">
+      <div className="w-full px-3 sm:px-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
           <Logo className="h-6 w-auto sm:h-8" /> 
           <span className="hidden sm:inline">Shannon</span>
