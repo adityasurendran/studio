@@ -17,7 +17,7 @@ import PinDialog from '@/components/pin-dialog';
 import EmailTestPanel from '@/components/email-test-panel';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/lib/firebase';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuthContext } from '@/contexts/auth-context';
 
 export default function ParentSettingsPage() {
   const { currentUser, parentProfile, loading: authLoading } = useAuth();
