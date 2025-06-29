@@ -28,6 +28,8 @@ const appBaseUrl = functions.config().app && functions.config().app.base_url
 console.log("Firebase Functions initialized.");
 console.log(`App Base URL configured as: ${appBaseUrl}`);
 
+// Import email service
+const { sendWeeklyProgressEmail, testEmailConfig } = require('./email-service');
 
 // Helper function to get or create a Stripe customer for a Firebase user
 const getOrCreateStripeCustomer = async (userId, email) => {
@@ -213,5 +215,360 @@ exports.stripeWebhookHandler = functions.https.onRequest(async (req, res) => {
   } catch (error) {
       console.error("Error handling Stripe webhook event:", event.type, "ID:", event.id, "Error:", error);
       res.status(500).json({ error: `Webhook handler failed. ${error.message}` });
+  }
+});
+
+// Weekly Progress Email Function (Scheduled)
+exports.sendWeeklyProgressEmails = functions.pubsub.schedule('0 9 * * 1').timeZone('UTC').onRun(async (context) => {
+  console.log('Starting weekly progress email job...');
+  
+  try {
+    // Test email configuration first
+    const emailConfigValid = await testEmailConfig();
+    if (!emailConfigValid) {
+      console.error('Email configuration is invalid. Skipping weekly progress emails.');
+      return null;
+    }
+
+    const db = admin.firestore();
+    const usersRef = db.collection('users');
+    const childProfilesRef = db.collection('childProfiles');
+
+    // Get all users with email addresses
+    const usersSnapshot = await usersRef.where('email', '!=', null).get();
+    
+    if (usersSnapshot.empty) {
+      console.log('No users with email addresses found.');
+      return null;
+    }
+
+    let emailsSent = 0;
+    let errors = 0;
+
+    for (const userDoc of usersSnapshot.docs) {
+      const userData = userDoc.data();
+      const parentEmail = userData.email;
+      const userId = userDoc.id;
+
+      try {
+        // Get child profiles for this user
+        const childProfilesSnapshot = await childProfilesRef
+          .where('parentId', '==', userId)
+          .get();
+
+        if (childProfilesSnapshot.empty) {
+          console.log(`No child profiles found for user ${userId}`);
+          continue;
+        }
+
+        // Process each child profile
+        for (const childDoc of childProfilesSnapshot.docs) {
+          const childProfile = childDoc.data();
+          
+          // Get lesson attempts from the last 7 days
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          
+          const recentAttempts = (childProfile.lessonAttempts || [])
+            .filter(attempt => new Date(attempt.timestamp) >= oneWeekAgo);
+
+          // Only send email if there are recent attempts or if it's the first week
+          if (recentAttempts.length > 0 || !childProfile.lastEmailSent) {
+            await sendWeeklyProgressEmail(parentEmail, childProfile, recentAttempts);
+            emailsSent++;
+            
+            // Update last email sent timestamp
+            await childDoc.ref.update({
+              lastEmailSent: new Date().toISOString()
+            });
+            
+            console.log(`Weekly progress email sent for child ${childProfile.name} to ${parentEmail}`);
+          } else {
+            console.log(`No recent activity for child ${childProfile.name}, skipping email`);
+          }
+        }
+
+      } catch (error) {
+        console.error(`Error processing user ${userId}:`, error);
+        errors++;
+      }
+    }
+
+    console.log(`Weekly progress email job completed. Emails sent: ${emailsSent}, Errors: ${errors}`);
+    return { emailsSent, errors };
+
+  } catch (error) {
+    console.error('Error in weekly progress email job:', error);
+    throw error;
+  }
+});
+
+// Manual trigger function for testing weekly progress emails
+exports.sendTestWeeklyProgressEmail = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "You must be signed in to send test emails.");
+  }
+
+  const { childId } = data;
+  if (!childId) {
+    throw new functions.https.HttpsError("invalid-argument", "Child ID is required.");
+  }
+
+  try {
+    const db = admin.firestore();
+    const childDoc = await db.collection('childProfiles').doc(childId).get();
+    
+    if (!childDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "Child profile not found.");
+    }
+
+    const childProfile = childDoc.data();
+    const parentEmail = context.auth.token.email;
+
+    // Get all lesson attempts for testing
+    const allAttempts = childProfile.lessonAttempts || [];
+    
+    await sendWeeklyProgressEmail(parentEmail, childProfile, allAttempts);
+    
+    return { success: true, message: 'Test email sent successfully' };
+  } catch (error) {
+    console.error('Error sending test weekly progress email:', error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+// PIN Management Functions
+const bcrypt = require('bcryptjs');
+
+exports.setupPin = functions.https.onCall(async (data, context) => {
+  // Check if user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const { pin } = data;
+  const userId = context.auth.uid;
+
+  if (!pin || typeof pin !== 'string' || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    throw new functions.https.HttpsError('invalid-argument', 'PIN must be a 4-digit number');
+  }
+
+  try {
+    // Hash the PIN
+    const saltRounds = 12;
+    const hashedPin = await bcrypt.hash(pin, saltRounds);
+
+    // Store in Firestore
+    await admin.firestore().collection('pins').doc(userId).set({
+      hashedPin,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error setting up PIN:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to setup PIN');
+  }
+});
+
+exports.verifyPin = functions.https.onCall(async (data, context) => {
+  // Check if user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const { pin } = data;
+  const userId = context.auth.uid;
+
+  if (!pin || typeof pin !== 'string' || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    throw new functions.https.HttpsError('invalid-argument', 'PIN must be a 4-digit number');
+  }
+
+  try {
+    // Get hashed PIN from Firestore
+    const pinDoc = await admin.firestore().collection('pins').doc(userId).get();
+
+    if (!pinDoc.exists) {
+      return false;
+    }
+
+    const { hashedPin } = pinDoc.data();
+    
+    // Verify PIN
+    const isValid = await bcrypt.compare(pin, hashedPin);
+    return isValid;
+  } catch (error) {
+    console.error('Error verifying PIN:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to verify PIN');
+  }
+});
+
+exports.clearPin = functions.https.onCall(async (data, context) => {
+  // Check if user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const userId = context.auth.uid;
+
+  try {
+    // Delete PIN from Firestore
+    await admin.firestore().collection('pins').doc(userId).delete();
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error clearing PIN:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to clear PIN');
+  }
+});
+
+exports.requestPinReset = functions.https.onCall(async (data, context) => {
+  // Check if user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const userId = context.auth.uid;
+  const userEmail = context.auth.token.email;
+
+  try {
+    // Generate a secure reset token
+    const resetToken = require('crypto').randomBytes(32).toString('hex');
+    const resetExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+    // Store reset token in Firestore
+    await admin.firestore().collection('pinResets').doc(userId).set({
+      resetToken,
+      email: userEmail,
+      expiresAt: resetExpiry,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Send reset email
+    const resetLink = `${appBaseUrl}/dashboard/parent-settings?resetToken=${resetToken}`;
+    
+    const mailOptions = {
+      from: `"Shannon Learning" <noreply@${functions.config().app?.domain || 'your-app.com'}>`,
+      to: userEmail,
+      subject: 'Reset Your PIN - Shannon Learning',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Reset Your PIN</h2>
+          <p>You requested to reset your PIN for Shannon Learning.</p>
+          <p>Click the button below to reset your PIN. This link will expire in 30 minutes.</p>
+          <a href="${resetLink}" style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">Reset PIN</a>
+          <p>If you didn't request this reset, you can safely ignore this email.</p>
+          <p>Best regards,<br>The Shannon Team</p>
+        </div>
+      `
+    };
+
+    await admin.firestore().collection('mail').add(mailOptions);
+
+    return { success: true, message: 'Reset email sent' };
+  } catch (error) {
+    console.error('Error requesting PIN reset:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to send reset email');
+  }
+});
+
+exports.verifyResetToken = functions.https.onCall(async (data, context) => {
+  // Check if user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const { resetToken } = data;
+  const userId = context.auth.uid;
+
+  if (!resetToken) {
+    throw new functions.https.HttpsError('invalid-argument', 'Reset token is required');
+  }
+
+  try {
+    // Get reset token from Firestore
+    const resetDoc = await admin.firestore().collection('pinResets').doc(userId).get();
+
+    if (!resetDoc.exists) {
+      return { valid: false, message: 'Reset token not found' };
+    }
+
+    const resetData = resetDoc.data();
+    
+    // Check if token is expired
+    if (resetData.expiresAt.toDate() < new Date()) {
+      // Clean up expired token
+      await admin.firestore().collection('pinResets').doc(userId).delete();
+      return { valid: false, message: 'Reset token has expired' };
+    }
+
+    // Check if token matches
+    if (resetData.resetToken !== resetToken) {
+      return { valid: false, message: 'Invalid reset token' };
+    }
+
+    return { valid: true, message: 'Reset token is valid' };
+  } catch (error) {
+    console.error('Error verifying reset token:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to verify reset token');
+  }
+});
+
+exports.resetPinWithToken = functions.https.onCall(async (data, context) => {
+  // Check if user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const { resetToken, newPin } = data;
+  const userId = context.auth.uid;
+
+  if (!resetToken || !newPin) {
+    throw new functions.https.HttpsError('invalid-argument', 'Reset token and new PIN are required');
+  }
+
+  if (typeof newPin !== 'string' || newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+    throw new functions.https.HttpsError('invalid-argument', 'PIN must be a 4-digit number');
+  }
+
+  try {
+    // Verify reset token first
+    const resetDoc = await admin.firestore().collection('pinResets').doc(userId).get();
+
+    if (!resetDoc.exists) {
+      throw new functions.https.HttpsError('invalid-argument', 'Reset token not found');
+    }
+
+    const resetData = resetDoc.data();
+    
+    // Check if token is expired
+    if (resetData.expiresAt.toDate() < new Date()) {
+      await admin.firestore().collection('pinResets').doc(userId).delete();
+      throw new functions.https.HttpsError('invalid-argument', 'Reset token has expired');
+    }
+
+    // Check if token matches
+    if (resetData.resetToken !== resetToken) {
+      throw new functions.https.HttpsError('invalid-argument', 'Invalid reset token');
+    }
+
+    // Hash the new PIN
+    const saltRounds = 12;
+    const hashedPin = await bcrypt.hash(newPin, saltRounds);
+
+    // Update PIN in Firestore
+    await admin.firestore().collection('pins').doc(userId).set({
+      hashedPin,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Clean up reset token
+    await admin.firestore().collection('pinResets').doc(userId).delete();
+
+    return { success: true, message: 'PIN reset successfully' };
+  } catch (error) {
+    console.error('Error resetting PIN:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to reset PIN');
   }
 });

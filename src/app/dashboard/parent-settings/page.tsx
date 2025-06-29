@@ -7,72 +7,125 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Shield, CreditCard, Bell, Mail, KeyRound, Edit3, ExternalLink, Lock, Unlock } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Shield, CreditCard, Bell, Mail, KeyRound, Edit3, ExternalLink, Lock, Unlock, HelpCircle } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { isCompetitionModeEnabled } from '@/config';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import PinDialog from '@/components/pin-dialog';
+import EmailTestPanel from '@/components/email-test-panel';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/lib/firebase';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 export default function ParentSettingsPage() {
-  const { 
-    currentUser, 
-    parentProfile, 
-    isLocalPinSetup, 
-    setupLocalPin, 
-    verifyLocalPin, 
-    clearLocalPin 
-  } = useAuth();
+  const { currentUser, parentProfile, loading: authLoading } = useAuth();
+  const { isPinSetup, setupPin, verifyPin, clearPin } = useAuthContext();
   const router = useRouter();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
 
   const [showPinDialog, setShowPinDialog] = useState(false);
-  const [pinDialogMode, setPinDialogMode] = useState<'setup' | 'enter' | 'change_enter_old' | 'change_set_new'>('enter');
+  const [pinDialogMode, setPinDialogMode] = useState<'setup' | 'enter' | 'change_enter_old' | 'change_set_new' | 'reset'>('enter');
   const [pinVerified, setPinVerified] = useState(false);
   const [tempOldPin, setTempOldPin] = useState<string | null>(null);
+  const [isResettingPin, setIsResettingPin] = useState(false);
+
+  // Check for reset token in URL
+  const resetToken = searchParams?.get('resetToken');
 
   useEffect(() => {
-    if (isLocalPinSetup && !pinVerified) {
+    if (resetToken) {
+      setPinDialogMode('reset');
+      setShowPinDialog(true);
+    } else if (isPinSetup && !pinVerified) {
       setPinDialogMode('enter');
       setShowPinDialog(true);
-    } else if (!isLocalPinSetup) {
-      setPinVerified(true); // No PIN setup, so access is granted
+    } else if (!isPinSetup) {
+      setPinVerified(true);
     }
-  }, [isLocalPinSetup, pinVerified]);
+  }, [isPinSetup, pinVerified, resetToken]);
 
-
-  const handlePinSuccess = (pinValue?: string) => {
+  const handlePinSuccess = async (pinValue?: string) => {
     if (pinDialogMode === 'enter') {
-      if (pinValue && verifyLocalPin(pinValue)) {
+      if (pinValue && await verifyPin(pinValue)) {
         setPinVerified(true);
         setShowPinDialog(false);
         toast({ title: "Access Granted", description: "PIN verified successfully." });
       } else {
         toast({ title: "Access Denied", description: "Incorrect PIN.", variant: "destructive" });
-        // Keep dialog open or offer limited retries
       }
     } else if (pinDialogMode === 'setup' && pinValue) {
-      setupLocalPin(pinValue);
-      setPinVerified(true); // Automatically verified after setup
+      await setupPin(pinValue);
+      setPinVerified(true);
       setShowPinDialog(false);
     } else if (pinDialogMode === 'change_enter_old' && pinValue) {
-        if (verifyLocalPin(pinValue)) {
-            setTempOldPin(pinValue); // Store old PIN temporarily if needed for a more complex flow
+        if (await verifyPin(pinValue)) {
+            setTempOldPin(pinValue);
             setPinDialogMode('change_set_new');
-            // setShowPinDialog(true); // Dialog should remain open or reopen for new PIN
             toast({ title: "Old PIN Verified", description: "Please set your new PIN." });
         } else {
             toast({ title: "Incorrect Old PIN", description: "Please try again.", variant: "destructive" });
         }
     } else if (pinDialogMode === 'change_set_new' && pinValue) {
-        setupLocalPin(pinValue); // This will overwrite the old PIN
+        await setupPin(pinValue);
         setPinVerified(true);
         setShowPinDialog(false);
         toast({ title: "PIN Changed Successfully", description: "Your PIN has been updated." });
+    } else if (pinDialogMode === 'reset' && pinValue && resetToken) {
+        handleResetPin(pinValue);
     }
   };
   
+  const handleResetPin = async (newPin: string) => {
+    if (!resetToken) {
+      toast({ title: "Reset Error", description: "No reset token found.", variant: "destructive" });
+      return;
+    }
+
+    setIsResettingPin(true);
+    try {
+      const resetPinFunction = httpsCallable(functions, 'resetPinWithToken');
+      await resetPinFunction({ resetToken, newPin });
+      
+      setPinVerified(true);
+      setShowPinDialog(false);
+      toast({ title: "PIN Reset Successfully", description: "Your PIN has been reset." });
+      
+      // Clear the reset token from URL
+      router.replace('/dashboard/parent-settings');
+    } catch (error: any) {
+      console.error('Error resetting PIN:', error);
+      toast({ 
+        title: "PIN Reset Failed", 
+        description: error.message || "Failed to reset PIN.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsResettingPin(false);
+    }
+  };
+
+  const handleRequestPinReset = async () => {
+    try {
+      const requestResetFunction = httpsCallable(functions, 'requestPinReset');
+      await requestResetFunction();
+      
+      toast({ 
+        title: "Reset Email Sent", 
+        description: "Check your email for PIN reset instructions." 
+      });
+    } catch (error: any) {
+      console.error('Error requesting PIN reset:', error);
+      toast({ 
+        title: "Reset Request Failed", 
+        description: error.message || "Failed to send reset email.", 
+        variant: "destructive" 
+      });
+    }
+  };
+
   const handleManageSubscription = async () => {
      if (isCompetitionModeEnabled) {
         toast({ title: "Competition Mode", description: "Subscription management is not applicable in competition mode." });
@@ -95,11 +148,9 @@ export default function ParentSettingsPage() {
     setShowPinDialog(true);
   };
 
-  const handleDisablePin = () => {
-    // Optionally, ask for current PIN before disabling
-    // For simplicity in demo, directly disabling
-    clearLocalPin();
-    setPinVerified(true); // Access is now open as PIN is disabled
+  const handleDisablePin = async () => {
+    await clearPin();
+    setPinVerified(true);
   };
 
 
@@ -135,7 +186,7 @@ export default function ParentSettingsPage() {
         }
       />
 
-      {!pinVerified && isLocalPinSetup ? (
+      {!pinVerified && isPinSetup ? (
         <Card className="shadow-xl border-t-4 border-primary text-center p-8">
           <CardHeader>
             <Lock className="h-16 w-16 text-primary mx-auto mb-4" />
@@ -159,12 +210,17 @@ export default function ParentSettingsPage() {
             <Card className="bg-card border">
               <CardHeader><CardTitle className="text-xl text-accent flex items-center gap-2"><KeyRound className="h-5 w-5"/>PIN Protection</CardTitle></CardHeader>
               <CardContent className="space-y-3">
-                {isLocalPinSetup ? (
+                {isPinSetup ? (
                   <>
                     <p className="text-sm text-green-600 font-medium">PIN protection is currently active for this browser.</p>
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button variant="outline" onClick={handleChangePin} className="flex-1"><Edit3 className="mr-2 h-4 w-4"/>Change PIN</Button>
                       <Button variant="destructive" onClick={handleDisablePin} className="flex-1"><Unlock className="mr-2 h-4 w-4"/>Disable PIN Protection</Button>
+                    </div>
+                    <div className="pt-2">
+                      <Button variant="link" onClick={handleRequestPinReset} className="text-sm text-muted-foreground hover:text-primary p-0 h-auto">
+                        <HelpCircle className="mr-2 h-4 w-4"/>Forgot your PIN? Reset it via email
+                      </Button>
                     </div>
                   </>
                 ) : (
@@ -176,7 +232,7 @@ export default function ParentSettingsPage() {
                   </>
                 )}
                 <p className="text-xs text-muted-foreground pt-2">
-                  Note: PIN protection is local to this browser and provides an extra layer of security on shared devices. It is NOT a replacement for a strong account password. For demo purposes, the PIN is stored insecurely.
+                  Note: PIN protection is securely stored and provides an extra layer of security. It is NOT a replacement for a strong account password.
                 </p>
               </CardContent>
             </Card>
@@ -211,6 +267,9 @@ export default function ParentSettingsPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Email Testing Section */}
+            <EmailTestPanel />
             
             <Separator />
             <div className="text-center"> <Button variant="link" onClick={() => router.push('/dashboard')} className="text-primary hover:text-accent"> <ExternalLink className="mr-2 h-4 w-4" /> Back to Main Dashboard </Button> </div>

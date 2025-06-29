@@ -10,10 +10,10 @@ import { AlertCircle, CheckCircle, ShieldQuestion, KeyRound } from 'lucide-react
 import { useToast } from '@/hooks/use-toast';
 
 interface PinDialogProps {
-  mode: 'setup' | 'enter';
+  mode: 'setup' | 'enter' | 'reset';
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  onSuccess: (pinValue?: string) => void; // pinValue is provided in 'setup' mode
+  onSuccess: (pinValue?: string) => void; // pinValue is provided in 'setup' and 'reset' modes
   title: string;
   description?: string;
 }
@@ -66,6 +66,17 @@ export default function PinDialog({ mode, isOpen, setIsOpen, onSuccess, title, d
       }
       onSuccess(pin);
       toast({ title: "PIN Setup Successful", description: "Your PIN has been set.", icon: <CheckCircle className="h-5 w-5 text-green-500" /> });
+    } else if (mode === 'reset') {
+      if (confirmPin.length !== 4) {
+        setError("Please confirm your 4-digit PIN.");
+        return;
+      }
+      if (pin !== confirmPin) {
+        setError("PINs do not match.");
+        return;
+      }
+      onSuccess(pin);
+      toast({ title: "PIN Reset Successful", description: "Your PIN has been reset.", icon: <CheckCircle className="h-5 w-5 text-green-500" /> });
     } else { // mode === 'enter'
       onSuccess(pin); // The calling component will verify the pin
     }
@@ -81,7 +92,7 @@ export default function PinDialog({ mode, isOpen, setIsOpen, onSuccess, title, d
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
-            {mode === 'setup' ? <ShieldQuestion className="h-7 w-7 text-primary" /> : <KeyRound className="h-7 w-7 text-primary" />}
+            {mode === 'setup' ? <ShieldQuestion className="h-7 w-7 text-primary" /> : mode === 'enter' ? <KeyRound className="h-7 w-7 text-primary" /> : 'Reset PIN'}
             {title}
           </DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
@@ -89,7 +100,7 @@ export default function PinDialog({ mode, isOpen, setIsOpen, onSuccess, title, d
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="pin" className="text-base">
-              {mode === 'setup' ? 'Create 4-Digit PIN' : 'Enter 4-Digit PIN'}
+              {mode === 'setup' ? 'Create 4-Digit PIN' : mode === 'enter' ? 'Enter 4-Digit PIN' : 'Enter New PIN'}
             </Label>
             <Input
               id="pin"
@@ -99,10 +110,25 @@ export default function PinDialog({ mode, isOpen, setIsOpen, onSuccess, title, d
               maxLength={4}
               placeholder="••••"
               className="text-center text-2xl tracking-[0.5em] h-14"
-              aria-label={mode === 'setup' ? 'Create 4-Digit PIN' : 'Enter 4-Digit PIN'}
+              aria-label={mode === 'setup' ? 'Create 4-Digit PIN' : mode === 'enter' ? 'Enter 4-Digit PIN' : 'Enter New PIN'}
             />
           </div>
           {mode === 'setup' && (
+            <div className="space-y-2">
+              <Label htmlFor="confirmPin" className="text-base">Confirm 4-Digit PIN</Label>
+              <Input
+                id="confirmPin"
+                type="password"
+                value={confirmPin}
+                onChange={handleConfirmPinChange}
+                maxLength={4}
+                placeholder="••••"
+                className="text-center text-2xl tracking-[0.5em] h-14"
+                aria-label="Confirm 4-Digit PIN"
+              />
+            </div>
+          )}
+          {(mode === 'setup' || mode === 'reset') && (
             <div className="space-y-2">
               <Label htmlFor="confirmPin" className="text-base">Confirm 4-Digit PIN</Label>
               <Input
@@ -128,7 +154,7 @@ export default function PinDialog({ mode, isOpen, setIsOpen, onSuccess, title, d
             Cancel
           </Button>
           <Button type="button" onClick={handleSubmit} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            {mode === 'setup' ? 'Set PIN' : 'Submit'}
+            {mode === 'setup' ? 'Set PIN' : mode === 'enter' ? 'Submit' : 'Reset PIN'}
           </Button>
         </DialogFooter>
       </DialogContent>

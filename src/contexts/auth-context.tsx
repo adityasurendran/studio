@@ -3,26 +3,24 @@
 
 import type { User } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from 'react';
-import { auth, functions as firebaseFunctions } from '@/lib/firebase'; 
+import { auth, functions as firebaseFunctions, db } from '@/lib/firebase'; 
 import type { ParentProfile } from '@/types'; 
 import { httpsCallable } from 'firebase/functions';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast'; 
 // Removed Firestore imports as they were commented out and not used for subscription status here.
 // If you intend to use Firestore for profile storage, they would be needed.
-
-const LOCAL_PIN_STORAGE_KEY = 'shannon_demo_pin_value'; 
-const LOCAL_PIN_SETUP_KEY = 'shannon_demo_pin_is_setup';
 
 interface AuthContextType {
   currentUser: User | null;
   parentProfile: ParentProfile | null; 
   loading: boolean;
   error: Error | null;
-  isLocalPinSetup: boolean;
-  setupLocalPin: (pin: string) => void;
-  verifyLocalPin: (pin: string) => boolean;
-  clearLocalPin: () => void;
-  updateSubscriptionStatus: (isSubscribed: boolean) => Promise<void>; // Added for external updates
+  isPinSetup: boolean;
+  setupPin: (pin: string) => Promise<void>;
+  verifyPin: (pin: string) => Promise<boolean>;
+  clearPin: () => Promise<void>;
+  updateSubscriptionStatus: (isSubscribed: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,47 +39,101 @@ interface AuthProviderProps {
 
 export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null); // Initialize with null
+  const [parentProfile, setParentProfile] = useState<ParentProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isPinSetup, setIsPinSetup] = useState(false);
   const { toast } = useToast();
 
-  const [isLocalPinSetup, setIsLocalPinSetup] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsLocalPinSetup(localStorage.getItem(LOCAL_PIN_SETUP_KEY) === 'true');
+  // Check if PIN is setup for current user
+  const checkPinSetup = useCallback(async (userId: string) => {
+    try {
+      const pinDoc = await getDoc(doc(db, 'pins', userId));
+      setIsPinSetup(pinDoc.exists());
+    } catch (error) {
+      console.error('Error checking PIN setup:', error);
+      setIsPinSetup(false);
     }
   }, []);
 
-  const setupLocalPin = useCallback((pin: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(LOCAL_PIN_STORAGE_KEY, pin); 
-      localStorage.setItem(LOCAL_PIN_SETUP_KEY, 'true');
-      setIsLocalPinSetup(true);
-      toast({ title: "PIN Protection Setup", description: "PIN protection has been enabled locally for this browser." });
+  const setupPin = useCallback(async (pin: string) => {
+    if (!currentUser) {
+      toast({ 
+        title: "Authentication Error", 
+        description: "You must be signed in to setup PIN protection.", 
+        variant: "destructive" 
+      });
+      return;
     }
-  }, [toast]);
 
-  const verifyLocalPin = useCallback((pin: string): boolean => {
-    if (typeof window !== 'undefined') {
-      const storedPin = localStorage.getItem(LOCAL_PIN_STORAGE_KEY);
-      const isSetup = localStorage.getItem(LOCAL_PIN_SETUP_KEY) === 'true';
-      if (isSetup && storedPin === pin) {
-        return true;
-      }
+    try {
+      const setupPinFunction = httpsCallable(firebaseFunctions, 'setupPin');
+      await setupPinFunction({ pin });
+      
+      setIsPinSetup(true);
+      toast({ 
+        title: "PIN Protection Setup", 
+        description: "PIN protection has been enabled securely." 
+      });
+    } catch (error: any) {
+      console.error('Error setting up PIN:', error);
+      toast({ 
+        title: "PIN Setup Failed", 
+        description: error.message || "Failed to setup PIN protection.", 
+        variant: "destructive" 
+      });
     }
-    return false;
-  }, []);
+  }, [currentUser, toast]);
 
-  const clearLocalPin = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(LOCAL_PIN_STORAGE_KEY);
-      localStorage.setItem(LOCAL_PIN_SETUP_KEY, 'false');
-      setIsLocalPinSetup(false);
-      toast({ title: "PIN Protection Disabled", description: "Local PIN protection has been disabled for this browser.", variant: "destructive" });
+  const verifyPin = useCallback(async (pin: string): Promise<boolean> => {
+    if (!currentUser) {
+      return false;
     }
-  }, [toast]);
+
+    try {
+      const verifyPinFunction = httpsCallable(firebaseFunctions, 'verifyPin');
+      const result = await verifyPinFunction({ pin });
+      return result.data as boolean;
+    } catch (error: any) {
+      console.error('Error verifying PIN:', error);
+      toast({ 
+        title: "PIN Verification Failed", 
+        description: error.message || "Failed to verify PIN.", 
+        variant: "destructive" 
+      });
+      return false;
+    }
+  }, [currentUser, toast]);
+
+  const clearPin = useCallback(async () => {
+    if (!currentUser) {
+      toast({ 
+        title: "Authentication Error", 
+        description: "You must be signed in to clear PIN protection.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    try {
+      const clearPinFunction = httpsCallable(firebaseFunctions, 'clearPin');
+      await clearPinFunction();
+      
+      setIsPinSetup(false);
+      toast({ 
+        title: "PIN Protection Disabled", 
+        description: "PIN protection has been disabled.", 
+        variant: "destructive" 
+      });
+    } catch (error: any) {
+      console.error('Error clearing PIN:', error);
+      toast({ 
+        title: "PIN Clear Failed", 
+        description: error.message || "Failed to clear PIN protection.", 
+        variant: "destructive" 
+      });
+    }
+  }, [currentUser, toast]);
 
   const updateSubscriptionStatus = useCallback(async (isSubscribed: boolean) => {
     if (!currentUser) {
@@ -99,7 +151,7 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
       await updateUserSubscriptionFunction({ isSubscribed });
       
       setParentProfile(prevProfile => {
-        if (!prevProfile) return null; // Should ideally not happen if user is logged in
+        if (!prevProfile) return null;
         return { ...prevProfile, isSubscribed };
       });
       toast({
@@ -116,7 +168,6 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
     }
   }, [currentUser, toast]);
 
-
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(
       async (user) => {
@@ -124,17 +175,16 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
         setError(null);
         setCurrentUser(user);
         if (user) {
-          // For regular users, call the Cloud Function to get their profile/subscription status
           try {
-            // Placeholder: Simulating a non-subscribed user if not the special email
-            // In a real app, you fetch this from Firestore or your backend
             setParentProfile(prev => ({
                 uid: user.uid,
                 email: user.email,
-                isSubscribed: prev?.isSubscribed || false, // Keep existing if re-auth, else default
+                isSubscribed: prev?.isSubscribed || false,
                 pinEnabled: prev?.pinEnabled || false,
             }));
-
+            
+            // Check PIN setup status
+            await checkPinSetup(user.uid);
           } catch (err: any) {
             console.error("Error fetching parent profile:", err);
             setError(err);
@@ -142,6 +192,7 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
           }
         } else {
           setParentProfile(null);
+          setIsPinSetup(false);
         }
         setLoading(false);
       },
@@ -153,17 +204,17 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
     );
 
     return () => unsubscribeAuth();
-  }, []);
+  }, [checkPinSetup]);
   
   const value = { 
     currentUser, 
     parentProfile, 
     loading, 
     error,
-    isLocalPinSetup,
-    setupLocalPin,
-    verifyLocalPin,
-    clearLocalPin,
+    isPinSetup,
+    setupPin,
+    verifyPin,
+    clearPin,
     updateSubscriptionStatus,
   };
 

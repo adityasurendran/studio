@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Progress Report - {{childName}}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #6366f1;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #6b7280;
+            font-size: 16px;
+        }
+        .child-info {
+            background-color: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .child-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        .child-details {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #6366f1;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #6366f1;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .lesson-item {
+            background-color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #10b981;
+        }
+        .lesson-title {
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        .lesson-details {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .lesson-score {
+            font-weight: bold;
+            color: #059669;
+        }
+        .lesson-score.poor {
+            color: #dc2626;
+        }
+        .lesson-score.good {
+            color: #d97706;
+        }
+        .lesson-score.excellent {
+            color: #059669;
+        }
+        .no-lessons {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #6366f1;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Shannon</div>
+            <div class="subtitle">Weekly Learning Progress Report</div>
+        </div>
+
+        <div class="child-info">
+            <div class="child-name">{{childName}}</div>
+            <div class="child-details">
+                Age: {{childAge}} • {{childInterests}}
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{totalLessons}}</div>
+                <div class="stat-label">Lessons Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{totalPoints}}</div>
+                <div class="stat-label">Points Earned</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{averageScore}}%</div>
+                <div class="stat-label">Average Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{subjectsCount}}</div>
+                <div class="stat-label">Subjects Covered</div>
+            </div>
+        </div>
+
+        <div class="section-title">📚 Recent Lessons</div>
+        {{#if recentLessons}}
+            {{#each recentLessons}}
+            <div class="lesson-item">
+                <div class="lesson-title">{{lessonTitle}}</div>
+                <div class="lesson-details">
+                    Subject: {{subject}} • Topic: {{lessonTopic}}
+                </div>
+                {{#if quizTotalQuestions}}
+                <div class="lesson-details">
+                    Score: <span class="lesson-score {{scoreClass}}">{{quizScore}}%</span> 
+                    ({{questionsAnsweredCorrectly}}/{{quizTotalQuestions}} correct)
+                    {{#if pointsAwarded}} • Points: +{{pointsAwarded}}{{/if}}
+                </div>
+                {{else}}
+                <div class="lesson-details">No quiz completed</div>
+                {{/if}}
+                <div class="lesson-details">{{timeAgo}}</div>
+            </div>
+            {{/each}}
+        {{else}}
+            <div class="no-lessons">
+                No lessons completed this week. Time to start learning! 🚀
+            </div>
+        {{/if}}
+
+        <div class="footer">
+            <p>Keep up the great work! 💪</p>
+            <p>
+                <a href="{{dashboardUrl}}">View Full Dashboard</a> • 
+                <a href="{{unsubscribeUrl}}">Unsubscribe from emails</a>
+            </p>
+            <p>© 2024 Shannon Learning App. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html> 

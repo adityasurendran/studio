@@ -1,0 +1,25 @@
+# Email Configuration Example
+# Copy these variables to your .env file in the functions directory
+
+# Email Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+
+# App Configuration
+APP_BASE_URL=http://localhost:9002
+
+# Stripe Configuration (if using)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PRICE_ID=price_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Instructions:
+# 1. Replace 'your-email@gmail.com' with your actual Gmail address
+# 2. Replace 'your-app-password' with a Gmail app password
+# 3. Update APP_BASE_URL to your production domain when deploying
+# 4. For Gmail setup:
+#    - Enable 2-Factor Authentication
+#    - Generate an App Password in Google Account settings
+#    - Use the app password as SMTP_PASS 
