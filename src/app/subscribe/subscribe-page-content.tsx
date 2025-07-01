@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { functions } from "@/lib/firebase"; 
+import { functions } from '@/lib/firebase-functions';
 import { httpsCallable } from 'firebase/functions'; 
 import { isCompetitionModeEnabled } from '@/config'; // Import the configuration
 

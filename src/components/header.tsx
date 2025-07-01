@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase-auth';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { LogIn, LogOut, UserPlus, LayoutDashboard, HelpCircle, Info, Menu } from 'lucide-react';

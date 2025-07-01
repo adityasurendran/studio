@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { functions } from '@/lib/firebase';
+import { functions } from '@/lib/firebase-functions';
 import { httpsCallable } from 'firebase/functions';
 import { Loader2, Mail, TestTube } from 'lucide-react';
 import { useChildProfiles } from '@/hooks/use-child-profiles';

@@ -16,7 +16,7 @@ import { useState, useEffect } from 'react';
 import PinDialog from '@/components/pin-dialog';
 import EmailTestPanel from '@/components/email-test-panel';
 import { httpsCallable } from 'firebase/functions';
-import { functions } from '@/lib/firebase';
+import { functions } from '@/lib/firebase-functions';
 import { useAuthContext } from '@/contexts/auth-context';
 
 export default function ParentSettingsPage() {

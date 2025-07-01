@@ -5,7 +5,7 @@ import type { ChildProfile, LessonAttempt, GeneratedLesson, Badge } from '@/type
 import { v4 as uuidv4 } from 'uuid';
 import { useCallback, useState, useEffect } from 'react';
 import { useToast } from './use-toast'; // Import useToast
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-firestore';
 import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { useAuth } from './use-auth';
 

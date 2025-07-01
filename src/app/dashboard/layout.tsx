@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 import { Home, Users, PlusSquare, BookOpen, Settings, LogOut, Palette, Sparkles, Brain, History as HistoryIcon, Search, Trophy, FastForward, FileEdit, Shield } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase-auth';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';

@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-firestore';
 
 const DEVELOPER_EMAILS = ['aditya@nyro.eu.org'];
 

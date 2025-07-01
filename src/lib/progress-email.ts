@@ -1,6 +1,6 @@
 import type { ChildProfile } from '@/types';
 import { formatLessonHistorySummary } from '@/lib/lesson-summary';
-import { functions } from '@/lib/firebase';
+import { functions } from '@/lib/firebase-functions';
 import { httpsCallable } from 'firebase/functions';
 
 export function sendWeeklyProgressEmail(parentEmail: string, child: ChildProfile) {

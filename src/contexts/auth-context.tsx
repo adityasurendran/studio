@@ -3,7 +3,9 @@
 
 import type { User } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, type ReactNode, useCallback } from 'react';
-import { auth, functions as firebaseFunctions, db } from '@/lib/firebase'; 
+import { auth } from '@/lib/firebase-auth';
+import { functions as firebaseFunctions } from '@/lib/firebase-functions';
+import { db } from '@/lib/firebase-firestore';
 import type { ParentProfile } from '@/types'; 
 import { httpsCallable } from 'firebase/functions';
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';

@@ -1,4 +1,4 @@
-import { db } from './firebase';
+import { db } from './firebase-firestore';
 import { collection, query, onSnapshot, addDoc, orderBy, limit } from 'firebase/firestore';
 import type { GeneratedLesson } from '@/types';
 
