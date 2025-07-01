@@ -77,7 +77,7 @@ export default function SignUpPage() {
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-var(--header-height,4rem)-2rem)] py-12 px-4 bg-gradient-to-br from-background to-accent/20">
-      <Card className="w-full max-w-md shadow-xl border-t-4 border-accent rounded-lg">
+      <Card className="w-full sm:max-w-xl md:max-w-2xl shadow-xl border-t-4 border-accent rounded-lg">
         <CardHeader className="text-center p-6 space-y-2">
            <div className="mx-auto bg-accent/10 p-3 rounded-full w-fit">
             <ShieldCheck className="h-10 w-10 text-accent" />

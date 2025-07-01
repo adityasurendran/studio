@@ -51,7 +51,7 @@ const faqs = [
 
 export default function FAQPage() {
   return (
-    <div className="w-full max-w-screen-xl mx-auto py-8 sm:py-12 px-3 sm:px-4">
+    <div className="w-full py-8 sm:py-12 px-2 sm:px-4">
       <Card className="shadow-xl border-t-4 border-primary w-full">
         <CardHeader className="text-center p-4 sm:p-6">
           <div className="mx-auto bg-primary/10 p-3 sm:p-4 rounded-full w-fit mb-3 sm:mb-4">
