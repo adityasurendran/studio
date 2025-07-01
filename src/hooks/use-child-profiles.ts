@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase';
 import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { useAuth } from './use-auth';
 
-const CHILD_PROFILES_STORAGE_KEY = 'shannon-child-profiles';
+const CHILD_PROFILES_STORAGE_KEY = 'nyro-child-profiles';
 
 const predefinedBadges: Omit<Badge, 'dateEarned'>[] = [
   { id: 'first-lesson', name: "Trailblazer", description: "Completed your first lesson!", iconName: "Rocket" },

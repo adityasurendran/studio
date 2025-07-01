@@ -18,8 +18,8 @@ const firebaseConfig = {
 // Check if the API key is the placeholder or missing and log a specific message.
 if (firebaseConfig.apiKey === "YOUR_API_KEY" || !firebaseConfig.apiKey) {
   const message = !firebaseConfig.apiKey 
-    ? "Shannon Setup: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) is missing or empty. "
-    : "Shannon Setup: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) appears to be the placeholder 'YOUR_API_KEY'. ";
+    ? "nyro Setup: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) is missing or empty. "
+    : "nyro Setup: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) appears to be the placeholder 'YOUR_API_KEY'. ";
   console.error(
     message +
     "Firebase will not initialize correctly. Please replace it with your actual Firebase API key. " +

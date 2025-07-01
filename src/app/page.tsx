@@ -84,7 +84,7 @@ export default function HomePage() {
           
           {/* Subtitle */}
           <p className="text-xl sm:text-2xl md:text-3xl text-muted-foreground mb-12 max-w-5xl mx-auto leading-relaxed font-light animate-slide-in-up" style={{animationDelay: '0.4s'}}>
-            Shannon creates <span className="text-primary font-semibold">personalized, engaging lessons</span> that adapt to your child's unique learning style, 
+            nyro creates <span className="text-primary font-semibold">personalized, engaging lessons</span> that adapt to your child's unique learning style, 
             making education <span className="text-accent font-semibold">accessible and enjoyable</span> for children with learning difficulties.
           </p>
           
@@ -135,7 +135,7 @@ export default function HomePage() {
           <div className="text-center mb-20 animate-slide-in-up">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6 hover-lift">
               <Lightbulb className="h-4 w-4" />
-              Why Parents Choose Shannon
+              Why Parents Choose nyro
             </div>
             <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary mb-8">
               Revolutionary Learning
@@ -215,7 +215,7 @@ export default function HomePage() {
               Get Started in Minutes
             </div>
             <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary mb-8">
-              How Shannon
+              How nyro
               <span className="block text-accent">Works</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
@@ -279,7 +279,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                quote: "Shannon has transformed my daughter's learning experience. The personalized lessons have made such a difference in her confidence and progress.",
+                quote: "nyro has transformed my daughter's learning experience. The personalized lessons have made such a difference in her confidence and progress.",
                 author: "Sarah M.",
                 role: "Parent of 8-year-old",
                 icon: Heart,

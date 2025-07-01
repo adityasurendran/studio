@@ -15,7 +15,7 @@ function SubscribePageSkeleton() {
           <div className="mx-auto bg-accent/10 p-5 rounded-full w-fit mb-6">
             <Sparkles className="h-16 w-16 text-accent" />
           </div>
-          <CardTitle className="text-4xl font-bold text-accent">Unlock Shannon Premium</CardTitle>
+          <CardTitle className="text-4xl font-bold text-accent">Unlock nyro Premium</CardTitle>
           <CardDescription className="text-xl mt-3 text-muted-foreground">
             Loading subscription options...
           </CardDescription>

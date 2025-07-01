@@ -26,7 +26,7 @@ export default function LeaderboardPage() {
           </div>
           <CardTitle className="text-4xl font-bold text-accent">Leaderboard</CardTitle>
           <CardDescription className="text-lg text-muted-foreground mt-2">
-            See who&apos;s topping the charts in Shannon! Points are earned by completing lessons and quizzes.
+            See who&apos;s topping the charts in nyro! Points are earned by completing lessons and quizzes.
           </CardDescription>
         </CardHeader>
         <CardContent>

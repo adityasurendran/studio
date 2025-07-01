@@ -15,7 +15,7 @@ export default function AboutPage() {
             <Logo className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 text-primary" />
           </div>
           <CardTitle className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-primary tracking-tight">
-            About Shannon
+            About nyro
           </CardTitle>
           <CardDescription className="text-base sm:text-lg md:text-xl text-muted-foreground mt-2 sm:mt-3 max-w-2xl mx-auto leading-relaxed">
             Empowering every child&apos;s learning journey through personalized, AI-driven education.
@@ -28,7 +28,7 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-center">
               <div className="space-y-4 sm:space-y-6">
                 <p className="text-base sm:text-lg text-foreground leading-relaxed">
-                  Shannon was born from a simple yet powerful belief: every child deserves the opportunity to learn in a way that works for them. 
+                  nyro was born from a simple yet powerful belief: every child deserves the opportunity to learn in a way that works for them. 
                   We understand that traditional educational approaches don&apos;t always meet the unique needs of children with learning difficulties.
                 </p>
                 <p className="text-base sm:text-lg text-foreground leading-relaxed">
@@ -50,7 +50,7 @@ export default function AboutPage() {
 
           <section>
             <h3 className="text-xl sm:text-2xl font-semibold text-primary mb-4 sm:mb-6 text-center flex items-center justify-center gap-2">
-              <Heart className="h-6 w-6 sm:h-7 sm:w-7" /> Why Shannon?
+              <Heart className="h-6 w-6 sm:h-7 sm:w-7" /> Why nyro?
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               <FeatureItem

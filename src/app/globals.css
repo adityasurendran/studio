@@ -8,12 +8,12 @@ body {
 
 /* OpenDyslexic font support */
 .font-dyslexic {
-  font-family: var(--font-opendyslexic), var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: 'OpenDyslexic', var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
 /* Dyslexia-friendly typography utilities */
 .dyslexic-friendly {
-  font-family: var(--font-opendyslexic), var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: 'OpenDyslexic', var(--font-geist-sans), Arial, Helvetica, sans-serif;
   line-height: 1.5;
   letter-spacing: 0.05em;
   word-spacing: 0.1em;
@@ -382,4 +382,34 @@ html {
   80%, 100% {
     content: '...';
   }
+}
+
+/* OpenDyslexic Web Fonts */
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/src/fonts/OpenDyslexic-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/src/fonts/OpenDyslexic-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/src/fonts/OpenDyslexic-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/src/fonts/OpenDyslexic-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
 }

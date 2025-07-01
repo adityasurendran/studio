@@ -98,7 +98,7 @@ const sendWeeklyProgressEmail = async (parentEmail, childProfile, lessonAttempts
 
     // Send email
     const mailOptions = {
-      from: `"Shannon Learning App" <${process.env.SMTP_USER}>`,
+      from: `"nyro Learning App" <${process.env.SMTP_USER}>`,
       to: parentEmail,
       subject: `Weekly Progress Report: ${childProfile.name}'s Learning Journey`,
       html: htmlContent,
@@ -145,7 +145,7 @@ const generateTextVersion = (data) => {
   text += `View your full dashboard: ${data.dashboardUrl}\n`;
   text += `Unsubscribe from emails: ${data.unsubscribeUrl}\n\n`;
   text += `Keep up the great work! 💪\n`;
-  text += `© 2024 Shannon Learning App. All rights reserved.`;
+  text += `© 2024 nyro Learning App. All rights reserved.`;
   
   return text;
 };

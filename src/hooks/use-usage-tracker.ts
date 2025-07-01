@@ -11,7 +11,7 @@ interface UsageData {
   [childId: string]: UsageEntry;
 }
 
-const STORAGE_KEY = 'shannon-usage-data';
+const STORAGE_KEY = 'nyro-usage-data';
 
 function loadData(): UsageData {
   if (typeof window === 'undefined') return {};

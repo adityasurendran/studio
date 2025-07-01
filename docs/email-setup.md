@@ -1,6 +1,6 @@
-# Email Setup Guide for Shannon Learning App
+# Email Setup Guide for nyro Learning App
 
-This guide explains how to set up the weekly progress email functionality for the Shannon Learning App.
+This guide explains how to set up the weekly progress email functionality for the nyro Learning App.
 
 ## Overview
 
@@ -133,7 +133,7 @@ Then call the function via the Firebase emulator.
 
 The email template is located at `functions/email-templates/weekly-progress.hbs` and includes:
 
-- **Header**: Shannon branding and child information
+- **Header**: nyro branding and child information
 - **Statistics**: Lessons completed, points earned, average score, subjects covered
 - **Recent Lessons**: Last 5 lessons with scores and timestamps
 - **Footer**: Links to dashboard and unsubscribe

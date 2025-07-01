@@ -14,6 +14,7 @@ import type { LessonAttempt, Badge as BadgeType } from '@/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuthContext } from '@/contexts/auth-context';
 import { useState } from 'react';
+import { Input } from '@/components/ui/input';
 
 // Helper to get Lucide icon component by name
 const getLucideIcon = (iconName?: string) => {
@@ -24,25 +25,121 @@ const getLucideIcon = (iconName?: string) => {
   return icons[iconName] || Award;
 };
 
+function CurriculumInfoDevPanel() {
+  const [curriculum, setCurriculum] = useState('Irish Junior Cycle Maths');
+  const [topic, setTopic] = useState('Fractions');
+  const [age, setAge] = useState(13);
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleFetch = async () => {
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch('/api/dev/fetch-curriculum-info', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-email': 'aditya@nyro.eu.org' },
+        body: JSON.stringify({ curriculumName: curriculum, lessonTopic: topic, childAge: age })
+      });
+      const data = await res.json();
+      setResult(data);
+    } catch (e) {
+      setResult({ error: String(e) });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="border-2 border-dashed border-accent mb-6">
+      <CardHeader>
+        <CardTitle className="text-lg text-accent">Curriculum Info Dev Tool</CardTitle>
+        <CardDescription>Test curriculum info fetching for any topic/curriculum/age</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <Input value={curriculum} onChange={e => setCurriculum(e.target.value)} placeholder="Curriculum name" className="w-56" />
+          <Input value={topic} onChange={e => setTopic(e.target.value)} placeholder="Lesson topic" className="w-56" />
+          <Input type="number" value={age} onChange={e => setAge(Number(e.target.value))} placeholder="Age" className="w-24" />
+          <Button onClick={handleFetch} disabled={loading}>{loading ? 'Fetching...' : 'Fetch Info'}</Button>
+        </div>
+        {result && (
+          <div className="mt-2 p-2 bg-muted rounded text-sm">
+            {result.error ? (
+              <span className="text-destructive">Error: {result.error}</span>
+            ) : (
+              <>
+                <div><b>Summary:</b> {result.summary}</div>
+                {result.sourceHints && <div><b>Sources:</b> {result.sourceHints.join(', ')}</div>}
+                {result.isPlaceholder && <div className="text-warning">(Placeholder/general knowledge used)</div>}
+              </>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function DeveloperToolsPanel() {
   const [competitionMode, setCompetitionMode] = useState(false);
   const [testStatus, setTestStatus] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<string | null>(null);
 
-  // Placeholder handlers
-  const handleToggleCompetition = () => {
-    setCompetitionMode((prev) => !prev);
-    // TODO: Actually toggle global competition mode
+  // Real handlers
+  const handleToggleCompetition = async () => {
+    setTestStatus(null);
+    setEmailStatus(null);
+    try {
+      const res = await fetch('/api/admin/toggle-competition', {
+        method: 'POST',
+        headers: { 'x-user-email': 'aditya@nyro.eu.org' },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCompetitionMode(data.competitionMode);
+      } else {
+        setTestStatus(data.error || 'Failed to toggle mode');
+      }
+    } catch (err) {
+      setTestStatus('Error toggling mode');
+    }
   };
-  const handleRunTests = () => {
+  const handleRunTests = async () => {
     setTestStatus('Running...');
-    // TODO: Call backend or trigger test runner
-    setTimeout(() => setTestStatus('All tests passed!'), 1200);
+    setEmailStatus(null);
+    try {
+      const res = await fetch('/api/admin/run-tests', {
+        method: 'POST',
+        headers: { 'x-user-email': 'aditya@nyro.eu.org' },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTestStatus(data.result || 'Tests complete');
+      } else {
+        setTestStatus(data.error || 'Failed to run tests');
+      }
+    } catch (err) {
+      setTestStatus('Error running tests');
+    }
   };
-  const handleSendTestEmail = () => {
+  const handleSendTestEmail = async () => {
     setEmailStatus('Sending...');
-    // TODO: Call backend/email endpoint
-    setTimeout(() => setEmailStatus('Test email sent!'), 1000);
+    setTestStatus(null);
+    try {
+      const res = await fetch('/api/admin/send-test-email', {
+        method: 'POST',
+        headers: { 'x-user-email': 'aditya@nyro.eu.org' },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEmailStatus(data.message || 'Email sent!');
+      } else {
+        setEmailStatus(data.error || 'Failed to send email');
+      }
+    } catch (err) {
+      setEmailStatus('Error sending email');
+    }
   };
 
   return (
@@ -134,6 +231,7 @@ export default function DashboardOverviewPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 px-3 sm:px-4">
+      {developerMode && <CurriculumInfoDevPanel />}
       {developerMode && <DeveloperToolsPanel />}
       <Card className="shadow-xl border-primary/20">
         <CardHeader className="pb-4 px-4 sm:px-6">

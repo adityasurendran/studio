@@ -88,7 +88,7 @@ export default function SignInFormContent() {
             <KeyRound className="h-10 w-10 text-primary" />
           </div>
           <CardTitle className="text-3xl font-bold text-primary">Parent Sign In</CardTitle>
-          <CardDescription className="text-base">Access your Shannon dashboard.</CardDescription>
+          <CardDescription className="text-base">Access your nyro dashboard.</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           {!showReset ? (

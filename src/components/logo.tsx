@@ -9,11 +9,11 @@ export default function Logo(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Shannon Logo"
+      aria-label="nyro Logo"
       {...props}
     >
       <defs>
-        <clipPath id="shannonLogoScurveClip">
+        <clipPath id="nyroLogoScurveClip">
           {/* This path defines the area for the accent color (orange part) */}
           {/* It's the S-curve itself, then completed to cover the 'right' side of the curve within the circle */}
           <path d="M20 5 
@@ -27,7 +27,7 @@ export default function Logo(props: SVGProps<SVGSVGElement>) {
       <circle cx="50" cy="50" r="45" fill="hsl(var(--primary))" />
       
       {/* Accent color part - This circle is drawn on top but clipped by the S-curve path */}
-      <circle cx="50" cy="50" r="45" fill="hsl(var(--accent))" clipPath="url(#shannonLogoScurveClip)" />
+      <circle cx="50" cy="50" r="45" fill="hsl(var(--accent))" clipPath="url(#nyroLogoScurveClip)" />
 
       {/* The S-curve line itself, drawn on top of the two colored sections */}
       {/* This creates the visual separation and the 'S' shape */}

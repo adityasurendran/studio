@@ -1,6 +1,6 @@
 {
-  "name": "shannon-firebase-functions",
-  "description": "Cloud Functions for Shannon App",
+  "name": "nyro-firebase-functions",
+  "description": "Cloud Functions for nyro App",
   "scripts": {
     "lint": "eslint .",
     "serve": "firebase emulators:start --only functions",

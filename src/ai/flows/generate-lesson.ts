@@ -48,6 +48,11 @@ const GenerateTailoredLessonsOutputSchema = z.object({
   subject: z.string().describe('The subject of the lesson (e.g. Math, English, Science).'),
   quiz: z.array(QuizQuestionSchema).describe('An array of 3-5 multiple-choice quiz questions related to the lesson content.'),
   kinestheticActivities: z.array(z.string()).optional().describe('An array of hands-on activities and games for kinesthetic learners. Each activity should be specific, actionable, and related to the lesson content.'),
+  curriculumInfo: z.object({
+    summary: z.string(),
+    sourceHints: z.array(z.string()).optional(),
+    isPlaceholder: z.boolean().optional(),
+  }).optional(),
 });
 export type GenerateTailoredLessonsOutput = z.infer<typeof GenerateTailoredLessonsOutputSchema>;
 
@@ -355,6 +360,20 @@ const generateTailoredLessonsFlow = ai.defineFlow(
         console.log('[generateTailoredLessonsFlow] Quiz data seems valid. Question count:', quiz.length);
       }
 
+      // Fetch curriculum info directly for UI feedback
+      let curriculumInfoResult = null;
+      try {
+        curriculumInfoResult = await fetchCurriculumInfoTool({
+          curriculumName: input.curriculum,
+          lessonTopic: input.lessonTopic,
+          childAge: input.childAge,
+          targetLanguage: input.targetLanguage,
+        });
+      } catch (e) {
+        curriculumInfoResult = null;
+      }
+
+      const isPlaceholder = curriculumInfoResult && curriculumInfoResult.summary && curriculumInfoResult.summary.startsWith('Placeholder:');
       const finalOutput = {
         lessonTitle: textAndQuizOutput.lessonTitle || `Lesson on ${input.lessonTopic}`,
         lessonFormat: textAndQuizOutput.lessonFormat || "Informational",
@@ -362,6 +381,9 @@ const generateTailoredLessonsFlow = ai.defineFlow(
         lessonPages: resolvedLessonPages.filter(page => page.sentences.length > 0),
         quiz: quiz,
         kinestheticActivities: textAndQuizOutput.kinestheticActivities || [],
+        curriculumInfo: curriculumInfoResult
+          ? { ...curriculumInfoResult, isPlaceholder }
+          : undefined,
       };
       console.log('[generateTailoredLessonsFlow] Successfully assembled final lesson output. Title:', finalOutput.lessonTitle, 'Pages:', finalOutput.lessonPages.length, 'Quiz items:', finalOutput.quiz.length, 'Output object keys:', Object.keys(finalOutput).join(', '));
       return finalOutput;

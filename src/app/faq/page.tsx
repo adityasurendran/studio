@@ -12,15 +12,15 @@ import { HelpCircle, BookOpen, Users, Zap, ShieldCheck, Brain, Palette } from "l
 
 const faqs = [
   {
-    question: "What is Shannon?",
+    question: "What is nyro?",
     answer:
-      "Shannon is an AI-powered learning application designed to help children, especially those with learning difficulties, by providing personalized and engaging lessons. Our goal is to make quality education accessible to all.",
+      "nyro is an AI-powered learning application designed to help children, especially those with learning difficulties, by providing personalized and engaging lessons. Our goal is to make quality education accessible to all.",
     icon: BookOpen,
   },
   {
-    question: "Who is Shannon for?",
+    question: "Who is nyro for?",
     answer:
-      "Shannon is primarily for children aged 2-18 who may benefit from tailored educational content. It's particularly helpful for children with learning difficulties, as lessons can be adapted to their specific needs, pace, and interests. Parents use the app to manage profiles and track progress.",
+      "nyro is primarily for children aged 2-18 who may benefit from tailored educational content. It's particularly helpful for children with learning difficulties, as lessons can be adapted to their specific needs, pace, and interests. Parents use the app to manage profiles and track progress.",
     icon: Users,
   },
   {
@@ -36,9 +36,9 @@ const faqs = [
     icon: Users,
   },
   {
-    question: "What kind of learning difficulties can Shannon help with?",
+    question: "What kind of learning difficulties can nyro help with?",
     answer:
-      "Shannon aims to be adaptable. When creating or editing a child's profile, you can specify learning difficulties such as dyslexia, ADHD, challenges with specific subjects (like math or reading), or general learning pace. The AI will attempt to simplify explanations, use clearer language, and adjust content complexity based on this information.",
+      "nyro aims to be adaptable. When creating or editing a child's profile, you can specify learning difficulties such as dyslexia, ADHD, challenges with specific subjects (like math or reading), or general learning pace. The AI will attempt to simplify explanations, use clearer language, and adjust content complexity based on this information.",
     icon: Brain,
   },
   {
@@ -61,7 +61,7 @@ export default function FAQPage() {
             Frequently Asked Questions
           </CardTitle>
           <CardDescription className="text-base sm:text-lg text-muted-foreground mt-2">
-            Find answers to common questions about Shannon. If you don&apos;t see your question here, contact us.
+            Find answers to common questions about nyro. If you don&apos;t see your question here, contact us.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-3 sm:px-6 py-6 sm:py-8">

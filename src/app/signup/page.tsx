@@ -50,7 +50,7 @@ export default function SignUpPage() {
       await createUserWithEmailAndPassword(auth, email, password);
       toast({
         title: "Sign Up Successful!",
-        description: "Your account has been created. Welcome to Shannon!",
+        description: "Your account has been created. Welcome to nyro!",
       });
       router.push('/dashboard'); 
     } catch (err: any) {
@@ -83,7 +83,7 @@ export default function SignUpPage() {
             <ShieldCheck className="h-10 w-10 text-accent" />
           </div>
           <CardTitle className="text-3xl font-bold text-accent">Create Parent Account</CardTitle>
-          <CardDescription className="text-base">Join Shannon to support your child&apos;s learning journey.</CardDescription>
+          <CardDescription className="text-base">Join nyro to support your child&apos;s learning journey.</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">

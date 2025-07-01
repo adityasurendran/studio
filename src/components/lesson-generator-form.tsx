@@ -21,6 +21,7 @@ import { useUsageTracker } from '@/hooks/use-usage-tracker';
 import { saveLesson } from '@/lib/firestore-lessons';
 import { useAuth } from '@/hooks/use-auth';
 import { v4 as uuidv4 } from 'uuid';
+import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 
 const lessonGenerationSchema = z.object({
   lessonTopic: z.string().min(3, "Please specify a lesson topic (min 3 characters).").max(100, "Topic too long (max 100 chars)."),
@@ -189,6 +190,15 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
             </div>
         </CardHeader>
         <CardContent className="px-4 sm:px-6">
+            {/* Show curriculum info warning if placeholder */}
+            {generatedLesson?.curriculumInfo?.isPlaceholder && (
+              <Alert variant="warning" className="mb-4">
+                <AlertTitle>General Knowledge Used</AlertTitle>
+                <AlertDescription>
+                  Curriculum-specific information could not be fetched for this lesson. The lesson is based on general knowledge and may not fully align with the selected curriculum.
+                </AlertDescription>
+              </Alert>
+            )}
             <Form {...form}>
             <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 sm:space-y-6">
                 <FormField

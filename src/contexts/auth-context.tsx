@@ -47,7 +47,7 @@ export const AuthProviderInternal: React.FC<AuthProviderProps> = ({ children }) 
   const { toast } = useToast();
 
   // Developer mode detection
-  const developerMode = currentUser?.email === 'aditya@shannon.adityasurendran.com';
+  const developerMode = currentUser?.email === 'aditya@shannon.adityasurendran.com' || currentUser?.email === 'aditya@nyro.eu.org';
 
   // Check if PIN is setup for current user
   const checkPinSetup = useCallback(async (userId: string) => {

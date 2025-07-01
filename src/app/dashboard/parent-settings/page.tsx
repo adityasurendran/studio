@@ -262,7 +262,7 @@ export default function ParentSettingsPage() {
                   <>
                     <p className="text-base">Status: <span className="font-semibold text-destructive">Not Subscribed</span></p>
                     <Link href="/subscribe" passHref> <Button className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground"> <CreditCard className="mr-2 h-4 w-4" /> Subscribe Now </Button> </Link>
-                    <p className="text-xs text-muted-foreground"> Unlock all features by subscribing to Shannon. </p>
+                    <p className="text-xs text-muted-foreground"> Unlock all features by subscribing to nyro. </p>
                   </>
                 )}
               </CardContent>

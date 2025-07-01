@@ -36,7 +36,7 @@ export default function SubscribePageContent() {
     if (sessionId) {
       toast({
         title: "Subscription Successful!",
-        description: "Welcome to Shannon Premium! Your dashboard is loading.",
+        description: "Welcome to nyro Premium! Your dashboard is loading.",
         variant: "default",
       });
       // Clear query params and redirect to dashboard
@@ -94,7 +94,7 @@ export default function SubscribePageContent() {
             </div>
             <CardTitle className="text-3xl font-bold text-primary">Access Restricted</CardTitle>
             <CardDescription className="text-lg mt-2 text-muted-foreground">
-                Please sign in to {isCompetitionModeEnabled ? "access the dashboard" : "subscribe and unlock Shannon"}.
+                Please sign in to {isCompetitionModeEnabled ? "access the dashboard" : "subscribe and unlock nyro"}.
             </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 p-0">
@@ -164,7 +164,7 @@ export default function SubscribePageContent() {
           <div className="mx-auto bg-accent/10 p-5 rounded-full w-fit mb-6">
             <Sparkles className="h-16 w-16 text-accent" />
           </div>
-          <CardTitle className="text-4xl font-bold text-accent">Unlock Shannon Premium</CardTitle>
+          <CardTitle className="text-4xl font-bold text-accent">Unlock nyro Premium</CardTitle>
           <CardDescription className="text-xl mt-3 text-muted-foreground">
             Subscribe to access personalized AI-powered lessons and all features.
           </CardDescription>

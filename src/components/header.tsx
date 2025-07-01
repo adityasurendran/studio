@@ -88,7 +88,7 @@ export default function Header() {
       <div className="w-full px-3 sm:px-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
           <Logo className="h-6 w-auto sm:h-8" /> 
-          <span className="hidden sm:inline">Shannon</span>
+          <span className="hidden sm:inline">nyro</span>
         </Link>
         
         {/* Desktop Navigation */}

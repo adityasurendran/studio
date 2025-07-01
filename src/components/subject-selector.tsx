@@ -16,6 +16,11 @@ interface SubjectSelectorProps {
   selectedSubject?: string;
 }
 
+const MASTER_SUBJECTS = [
+  'English', 'Home Economics', 'Religion', 'Civics', 'Science', 'Spanish',
+  'Irish', 'Maths', 'History', 'Geography', 'Business', 'French', 'German', 'Art', 'Music', 'Technology'
+];
+
 export default function SubjectSelector({ onSubjectSelect, selectedSubject }: SubjectSelectorProps) {
   const [subjects, setSubjects] = useState<SubjectMapping>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -41,8 +46,11 @@ export default function SubjectSelector({ onSubjectSelect, selectedSubject }: Su
     loadSubjects();
   }, []);
 
+  const availableSubjects = Object.keys(subjects).map(s => s.charAt(0).toUpperCase() + s.slice(1));
+  const unavailableSubjects = MASTER_SUBJECTS.filter(subject => !availableSubjects.includes(subject));
+
   const handleSubjectClick = (subject: string) => {
-    if (subjects[subject]) {
+    if (availableSubjects.includes(subject)) {
       onSubjectSelect(subject);
     } else {
       toast({
@@ -52,12 +60,6 @@ export default function SubjectSelector({ onSubjectSelect, selectedSubject }: Su
       });
     }
   };
-
-  const availableSubjects = Object.keys(subjects);
-  const unavailableSubjects = [
-    'Irish', 'Maths', 'History', 'Geography', 'Business', 
-    'French', 'German', 'Art', 'Music', 'Technology'
-  ].filter(subject => !availableSubjects.includes(subject));
 
   if (isLoading) {
     return (
@@ -94,55 +96,6 @@ export default function SubjectSelector({ onSubjectSelect, selectedSubject }: Su
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Available Subjects */}
-        <div>
-          <h3 className="text-xl font-semibold text-primary mb-4 flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            Available Subjects
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {availableSubjects.map((subject) => (
-              <Button
-                key={subject}
-                variant={selectedSubject === subject ? "default" : "outline"}
-                className={`h-16 text-base font-medium transition-all duration-200 ${
-                  selectedSubject === subject 
-                    ? "bg-primary text-primary-foreground shadow-lg scale-105" 
-                    : "hover:bg-primary/10 hover:border-primary hover:text-primary hover:scale-105"
-                }`}
-                onClick={() => handleSubjectClick(subject)}
-              >
-                <BookOpen className="mr-2 h-4 w-4" />
-                {subject}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Unavailable Subjects */}
-        {unavailableSubjects.length > 0 && (
-          <div>
-            <h3 className="text-xl font-semibold text-muted-foreground mb-4 flex items-center gap-2">
-              <GraduationCap className="h-5 w-5" />
-              Coming Soon
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {unavailableSubjects.map((subject) => (
-                <Button
-                  key={subject}
-                  variant="outline"
-                  className="h-16 text-base font-medium text-muted-foreground border-dashed hover:bg-muted/50 cursor-not-allowed opacity-60"
-                  onClick={() => handleSubjectClick(subject)}
-                  disabled
-                >
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  {subject}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Subject Info */}
         {selectedSubject && subjects[selectedSubject] && (
           <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
@@ -158,6 +111,34 @@ export default function SubjectSelector({ onSubjectSelect, selectedSubject }: Su
             </div>
           </div>
         )}
+
+        {/* Subject Buttons */}
+        <div>
+          <h3 className="text-xl font-semibold text-primary mb-4 flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            Available Subjects
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {MASTER_SUBJECTS.map((subject) => (
+              <Button
+                key={subject}
+                variant={selectedSubject === subject ? "default" : "outline"}
+                className={`h-16 text-base font-medium transition-all duration-200 ${
+                  availableSubjects.includes(subject)
+                    ? (selectedSubject === subject
+                        ? "bg-primary text-primary-foreground shadow-lg scale-105"
+                        : "hover:bg-primary/10 hover:border-primary hover:text-primary hover:scale-105")
+                    : "text-muted-foreground border-dashed cursor-not-allowed opacity-60 hover:bg-muted/50"
+                }`}
+                onClick={() => handleSubjectClick(subject)}
+                disabled={!availableSubjects.includes(subject)}
+              >
+                <BookOpen className="mr-2 h-4 w-4" />
+                {subject}
+              </Button>
+            ))}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
