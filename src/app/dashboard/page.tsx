@@ -233,7 +233,7 @@ export default function DashboardOverviewPage() {
     <div className="space-y-6 sm:space-y-8 px-3 sm:px-4">
       {developerMode && <CurriculumInfoDevPanel />}
       {developerMode && <DeveloperToolsPanel />}
-      <Card className="shadow-xl border-primary/20">
+      <Card className="w-full sm:max-w-2xl md:max-w-4xl mx-auto shadow-xl border-primary/20">
         <CardHeader className="pb-4 px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
@@ -303,7 +303,7 @@ export default function DashboardOverviewPage() {
       </Card>
 
       {activeChild && (
-        <Card className="shadow-lg">
+        <Card className="w-full sm:max-w-2xl md:max-w-4xl mx-auto shadow-lg">
           <CardHeader className="px-4 sm:px-6">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
@@ -374,7 +374,7 @@ export default function DashboardOverviewPage() {
 
 
       {activeChild && activeChild.lessonAttempts && activeChild.lessonAttempts.length > 0 && (
-        <Card className="shadow-lg">
+        <Card className="w-full sm:max-w-2xl md:max-w-4xl mx-auto shadow-lg">
           <CardHeader>
             <div className="flex items-center gap-2">
                 <HistoryIcon className="h-7 w-7 text-primary" />
@@ -448,6 +448,7 @@ export default function DashboardOverviewPage() {
           link="/dashboard/lessons/new"
           linkLabel="Create Lesson"
           disabled={!activeChild}
+          disabledReason={!activeChild ? "Select a profile to use this feature." : undefined}
         />
         <FeatureCard
           icon={<GraduationCap className="h-10 w-10 text-primary" />}
@@ -456,6 +457,7 @@ export default function DashboardOverviewPage() {
           link="/dashboard/lessons/book-based"
           linkLabel="Browse Subjects"
           disabled={!activeChild}
+          disabledReason={!activeChild ? "Select a profile to use this feature." : undefined}
         />
         <FeatureCard
           icon={<Search className="h-10 w-10 text-primary" />}
@@ -464,6 +466,7 @@ export default function DashboardOverviewPage() {
           link="/dashboard/discover" 
           linkLabel="Discover Topics"
           disabled={!activeChild}
+          disabledReason={!activeChild ? "Select a profile to use this feature." : undefined}
         />
          <FeatureCard
           icon={<FastForward className="h-10 w-10 text-primary" />}
@@ -472,6 +475,11 @@ export default function DashboardOverviewPage() {
           link="/dashboard/recommendations"
           linkLabel="Get Recommendation"
           disabled={!activeChild || !activeChild.lessonAttempts || activeChild.lessonAttempts.length === 0}
+          disabledReason={
+            !activeChild ? "Select a profile to get recommendations."
+            : (!activeChild.lessonAttempts || activeChild.lessonAttempts.length === 0) ? "Complete a lesson to get recommendations."
+            : undefined
+          }
         />
          <FeatureCard
           icon={<Trophy className="h-10 w-10 text-primary" />}
@@ -479,12 +487,13 @@ export default function DashboardOverviewPage() {
           description="See who's topping the charts! (Optional participation)"
           link="/dashboard/leaderboard"
           linkLabel="View Leaderboard"
-          disabled={profiles.length === 0} // Disable if no profiles exist
+          disabled={profiles.length === 0}
+          disabledReason={profiles.length === 0 ? "Add a child profile to unlock the leaderboard." : undefined}
         />
       </div>
 
       {profiles.length > 0 && !activeChild && (
-        <Card className="shadow-lg">
+        <Card className="w-full sm:max-w-2xl md:max-w-4xl mx-auto shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl text-primary flex items-center gap-2"> <Users className="h-7 w-7" /> Select an Active Profile</CardTitle>
             <CardDescription>Choose a child to focus on for lesson generation and tracking.</CardDescription>
@@ -523,11 +532,12 @@ interface FeatureCardProps {
   link: string;
   linkLabel: string;
   disabled?: boolean;
+  disabledReason?: string;
 }
 
-function FeatureCard({ icon, title, description, link, linkLabel, disabled }: FeatureCardProps) {
+function FeatureCard({ icon, title, description, link, linkLabel, disabled, disabledReason }: FeatureCardProps) {
   return (
-    <Card className="hover:shadow-xl transition-shadow duration-300 ease-in-out group">
+    <Card className={`w-full hover:shadow-xl transition-shadow duration-300 ease-in-out group ${disabled ? "opacity-60" : ""}`}>
       <CardHeader className="flex flex-col items-center text-center gap-3 pb-3">
         <div className="p-3 bg-primary/10 rounded-full group-hover:scale-110 transition-transform duration-200">
             {icon}
@@ -536,17 +546,38 @@ function FeatureCard({ icon, title, description, link, linkLabel, disabled }: Fe
       </CardHeader>
       <CardContent className="text-center">
         <p className="text-muted-foreground mb-6 min-h-[3em]">{description}</p>
-        <Link href={disabled ? "#" : link} passHref legacyBehavior>
-          <Button 
-            variant="secondary" 
-            className="w-full text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors group-hover:shadow-lg" 
-            disabled={disabled}
-            aria-disabled={disabled}
-            tabIndex={disabled ? -1 : 0}
-          >
-            {linkLabel}
-          </Button>
-        </Link>
+        {disabled && disabledReason ? (
+          <div className="flex flex-col items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0}>
+                  <Button 
+                    variant="secondary" 
+                    className="w-full text-secondary-foreground"
+                    disabled
+                    aria-disabled="true"
+                    tabIndex={-1}
+                  >
+                    {linkLabel}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {disabledReason}
+              </TooltipContent>
+            </Tooltip>
+            <span className="text-xs text-muted-foreground mt-1">{disabledReason}</span>
+          </div>
+        ) : (
+          <Link href={link} passHref legacyBehavior>
+            <Button 
+              variant="secondary" 
+              className="w-full text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors group-hover:shadow-lg"
+            >
+              {linkLabel}
+            </Button>
+          </Link>
+        )}
       </CardContent>
     </Card>
   );
@@ -561,7 +592,7 @@ interface StatCardProps {
 
 function StatCard({ icon, label, value, description }: StatCardProps) {
   return (
-    <Card className="p-4 bg-card hover:shadow-lg transition-shadow">
+    <Card className="w-full p-4 bg-card hover:shadow-lg transition-shadow">
       <div className="flex items-center justify-center text-muted-foreground mb-2">
         {icon}
         <h3 className="ml-2 text-base font-medium">{label}</h3>

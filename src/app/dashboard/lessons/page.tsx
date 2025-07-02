@@ -7,12 +7,13 @@ import { useActiveChildProfile } from '@/contexts/active-child-profile-context';
 import type { ChildProfile, GeneratedLesson, LessonAttempt } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Loader2, BookOpen, ChevronLeft, History, Eye, Layers, FileText, HelpCircle, Users, Edit, PlusSquare, Palette, Type } from 'lucide-react';
+import { AlertTriangle, Loader2, BookOpen, ChevronLeft, History, Eye, Layers, FileText, HelpCircle, Users, Edit, PlusSquare, Palette, Type, Info } from 'lucide-react';
 import LessonDisplay from '@/components/lesson-display';
 import { useChildProfilesContext } from '@/contexts/child-profiles-context';
 import { useToast } from '@/hooks/use-toast';
 import { subscribeToLessons } from '@/lib/firestore-lessons';
 import { useAuth } from '@/hooks/use-auth';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export default function LessonHistoryPage() {
   const { activeChild, isLoading: activeChildLoading } = useActiveChildProfile();
@@ -137,7 +138,7 @@ export default function LessonHistoryPage() {
               {lessons.slice().reverse().map((lesson, index) => ( 
                 <Card 
                   key={lesson.lessonTitle + '-' + index} // Use a more unique key if possible, like a lesson ID if you add one
-                  className="hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col bg-card overflow-hidden group border hover:border-primary/50"
+                  className="w-full hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col bg-card overflow-hidden group border hover:border-primary/50"
                 >
                   <CardHeader className="pb-4 bg-secondary/20 border-b">
                     <div className="flex items-start justify-between">
@@ -159,17 +160,46 @@ export default function LessonHistoryPage() {
                         <Layers className="h-4 w-4 mr-2 text-primary/70 flex-shrink-0" />
                         <span>Pages: {lesson.lessonPages.length}</span>
                     </div>
-                     {lesson.quiz && lesson.quiz.length > 0 && (
+                    {lesson.quiz && lesson.quiz.length > 0 && (
                         <div className="flex items-center text-muted-foreground">
                             <HelpCircle className="h-4 w-4 mr-2 text-primary/70 flex-shrink-0" />
                             <span>Quiz: {lesson.quiz.length} questions</span>
                         </div>
                     )}
-                     {/* Placeholder for timestamp if lessons had one */}
-                     {/* <div className="flex items-center text-muted-foreground">
-                        <Calendar className="h-4 w-4 mr-2 text-primary/70 flex-shrink-0" />
-                        <span>Generated: {lesson.generatedDate ? format(new Date(lesson.generatedDate), "MMM d, yyyy") : "N/A"}</span>
-                    </div> */}
+                    {lesson.curriculumInfo && lesson.curriculumInfo.isPlaceholder && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center text-warning cursor-help ml-2">
+                              <AlertTriangle className="h-4 w-4 mr-1 text-warning" />
+                              <span>General Knowledge</span>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            This lesson was generated using general knowledge. Curriculum-specific information could not be fetched.
+                          </TooltipContent>
+                        </Tooltip>
+                    )}
+                    {lesson.curriculumInfo && !lesson.curriculumInfo.isPlaceholder && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center text-info cursor-help ml-2">
+                              <Info className="h-4 w-4 mr-1 text-info" />
+                              <span>Curriculum Info</span>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="max-w-xs">
+                              <div className="font-semibold mb-1">Curriculum Summary</div>
+                              <div className="text-xs">{lesson.curriculumInfo.summary}</div>
+                              {lesson.curriculumInfo.sourceHints && lesson.curriculumInfo.sourceHints.length > 0 && (
+                                <div className="mt-2 text-xs">
+                                  <b>Sources:</b> {lesson.curriculumInfo.sourceHints.join(', ')}
+                                </div>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                    )}
                   </CardContent>
                   <CardFooter className="p-4 border-t mt-auto bg-card">
                     <Button

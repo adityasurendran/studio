@@ -1,6 +1,7 @@
 import { db } from './firebase-firestore';
 import { collection, query, onSnapshot, addDoc, orderBy, limit } from 'firebase/firestore';
 import type { GeneratedLesson } from '@/types';
+import { logError, logWarn } from './logger';
 
 /**
  * Subscribe to lessons for a specific user
@@ -10,7 +11,7 @@ import type { GeneratedLesson } from '@/types';
  */
 export function subscribeToLessons(userId: string, callback: (lessons: GeneratedLesson[]) => void) {
   if (!userId) {
-    console.warn('subscribeToLessons: No userId provided');
+    logWarn('subscribeToLessons: No userId provided');
     return () => {};
   }
 
@@ -28,12 +29,14 @@ export function subscribeToLessons(userId: string, callback: (lessons: Generated
         lessonFormat: data.lessonFormat,
         subject: data.subject,
         quiz: data.quiz,
+        kinestheticActivities: data.kinestheticActivities,
+        curriculumInfo: data.curriculumInfo,
       };
       lessons.push(lesson);
     });
     callback(lessons);
   }, (error) => {
-    console.error('Error subscribing to lessons:', error);
+    logError('Error subscribing to lessons:', error);
     callback([]);
   });
 
@@ -69,7 +72,7 @@ export async function saveLesson(userId: string, lesson: GeneratedLesson): Promi
  */
 export async function getLessons(userId: string): Promise<GeneratedLesson[]> {
   if (!userId) {
-    console.warn('getLessons: No userId provided');
+    logWarn('getLessons: No userId provided');
     return [];
   }
 
@@ -88,13 +91,15 @@ export async function getLessons(userId: string): Promise<GeneratedLesson[]> {
           lessonFormat: data.lessonFormat,
           subject: data.subject,
           quiz: data.quiz,
+          kinestheticActivities: data.kinestheticActivities,
+          curriculumInfo: data.curriculumInfo,
         };
         lessons.push(lesson);
       });
       unsubscribe();
       resolve(lessons);
     }, (error) => {
-      console.error('Error getting lessons:', error);
+      logError('Error getting lessons:', error);
       reject(error);
     });
   });

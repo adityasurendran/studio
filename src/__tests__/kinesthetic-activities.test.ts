@@ -1,4 +1,5 @@
 import { generateTailoredLessons } from '../ai/flows/generate-lesson';
+import { createMockChildProfile } from './mocks/childProfile';
 
 describe('Kinesthetic Activities Generation', () => {
   it('should generate kinesthetic activities for kinesthetic learners', async () => {

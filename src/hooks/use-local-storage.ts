@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { logWarn } from '@/lib/logger';
 
 function getValueFromLocalStorage<T>(key: string, initialValue: T | (() => T)): T {
   if (typeof window === 'undefined') {
@@ -11,7 +12,7 @@ function getValueFromLocalStorage<T>(key: string, initialValue: T | (() => T)): 
     const item = window.localStorage.getItem(key);
     return item ? JSON.parse(item) : (typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue);
   } catch (error) {
-    console.warn(`Error reading localStorage key "${key}":`, error);
+    logWarn(`Error reading localStorage key "${key}":`, error);
     return typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue;
   }
 }
@@ -24,7 +25,7 @@ export function useLocalStorage<T>(key: string, initialValue: T | (() => T)): [T
       try {
         window.localStorage.setItem(key, JSON.stringify(storedValue));
       } catch (error) {
-        console.warn(`Error setting localStorage key "${key}":`, error);
+        logWarn(`Error setting localStorage key "${key}":`, error);
       }
     }
   }, [key, storedValue]);
@@ -36,7 +37,7 @@ export function useLocalStorage<T>(key: string, initialValue: T | (() => T)): [T
         try {
           setStoredValue(JSON.parse(event.newValue));
         } catch (error) {
-           console.warn(`Error parsing storage change for key "${key}":`, error);
+           logWarn(`Error parsing storage change for key "${key}":`, error);
         }
       }
     };

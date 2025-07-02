@@ -19,6 +19,11 @@ export interface GeneratedLesson {
   subject: string; // e.g. "Math", "English", "Science"
   quiz: QuizQuestion[]; 
   kinestheticActivities?: string[]; // Optional array of hands-on activities for kinesthetic learners
+  curriculumInfo?: {
+    summary: string;
+    sourceHints?: string[];
+    isPlaceholder?: boolean;
+  };
 }
 
 export interface LessonAttempt {

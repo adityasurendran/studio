@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Shield, CreditCard, Bell, Mail, KeyRound, Edit3, ExternalLink, Lock, Unlock, HelpCircle } from 'lucide-react';
+import { Shield, CreditCard, Bell, Mail, KeyRound, Edit3, ExternalLink, Lock, Unlock, HelpCircle, Loader2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { isCompetitionModeEnabled } from '@/config';
+import { useCompetitionMode } from '@/hooks/use-competition-mode';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import PinDialog from '@/components/pin-dialog';
@@ -25,6 +25,7 @@ export default function ParentSettingsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const { competitionMode, loading: competitionLoading } = useCompetitionMode();
 
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [pinDialogMode, setPinDialogMode] = useState<'setup' | 'enter' | 'change_enter_old' | 'change_set_new' | 'reset'>('enter');
@@ -127,7 +128,7 @@ export default function ParentSettingsPage() {
   };
 
   const handleManageSubscription = async () => {
-     if (isCompetitionModeEnabled) {
+     if (competitionMode) {
         toast({ title: "Competition Mode", description: "Subscription management is not applicable in competition mode." });
         return;
     }
@@ -153,6 +154,14 @@ export default function ParentSettingsPage() {
     setPinVerified(true);
   };
 
+  if (competitionLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-var(--header-height,4rem)-3rem)] text-center p-4">
+        <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+        <p className="text-xl text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (
@@ -251,7 +260,7 @@ export default function ParentSettingsPage() {
             <Card className="bg-card border">
               <CardHeader> <CardTitle className="text-xl text-accent flex items-center gap-2"> <CreditCard className="h-5 w-5" /> Subscription </CardTitle> </CardHeader>
               <CardContent className="space-y-4">
-                {isCompetitionModeEnabled ? ( <p className="text-base text-green-600 font-semibold bg-green-50 p-3 rounded-md border border-green-200"> Competition Mode is active. All features are currently unlocked. </p>
+                {competitionMode ? ( <p className="text-base text-green-600 font-semibold bg-green-50 p-3 rounded-md border border-green-200"> Competition Mode is active. All features are currently unlocked. </p>
                 ) : parentProfile?.isSubscribed ? (
                   <>
                     <p className="text-base">Status: <span className="font-semibold text-green-600 capitalize">{parentProfile.stripeSubscriptionStatus || 'Active'}</span></p>

@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2, ShieldCheck } from 'lucide-react'; // Added ShieldCheck for visual flair
-import { isCompetitionModeEnabled } from '@/config'; 
+import { useCompetitionMode } from '@/hooks/use-competition-mode';
 import Logo from '@/components/logo';
 
 interface AuthGuardProps {
@@ -14,15 +14,16 @@ interface AuthGuardProps {
 
 export default function AuthGuard({ children }: AuthGuardProps) {
   const { currentUser, parentProfile, loading } = useAuth();
+  const { competitionMode, loading: competitionLoading } = useCompetitionMode();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !competitionLoading) {
       if (!currentUser) {
         router.push(`/signin?redirect=${encodeURIComponent(pathname)}`);
       } else if (
-        !isCompetitionModeEnabled &&
+        !competitionMode &&
         parentProfile &&
         !parentProfile.isSubscribed &&
         pathname !== '/subscribe' && 
@@ -31,9 +32,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         router.push('/subscribe');
       }
     }
-  }, [currentUser, parentProfile, loading, router, pathname]);
+  }, [currentUser, parentProfile, loading, competitionMode, competitionLoading, router, pathname]);
 
-  if (loading) {
+  if (loading || competitionLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-background via-secondary/10 to-background text-center p-6">
         <div className="mb-8 animate-pulse">
@@ -54,7 +55,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  if (isCompetitionModeEnabled && currentUser) {
+  if (competitionMode && currentUser) {
     return <>{children}</>;
   }
 
@@ -63,7 +64,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }
   
   if (
-    !isCompetitionModeEnabled &&
+    !competitionMode &&
     parentProfile &&
     !parentProfile.isSubscribed &&
     pathname !== '/subscribe' &&

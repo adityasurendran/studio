@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -11,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { logInfo, logError } from '@/lib/logger';
 
 const SummarizeChildInsightsInputSchema = z.object({
   childName: z.string().describe('The name of the child.'),
@@ -52,17 +52,17 @@ const summarizeChildInsightsFlowInternal = ai.defineFlow( // Renamed to avoid co
     outputSchema: SummarizeChildInsightsOutputSchema,
   },
   async input => {
-    console.log('[summarizeChildInsightsFlowInternal] Flow started with input:', JSON.stringify(input, null, 2));
+    logInfo('[summarizeChildInsightsFlowInternal] Flow started with input:', JSON.stringify(input, null, 2));
     try {
       const {output} = await prompt(input);
       if (!output) {
-        console.error('[summarizeChildInsightsFlowInternal] AI model returned no output for insights summary. Input:', JSON.stringify(input, null, 2));
+        logError('[summarizeChildInsightsFlowInternal] AI model returned no output for insights summary. Input:', JSON.stringify(input, null, 2));
         throw new Error('AI model returned no output for insights summary.');
       }
-      console.log('[summarizeChildInsightsFlowInternal] Successfully received output from prompt:', JSON.stringify(output, null, 2));
+      logInfo('[summarizeChildInsightsFlowInternal] Successfully received output from prompt:', JSON.stringify(output, null, 2));
       return output;
     } catch (error: any) {
-      console.error(`[summarizeChildInsightsFlowInternal] Error during prompt execution for child ${input.childName}, input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      logError(`[summarizeChildInsightsFlowInternal] Error during prompt execution for child ${input.childName}, input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       let errorMessage = "Failed during AI prompt for insights summary.";
        if (error && error.message) errorMessage = `AI prompt for insights summary failed: ${error.message}`;
       throw new Error(errorMessage);
@@ -73,14 +73,14 @@ const summarizeChildInsightsFlowInternal = ai.defineFlow( // Renamed to avoid co
 export async function summarizeChildInsights(
   input: SummarizeChildInsightsInput
 ): Promise<SummarizeChildInsightsOutput> {
-  console.log('[summarizeChildInsights wrapper] Called with input:', JSON.stringify(input, null, 2));
+  logInfo('[summarizeChildInsights wrapper] Called with input:', JSON.stringify(input, null, 2));
   try {
     // Calling the renamed internal flow function
     const result = await summarizeChildInsightsFlowInternal(input); 
-    console.log('[summarizeChildInsights wrapper] Successfully summarized insights for child:', input.childName);
+    logInfo('[summarizeChildInsights wrapper] Successfully summarized insights for child:', input.childName);
     return result;
   } catch (error: any) {
-    console.error(`[summarizeChildInsights wrapper] Error generating summary for child ${input.childName}, input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    logError(`[summarizeChildInsights wrapper] Error generating summary for child ${input.childName}, input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     let userFriendlyMessage = `Failed to generate insights summary for ${input.childName}. `;
     if (error && error.message) {
         const lowerCaseMessage = error.message.toLowerCase();

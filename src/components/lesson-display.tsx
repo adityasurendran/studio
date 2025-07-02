@@ -17,6 +17,7 @@ import { recommendNextLesson, type RecommendNextLessonInput } from '@/ai/flows/r
 import { formatDistanceToNow } from 'date-fns';
 import { useUsageTracker } from '@/hooks/use-usage-tracker';
 import { formatLessonHistorySummary } from '@/lib/lesson-summary';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface LessonDisplayProps {
   lesson: GeneratedLesson;
@@ -374,8 +375,54 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
     }
     const lessonPageSentences = currentLessonPage.sentences.join(' ');
     const lessonPageIdentifier = `lesson-page-${currentPageIndex}`;
+    const isFallbackLessonContent = lesson.lessonPages.length === 1 && (
+      lesson.lessonPages[0].sentences.length === 1 && (
+        lesson.lessonPages[0].sentences[0].includes('default sentence') ||
+        lesson.lessonPages[0].sentences[0].includes('unusable')
+      )
+    );
     return (
       <div className={cn("lesson-display", themeClass)}>
+        {/* Curriculum Info Alert */}
+        {lesson.curriculumInfo?.isPlaceholder && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>General Knowledge Used</AlertTitle>
+            <AlertDescription>
+              Curriculum-specific information could not be fetched for this lesson. The lesson is based on general knowledge and may not fully align with the selected curriculum.
+            </AlertDescription>
+          </Alert>
+        )}
+        {lesson.curriculumInfo && !lesson.curriculumInfo.isPlaceholder && (
+          <Alert className="mb-4">
+            <AlertTitle>Curriculum Information</AlertTitle>
+            <AlertDescription>
+              {lesson.curriculumInfo.summary}
+              {lesson.curriculumInfo.sourceHints && lesson.curriculumInfo.sourceHints.length > 0 && (
+                <div className="mt-2">
+                  <b>Sources:</b> {lesson.curriculumInfo.sourceHints.join(', ')}
+                </div>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+        {/* Fallback Lesson Content Alert */}
+        {isFallbackLessonContent && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>Fallback Lesson Content</AlertTitle>
+            <AlertDescription>
+              The lesson content could not be generated as expected. This is a default placeholder. Please try again or adjust the topic.
+            </AlertDescription>
+          </Alert>
+        )}
+        {/* Fallback Quiz Alert */}
+        {lesson.quiz.length === 0 && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>No Quiz Generated</AlertTitle>
+            <AlertDescription>
+              The quiz for this lesson could not be generated or was invalid. Please try again or adjust the topic for better results.
+            </AlertDescription>
+          </Alert>
+        )}
         {/* Lesson View */}
         {view === 'lesson' && currentLessonPage && (
           <div className="space-y-4 sm:space-y-6">
@@ -385,7 +432,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
                 <Layers className="h-4 w-4" />
                 <span>Page {currentPageIndex + 1} of {totalLessonPages}</span>
               </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary px-2">{currentLessonPage.title}</h2>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary px-2">Lesson Page</h2>
             </div>
 
             {/* Lesson Content */}
@@ -396,7 +443,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
                   <div className="relative aspect-video w-full max-w-2xl mx-auto">
                     <Image
                       src={currentLessonPage.imageDataUri}
-                      alt={currentLessonPage.title}
+                      alt="Lesson page illustration"
                       fill
                       className="rounded-lg object-cover shadow-md"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 800px"
@@ -405,7 +452,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
                       variant="outline"
                       size="icon"
                       className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm hover:bg-background"
-                      onClick={() => handleSpeak(currentLessonPage.title, `lesson-image-${currentPageIndex}`)}
+                      onClick={() => handleSpeak(currentLessonPage.sentences.join(' '), `lesson-image-${currentPageIndex}`)}
                     >
                       {isSpeaking && speakingTextIdentifier === `lesson-image-${currentPageIndex}` ? (
                         <StopCircle className="h-4 w-4" />
@@ -418,48 +465,24 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
 
                 {/* Text Content */}
                 <div className="space-y-3 sm:space-y-4">
-                  {currentLessonPage.content.map((contentBlock, blockIndex) => (
-                    <div key={blockIndex} className="space-y-2 sm:space-y-3">
-                      {contentBlock.type === 'heading' && (
-                        <div className="flex items-start gap-2 sm:gap-3">
-                          <Type className="h-5 w-5 sm:h-6 sm:w-6 text-primary mt-1 flex-shrink-0" />
-                          <div className="flex-1">
-                            <h3 className={cn("font-bold text-primary", fontClass)}>{contentBlock.text}</h3>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="mt-1 h-8 px-2 text-xs"
-                              onClick={() => handleSpeak(contentBlock.text, `lesson-heading-${currentPageIndex}-${blockIndex}`)}
-                            >
-                              {isSpeaking && speakingTextIdentifier === `lesson-heading-${currentPageIndex}-${blockIndex}` ? (
-                                <StopCircle className="h-3 w-3" />
-                              ) : (
-                                <Volume2 className="h-3 w-3" />
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                      {contentBlock.type === 'paragraph' && (
-                        <div className="flex items-start gap-2 sm:gap-3">
-                          <div className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
-                          <div className="flex-1">
-                            <p className={cn("leading-relaxed", fontClass)}>{contentBlock.text}</p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="mt-1 h-8 px-2 text-xs"
-                              onClick={() => handleSpeak(contentBlock.text, `lesson-paragraph-${currentPageIndex}-${blockIndex}`)}
-                            >
-                              {isSpeaking && speakingTextIdentifier === `lesson-paragraph-${currentPageIndex}-${blockIndex}` ? (
-                                <StopCircle className="h-3 w-3" />
-                              ) : (
-                                <Volume2 className="h-3 w-3" />
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
+                  {currentLessonPage.sentences.map((sentence, idx) => (
+                    <div key={idx} className="flex items-start gap-2 sm:gap-3">
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className={cn("leading-relaxed", fontClass)}>{sentence}</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mt-1 h-8 px-2 text-xs"
+                          onClick={() => handleSpeak(sentence, `lesson-sentence-${currentPageIndex}-${idx}`)}
+                        >
+                          {isSpeaking && speakingTextIdentifier === `lesson-sentence-${currentPageIndex}-${idx}` ? (
+                            <StopCircle className="h-3 w-3" />
+                          ) : (
+                            <Volume2 className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -602,7 +625,7 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
                   {lesson.quiz?.map((question, questionIndex) => (
                     <div key={questionIndex} className="border rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
                       <div className="flex items-start gap-2 sm:gap-3">
-                        {selectedAnswers[questionIndex] === question.correctAnswer ? (
+                        {selectedAnswers[questionIndex] === question.correctAnswerIndex ? (
                           <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-green-500 mt-1 flex-shrink-0" />
                         ) : (
                           <X className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 mt-1 flex-shrink-0" />
@@ -610,13 +633,13 @@ export default function LessonDisplay({ lesson, childProfile, lessonTopic, onQui
                         <div className="flex-1">
                           <h4 className="font-semibold text-base sm:text-lg">{question.questionText}</h4>
                           <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                            Your answer: <span className={selectedAnswers[questionIndex] === question.correctAnswer ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                            Your answer: <span className={selectedAnswers[questionIndex] === question.correctAnswerIndex ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
                               {question.options[selectedAnswers[questionIndex] || 0]}
                             </span>
                           </p>
-                          {selectedAnswers[questionIndex] !== question.correctAnswer && (
+                          {selectedAnswers[questionIndex] !== question.correctAnswerIndex && (
                             <p className="text-sm sm:text-base text-green-600 font-medium mt-1">
-                              Correct answer: {question.options[question.correctAnswer]}
+                              Correct answer: {question.options[question.correctAnswerIndex]}
                             </p>
                           )}
                           {question.explanation && (

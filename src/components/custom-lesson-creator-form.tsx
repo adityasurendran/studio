@@ -92,7 +92,7 @@ export default function CustomLessonCreatorForm({ childProfile }: CustomLessonCr
   };
 
   return (
-    <Card className="w-full max-w-3xl mx-auto shadow-xl border-t-4 border-accent">
+    <Card className="w-full sm:max-w-2xl md:max-w-4xl mx-auto shadow-xl border-t-4 border-accent">
       <CardHeader>
         <div className="flex items-center gap-3">
           <FileEdit className="h-10 w-10 text-accent" />

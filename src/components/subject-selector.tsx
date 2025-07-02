@@ -63,7 +63,7 @@ export default function SubjectSelector({ onSubjectSelect, selectedSubject }: Su
 
   if (isLoading) {
     return (
-      <Card className="w-full max-w-4xl mx-auto shadow-xl border-t-4 border-primary">
+      <Card className="w-full sm:max-w-2xl md:max-w-4xl mx-auto shadow-xl border-t-4 border-primary">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-3">
             <GraduationCap className="h-10 w-10 text-primary" />
@@ -83,7 +83,7 @@ export default function SubjectSelector({ onSubjectSelect, selectedSubject }: Su
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-xl border-t-4 border-primary">
+    <Card className="w-full sm:max-w-2xl md:max-w-4xl mx-auto shadow-xl border-t-4 border-primary">
       <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
           <GraduationCap className="h-10 w-10 text-primary" />

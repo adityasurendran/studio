@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, LogIn, KeyRound } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export default function SignInFormContent() {
   const [email, setEmail] = useState('');
@@ -35,7 +36,7 @@ export default function SignInFormContent() {
         title: "Sign In Successful",
         description: "Welcome back! Redirecting...",
       });
-      const redirectPath = searchParams.get('redirect');
+      const redirectPath = searchParams?.get('redirect');
       router.push(redirectPath || '/dashboard');
     } catch (err: any) {
       let friendlyMessage = "Please check your credentials and try again.";
@@ -128,7 +129,15 @@ export default function SignInFormContent() {
                   </button>
                 </p>
               </div>
-              {error && <p className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-md">{error}</p>}
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertTitle>Sign In Failed</AlertTitle>
+                  <AlertDescription>
+                    {error}
+                    <Button onClick={handleSubmit} variant="outline" className="ml-2 mt-2">Try Again</Button>
+                  </AlertDescription>
+                </Alert>
+              )}
               <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-lg py-6 shadow-md hover:shadow-lg transition-shadow" disabled={loading}>
                 {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <LogIn className="mr-2 h-5 w-5" />}
                 Sign In

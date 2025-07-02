@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Recommends the next lesson topic for a child based on their profile and detailed learning history.
@@ -9,6 +8,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { logInfo, logError, logWarn } from '@/lib/logger';
 
 const RecommendNextLessonInputSchema = z.object({
   childAge: z.number().describe('The age of the child.'),
@@ -74,28 +74,28 @@ const recommendNextLessonFlowInternal = ai.defineFlow(
     outputSchema: RecommendNextLessonOutputSchema,
   },
   async (input) => {
-    console.log('[recommendNextLessonFlowInternal] Flow started with input:', JSON.stringify(input, null, 2));
+    logInfo('[recommendNextLessonFlowInternal] Flow started with input:', JSON.stringify(input, null, 2));
     try {
       const { output } = await recommendNextLessonPrompt(input);
       if (!output) {
-        console.error('[recommendNextLessonFlowInternal] AI model returned no output. Input:', JSON.stringify(input, null, 2));
+        logError('[recommendNextLessonFlowInternal] AI model returned no output. Input:', JSON.stringify(input, null, 2));
         throw new Error('AI model did not return a recommendation for the next lesson.');
       }
       // Ensure confidence is a number if present, or undefined
       if (output.confidence !== undefined && typeof output.confidence !== 'number') {
-        console.warn(`[recommendNextLessonFlowInternal] Confidence value was not a number, received: ${output.confidence}. Setting to undefined.`);
+        logWarn(`[recommendNextLessonFlowInternal] Confidence value was not a number, received: ${output.confidence}. Setting to undefined.`);
         output.confidence = undefined;
       } else if (output.confidence !== undefined) {
         output.confidence = Math.max(0, Math.min(1, output.confidence)); // Clamp to 0-1
       }
-      console.log('[recommendNextLessonFlowInternal] Successfully received output from prompt:', JSON.stringify(output, null, 2));
+      logInfo('[recommendNextLessonFlowInternal] Successfully received output from prompt:', JSON.stringify(output, null, 2));
       return output;
     } catch (error: any) {
       let errorDetails = `Message: ${error.message || 'No message'}, Name: ${error.name || 'No name'}`;
       if (error.stack) { errorDetails += `, Stack: ${error.stack}`; }
       try { errorDetails += `, FullErrorObject: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`; } 
       catch (e) { errorDetails += `, FullErrorObject: (Unstringifiable)`; }
-      console.error(`[recommendNextLessonFlowInternal] Error during prompt execution for input: ${JSON.stringify(input, null, 2)}. ${errorDetails}`);
+      logError(`[recommendNextLessonFlowInternal] Error during prompt execution for input: ${JSON.stringify(input, null, 2)}. ${errorDetails}`);
       
       let errorMessage = "Next lesson recommendation failed during AI prompt execution.";
       if (error && error.message) errorMessage = `AI prompt for next lesson failed: ${error.message}`;
@@ -105,10 +105,10 @@ const recommendNextLessonFlowInternal = ai.defineFlow(
 );
 
 export async function recommendNextLesson(input: RecommendNextLessonInput): Promise<RecommendNextLessonOutput> {
-  console.log('[recommendNextLesson wrapper] Called with input:', JSON.stringify(input, null, 2));
+  logInfo('[recommendNextLesson wrapper] Called with input:', JSON.stringify(input, null, 2));
   try {
     const result = await recommendNextLessonFlowInternal(input);
-    console.log('[recommendNextLesson wrapper] Successfully recommended next lesson:', result.recommendedTopic);
+    logInfo('[recommendNextLesson wrapper] Successfully recommended next lesson:', result.recommendedTopic);
     return result;
   } catch (error: any)
 {
@@ -116,7 +116,7 @@ export async function recommendNextLesson(input: RecommendNextLessonInput): Prom
     if (error.stack) { errorDetails += `, Stack: ${error.stack}`; }
     try { errorDetails += `, FullErrorObject: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`; } 
     catch (e) { errorDetails += `, FullErrorObject: (Unstringifiable)`; }
-    console.error(`[recommendNextLesson wrapper] Error during next lesson recommendation flow for input: ${JSON.stringify(input, null, 2)}. ${errorDetails}`);
+    logError(`[recommendNextLesson wrapper] Error during next lesson recommendation flow for input: ${JSON.stringify(input, null, 2)}. ${errorDetails}`);
 
     let userFriendlyMessage = "Failed to recommend the next lesson. ";
     if (error && error.message) {

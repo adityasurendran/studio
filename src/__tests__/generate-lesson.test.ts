@@ -12,6 +12,7 @@ jest.mock('../ai/flows/generate-image-for-sentence', () => ({
 }));
 
 import { cleanSentence } from '../ai/flows/generate-lesson';
+import { createMockChildProfile } from './mocks/childProfile';
 
 describe('cleanSentence', () => {
   it('capitalizes and adds period to lowercase sentence without punctuation', () => {

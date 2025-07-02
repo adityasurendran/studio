@@ -11,17 +11,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { functions } from '@/lib/firebase-functions';
 import { httpsCallable } from 'firebase/functions'; 
-import { isCompetitionModeEnabled } from '@/config'; // Import the configuration
+import { useCompetitionMode } from '@/hooks/use-competition-mode';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export default function SubscribePageContent() {
   const { currentUser, parentProfile, loading: authLoading } = useAuth();
+  const { competitionMode, loading: competitionLoading } = useCompetitionMode();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isCompetitionModeEnabled && currentUser) {
+    if (competitionMode && currentUser) {
       toast({
         title: "Competition Mode Active",
         description: "All features are currently unlocked. Redirecting to dashboard.",
@@ -52,10 +55,10 @@ export default function SubscribePageContent() {
       // Use router.replace to remove query params from URL without adding to history
       router.replace('/subscribe'); 
     }
-  }, [isCompetitionModeEnabled, currentUser, router, toast, searchParams]);
+  }, [competitionMode, currentUser, router, toast, searchParams]);
 
 
-  if (authLoading || (isCompetitionModeEnabled && currentUser)) { 
+  if (authLoading || competitionLoading || (competitionMode && currentUser)) { 
     return (
       <div className="flex flex-col justify-center items-center h-[calc(100vh-var(--header-height,4rem)-3rem)] text-center p-4">
         <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
@@ -64,7 +67,7 @@ export default function SubscribePageContent() {
     );
   }
 
-  if (currentUser && parentProfile?.isSubscribed && !isCompetitionModeEnabled) { 
+  if (currentUser && parentProfile?.isSubscribed && !competitionMode) { 
     router.replace('/dashboard'); 
     return ( // Return a loader while redirecting
         <div className="flex flex-col justify-center items-center h-[calc(100vh-var(--header-height,4rem)-3rem)] text-center p-4">
@@ -74,7 +77,7 @@ export default function SubscribePageContent() {
     );
   }
   
-  if (isCompetitionModeEnabled && currentUser) {
+  if (competitionMode && currentUser) {
     return (
       <div className="flex flex-col justify-center items-center h-[calc(100vh-var(--header-height,4rem)-3rem)] text-center p-4">
         <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
@@ -94,11 +97,11 @@ export default function SubscribePageContent() {
             </div>
             <CardTitle className="text-3xl font-bold text-primary">Access Restricted</CardTitle>
             <CardDescription className="text-lg mt-2 text-muted-foreground">
-                Please sign in to {isCompetitionModeEnabled ? "access the dashboard" : "subscribe and unlock nyro"}.
+                Please sign in to {competitionMode ? "access the dashboard" : "subscribe and unlock nyro"}.
             </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 p-0">
-            <Link href={isCompetitionModeEnabled ? "/signin?redirect=/dashboard" : "/signin?redirect=/subscribe"} passHref>
+            <Link href={competitionMode ? "/signin?redirect=/dashboard" : "/signin?redirect=/subscribe"} passHref>
                 <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-6" size="lg">
                     <LogIn className="mr-2 h-5 w-5" /> Sign In
                 </Button>
@@ -123,7 +126,7 @@ export default function SubscribePageContent() {
       router.push("/signin?redirect=/subscribe");
       return;
     }
-    if (isCompetitionModeEnabled) { 
+    if (competitionMode) { 
       toast({ title: "Competition Mode Active", description: "Subscription is not required."});
       router.push('/dashboard');
       return;
@@ -148,10 +151,14 @@ export default function SubscribePageContent() {
       } else if (error.details && typeof error.details === 'string') {
         errorMessage = error.details;
       }
+      setSubscribeError(errorMessage);
       toast({
         title: "Subscription Error",
         description: errorMessage,
         variant: "destructive",
+        action: (
+          <Button onClick={handleSubscribe} variant="outline" className="ml-2">Try Again</Button>
+        ),
       });
       setIsSubscribing(false);
     }
@@ -159,7 +166,7 @@ export default function SubscribePageContent() {
 
   return (
     <div className="container mx-auto px-4 py-12 flex flex-col items-center text-center min-h-[calc(100vh-var(--header-height,4rem)-2rem)] justify-center">
-      <Card className="w-full max-w-lg shadow-xl border-t-4 border-accent p-6 md:p-8">
+      <Card className="w-full sm:max-w-xl md:max-w-2xl mx-auto shadow-xl border-t-4 border-accent p-6 md:p-8">
         <CardHeader className="p-0 mb-6">
           <div className="mx-auto bg-accent/10 p-5 rounded-full w-fit mb-6">
             <Sparkles className="h-16 w-16 text-accent" />
@@ -186,6 +193,16 @@ export default function SubscribePageContent() {
             Subscription Price: <span className="text-accent">$9.99 / month</span>
           </p>
           <p className="text-sm text-muted-foreground -mt-4">(Example price. Configure yours in Stripe & .env)</p>
+          
+          {subscribeError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Subscription Error</AlertTitle>
+              <AlertDescription>
+                {subscribeError}
+                <Button onClick={handleSubscribe} variant="outline" className="ml-2 mt-2">Try Again</Button>
+              </AlertDescription>
+            </Alert>
+          )}
           
           <Button 
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-xl py-7 shadow-lg hover:shadow-xl transition-all transform hover:scale-105" 

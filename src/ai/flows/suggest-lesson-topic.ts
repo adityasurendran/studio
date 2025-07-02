@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Suggests a lesson topic for a child based on their profile and learning history.
@@ -9,6 +8,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { logInfo, logError, logWarn } from '@/lib/logger';
 
 const SuggestLessonTopicInputSchema = z.object({
   childAge: z.number().describe('The age of the child.'),
@@ -68,17 +68,17 @@ const suggestLessonTopicFlowInternal = ai.defineFlow(
     outputSchema: SuggestLessonTopicOutputSchema,
   },
   async (input) => {
-    console.log('[suggestLessonTopicFlowInternal] Flow started with input:', JSON.stringify(input, null, 2));
+    logInfo('[suggestLessonTopicFlowInternal] Flow started with input:', JSON.stringify(input, null, 2));
     try {
       const { output } = await suggestTopicPrompt(input);
       if (!output) {
-        console.error('[suggestLessonTopicFlowInternal] AI model returned no output. Input:', JSON.stringify(input, null, 2));
+        logError('[suggestLessonTopicFlowInternal] AI model returned no output. Input:', JSON.stringify(input, null, 2));
         throw new Error('AI model did not return a lesson topic suggestion.');
       }
-      console.log('[suggestLessonTopicFlowInternal] Successfully received output from prompt:', JSON.stringify(output, null, 2));
+      logInfo('[suggestLessonTopicFlowInternal] Successfully received output from prompt:', JSON.stringify(output, null, 2));
       return output;
     } catch (error: any) {
-      console.error(`[suggestLessonTopicFlowInternal] Error during prompt execution for input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      logError(`[suggestLessonTopicFlowInternal] Error during prompt execution for input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       let errorMessage = "Topic suggestion failed during AI prompt execution.";
       if (error && error.message) errorMessage = `AI prompt for topic suggestion failed: ${error.message}`;
       throw new Error(errorMessage);
@@ -87,13 +87,13 @@ const suggestLessonTopicFlowInternal = ai.defineFlow(
 );
 
 export async function suggestLessonTopic(input: SuggestLessonTopicInput): Promise<SuggestLessonTopicOutput> {
-  console.log('[suggestLessonTopic wrapper] Called with input:', JSON.stringify(input, null, 2));
+  logInfo('[suggestLessonTopic wrapper] Called with input:', JSON.stringify(input, null, 2));
   try {
     const result = await suggestLessonTopicFlowInternal(input);
-    console.log('[suggestLessonTopic wrapper] Successfully suggested topic:', result.suggestedTopic);
+    logInfo('[suggestLessonTopic wrapper] Successfully suggested topic:', result.suggestedTopic);
     return result;
   } catch (error: any) {
-     console.error(`[suggestLessonTopic wrapper] Error during topic suggestion flow for input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+     logError(`[suggestLessonTopic wrapper] Error during topic suggestion flow for input: ${JSON.stringify(input, null, 2)}. Error:`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     let userFriendlyMessage = "Failed to suggest a lesson topic. ";
     if (error && error.message) {
         const lowerCaseMessage = error.message.toLowerCase();

@@ -6,6 +6,7 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   background: linear-gradient(135deg, #ececec 0%, #c7d2fe 50%, #60a5fa 100%);
   color: var(--foreground);
+  margin: 0 !important;
 }
 
 /* OpenDyslexic font support */
@@ -414,4 +415,9 @@ html {
   font-weight: 700;
   font-style: italic;
   font-display: swap;
+}
+
+/* Utility to disable horizontal scrolling on non-home pages */
+.no-x-scroll {
+  overflow-x: hidden !important;
 }

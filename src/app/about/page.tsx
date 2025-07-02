@@ -9,7 +9,7 @@ import Image from "next/image";
 export default function AboutPage() {
   return (
     <div className="w-full py-8 sm:py-12 px-2 sm:px-4">
-      <Card className="shadow-xl border-t-4 border-primary overflow-hidden w-full">
+      <Card className="w-full sm:max-w-2xl md:max-w-4xl mx-auto shadow-xl border-t-4 border-primary overflow-hidden">
         <CardHeader className="text-center bg-gradient-to-br from-primary/10 via-card to-accent/5 p-6 sm:p-8 md:p-12">
           <div className="mx-auto mb-4 sm:mb-6 transform transition-transform hover:scale-110">
             <Logo className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 text-primary" />

@@ -85,6 +85,9 @@ export default function LessonGeneratorForm({ childProfile, initialTopic }: Less
         title: "Error Generating Lesson",
         description: error instanceof Error ? error.message : "Something went wrong. Please try again or adjust the topic.",
         variant: "destructive",
+        action: (
+          <Button onClick={handleRegenerateLastLesson} variant="outline" className="ml-2">Try Again</Button>
+        ),
       });
     } finally {
       setIsLoading(false);

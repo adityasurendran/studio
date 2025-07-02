@@ -10,12 +10,13 @@ import { useRouter } from 'next/navigation';
 import { LogIn, LogOut, UserPlus, LayoutDashboard, HelpCircle, Info, Menu } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Logo from '@/components/logo'; 
-import { isCompetitionModeEnabled } from '@/config'; // Import the configuration
+import { useCompetitionMode } from '@/hooks/use-competition-mode';
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export default function Header() {
   const { currentUser, parentProfile } = useAuth();
+  const { competitionMode, loading: competitionLoading } = useCompetitionMode();
   const router = useRouter();
   const { toast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -31,7 +32,7 @@ export default function Header() {
     }
   };
 
-  const dashboardLink = (currentUser && (parentProfile?.isSubscribed || isCompetitionModeEnabled)) ? "/dashboard" : "/subscribe";
+  const dashboardLink = (currentUser && (parentProfile?.isSubscribed || competitionMode)) ? "/dashboard" : "/subscribe";
 
   const NavigationLinks = () => (
     <>
@@ -84,33 +85,40 @@ export default function Header() {
   );
 
   return (
-    <header className="bg-card shadow-md sticky top-0 z-50 h-[var(--header-height,4rem)] flex items-center w-full">
-      <div className="w-full px-3 sm:px-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
-          <Logo className="h-6 w-auto sm:h-8" /> 
-          <span className="hidden sm:inline">nyro</span>
-        </Link>
-        
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1 sm:gap-2">
-          <NavigationLinks />
-        </nav>
+    <header className="w-full border-b bg-background sticky top-0 z-50">
+      {competitionMode && !competitionLoading && (
+        <div className="w-full bg-green-600 text-white text-center py-2 text-sm font-semibold tracking-wide shadow-md">
+          Competition Mode Active: All features are unlocked for demo/testing.
+        </div>
+      )}
+      <div className="bg-card shadow-md sticky top-0 z-50 h-[var(--header-height,4rem)] flex items-center w-full">
+        <div className="w-full px-3 sm:px-4 flex justify-between items-center">
+          <Link href="/" className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
+            <Logo className="h-6 w-auto sm:h-8" /> 
+            <span className="hidden sm:inline">nyro</span>
+          </Link>
+          
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-1 sm:gap-2">
+            <NavigationLinks />
+          </nav>
 
-        {/* Mobile Navigation */}
-        <div className="md:hidden">
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[320px]">
-              <div className="flex flex-col gap-2 mt-6">
-                <NavigationLinks />
-              </div>
-            </SheetContent>
-          </Sheet>
+          {/* Mobile Navigation */}
+          <div className="md:hidden">
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[280px] sm:w-[320px]">
+                <div className="flex flex-col gap-2 mt-6">
+                  <NavigationLinks />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </header>

@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Generates an image for a given sentence or pair of sentences using an AI model.
@@ -9,6 +8,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { logInfo, logError } from '@/lib/logger';
 
 const GenerateImageInputSchema = z.object({
   sentences: z.array(z.string()).min(1, "At least one sentence is required.").max(2, "No more than two sentences are allowed.").describe('The sentences to generate an image for (1 or 2).'),
@@ -49,7 +49,7 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
     promptText += ` Focus on a clear, imaginative, and engaging visual that complements the learning material without directly showing any written language. The final image MUST be purely pictorial and contain NO form of letters, numbers, or symbols that constitute text. ABSOLUTELY NO TEXT. The image must not contain any words or letters. Generate an image without any text. The image must be purely visual, with no words, letters, or numbers at all.`;
 
     try {
-      console.log('[generateImageForSentenceFlowInternal] Attempting to generate image. Prompt text length:', promptText.length, 'Sentences:', input.sentences.join(' '));
+      logInfo('[generateImageForSentenceFlowInternal] Attempting to generate image. Prompt text length:', promptText.length, 'Sentences:', input.sentences.join(' '));
       const { media } = await ai.generate({
         model: 'googleai/gemini-2.0-flash-exp', 
         prompt: promptText,
@@ -59,13 +59,13 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
       });
 
       if (!media || !media.url) {
-        console.error('[generateImageForSentenceFlowInternal] Image generation failed: No image URL returned by the model. Sentences:', input.sentences.join(' '), 'Full Prompt Sent:', promptText, 'Response media object:', JSON.stringify(media));
+        logError('[generateImageForSentenceFlowInternal] Image generation failed: No image URL returned by the model. Sentences:', input.sentences.join(' '), 'Full Prompt Sent:', promptText, 'Response media object:', JSON.stringify(media));
         throw new Error('Image generation failed: No image data received from the model. This might be due to content restrictions, an issue with the AI model, or the generated prompt.');
       }
-      console.log('[generateImageForSentenceFlowInternal] Image generated successfully. URI length:', media.url.length);
+      logInfo('[generateImageForSentenceFlowInternal] Image generated successfully. URI length:', media.url.length);
       return { imageDataUri: media.url };
     } catch (error: any) {
-      console.error("[generateImageForSentenceFlowInternal] Error during image generation for sentences:", input.sentences.join(' '), "Prompt:", promptText, "Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      logError("[generateImageForSentenceFlowInternal] Error during image generation for sentences:", input.sentences.join(' '), "Prompt:", promptText, "Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       
       let errorMessage = "Image generation failed due to an internal server error.";
       let isSafetyRelated = false;
@@ -125,13 +125,13 @@ const generateImageForSentenceFlowInternal = ai.defineFlow(
 
 // Exported async wrapper function
 export async function generateImageForSentence(input: GenerateImageInput): Promise<GenerateImageOutput> {
-  console.log('[generateImageForSentence wrapper] Called with input:', JSON.stringify(input, null, 2));
+  logInfo('[generateImageForSentence wrapper] Called with input:', JSON.stringify(input, null, 2));
   try {
     const result = await generateImageForSentenceFlowInternal(input);
-    console.log('[generateImageForSentence wrapper] Successfully generated image.');
+    logInfo('[generateImageForSentence wrapper] Successfully generated image.');
     return result;
   } catch (error: any) {
-    console.error(`[generateImageForSentence wrapper] Error during image generation flow for sentences "${input.sentences.join(' ')}":`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    logError(`[generateImageForSentence wrapper] Error during image generation flow for sentences "${input.sentences.join(' ')}":`, error.message ? error.message : JSON.stringify(error), "Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     // Construct a more user-friendly error message to be thrown up
     let userFriendlyMessage = `Failed to generate image for: "${input.sentences.join(' ')}". `;
     if (error && error.message) {

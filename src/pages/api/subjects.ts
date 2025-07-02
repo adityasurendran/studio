@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
+import { logError } from '@/lib/logger';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -19,7 +20,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     res.status(200).json(subjects);
   } catch (error) {
-    console.error('Error reading subject mapping:', error);
+    logError('Error reading subject mapping:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 } 
