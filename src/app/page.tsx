@@ -52,7 +52,6 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5"></div>
         <div className="relative w-full text-center">
           {/* Animated Logo */}
           <div className="flex justify-center mb-12 animate-slide-in-up">
@@ -130,7 +129,6 @@ export default function HomePage() {
 
       {/* Features Section */}
       <section className="relative py-24 sm:py-32">
-        <div className="absolute inset-0 bg-gradient-to-b from-card/30 to-transparent"></div>
         <div className="relative w-full max-w-7xl mx-auto px-4">
           <div className="text-center mb-20 animate-slide-in-up">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6 hover-lift">
@@ -263,7 +261,6 @@ export default function HomePage() {
 
       {/* Testimonials Section */}
       <section className="relative py-24 sm:py-32">
-        <div className="absolute inset-0 bg-gradient-to-b from-card/30 to-transparent"></div>
         <div className="relative w-full max-w-7xl mx-auto px-4">
           <div className="text-center mb-20 animate-slide-in-up">
             <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-full text-sm font-medium mb-6 hover-lift">
@@ -329,7 +326,6 @@ export default function HomePage() {
 
       {/* Final CTA Section */}
       <section className="relative py-24 sm:py-32 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5"></div>
         <div className="relative w-full max-w-4xl mx-auto px-4 text-center">
           <div className="mb-12 animate-slide-in-up">
             <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mb-8 animate-gradient-shift">
