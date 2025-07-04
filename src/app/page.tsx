@@ -82,7 +82,7 @@ export default function HomePage() {
           </div>
           
           {/* Subtitle */}
-          <p className="text-xl sm:text-2xl md:text-3xl text-muted-foreground mb-12 max-w-5xl mx-auto leading-relaxed font-light animate-slide-in-up" style={{animationDelay: '0.4s'}}>
+          <p className="text-xl sm:text-2xl md:text-3xl text-gray-900 mb-12 max-w-5xl mx-auto leading-relaxed font-light animate-slide-in-up" style={{animationDelay: '0.4s'}}>
             nyro creates <span className="text-primary font-semibold">personalized, engaging lessons</span> that adapt to your child's unique learning style, 
             making education <span className="text-accent font-semibold">accessible and enjoyable</span> for children with learning difficulties.
           </p>
@@ -110,7 +110,7 @@ export default function HomePage() {
           </div>
           
           {/* Trust Indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground animate-slide-in-up" style={{animationDelay: '0.8s'}}>
+          <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-900 animate-slide-in-up" style={{animationDelay: '0.8s'}}>
             <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-4 py-2 rounded-full border border-primary/10 hover-lift">
               <CheckCircle className="h-4 w-4 text-green-500" />
               <span>No credit card required</span>
@@ -135,11 +135,11 @@ export default function HomePage() {
               <Lightbulb className="h-4 w-4" />
               Why Parents Choose nyro
             </div>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary mb-8">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-8">
               Revolutionary Learning
               <span className="block text-accent">Experience</span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-900 max-w-4xl mx-auto leading-relaxed">
               Our AI-powered platform adapts to your child's unique needs, making learning engaging and effective.
             </p>
           </div>
@@ -189,12 +189,12 @@ export default function HomePage() {
                   <div className={`mx-auto w-16 h-16 bg-${feature.color}/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-${feature.color}/20 transition-all duration-500 group-hover:scale-110`}>
                     <feature.icon className={`h-8 w-8 text-${feature.color}`} />
                   </div>
-                  <CardTitle className="text-2xl font-bold text-primary group-hover:text-accent transition-colors duration-300">
+                  <CardTitle className="text-2xl font-bold text-foreground group-hover:text-accent transition-colors duration-300">
                     {feature.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center relative z-10">
-                  <p className="text-muted-foreground text-lg leading-relaxed">
+                  <p className="text-gray-900 text-lg leading-relaxed">
                     {feature.description}
                   </p>
                 </CardContent>
@@ -212,11 +212,11 @@ export default function HomePage() {
               <Clock className="h-4 w-4" />
               Get Started in Minutes
             </div>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary mb-8">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-8">
               How nyro
               <span className="block text-accent">Works</span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-900 max-w-4xl mx-auto leading-relaxed">
               Get started in minutes and watch your child's learning journey begin.
             </p>
           </div>
@@ -247,10 +247,10 @@ export default function HomePage() {
                   <span className={`text-3xl font-black text-${step.color}`}>{step.step}</span>
                   <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/20 animate-spin-slow"></div>
                 </div>
-                <h3 className="text-2xl font-bold text-primary mb-6 group-hover:text-accent transition-colors duration-300">
+                <h3 className="text-2xl font-bold text-foreground mb-6 group-hover:text-accent transition-colors duration-300">
                   {step.title}
                 </h3>
-                <p className="text-lg text-muted-foreground leading-relaxed">
+                <p className="text-lg text-gray-900 leading-relaxed">
                   {step.description}
                 </p>
               </div>
@@ -267,7 +267,7 @@ export default function HomePage() {
               <Heart className="h-4 w-4" />
               Loved by Parents
             </div>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary mb-8">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-8">
               What Parents
               <span className="block text-accent">Say</span>
             </h2>
@@ -305,7 +305,7 @@ export default function HomePage() {
                       <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
                     ))}
                   </div>
-                  <p className="text-lg text-muted-foreground mb-8 leading-relaxed italic">
+                  <p className="text-lg text-gray-900 mb-8 leading-relaxed italic">
                     "{testimonial.quote}"
                   </p>
                   <div className="flex items-center">
@@ -313,8 +313,8 @@ export default function HomePage() {
                       <testimonial.icon className={`h-6 w-6 text-${testimonial.color}`} />
                     </div>
                     <div>
-                      <p className="font-bold text-lg text-primary">{testimonial.author}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                      <p className="font-bold text-lg text-foreground">{testimonial.author}</p>
+                      <p className="text-sm text-gray-900">{testimonial.role}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -332,7 +332,7 @@ export default function HomePage() {
               Ready to Transform
               <span className="block">Your Child's Learning?</span>
             </h2>
-            <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-900 mb-12 max-w-3xl mx-auto leading-relaxed">
               Join thousands of parents who have discovered the power of personalized AI-driven education.
             </p>
           </div>
@@ -358,7 +358,7 @@ export default function HomePage() {
             </Link>
           </div>
           
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground animate-slide-in-up" style={{animationDelay: '0.4s'}}>
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-900 animate-slide-in-up" style={{animationDelay: '0.4s'}}>
             <div className="flex items-center gap-2 bg-card/50 backdrop-blur-sm px-4 py-2 rounded-full border border-primary/10 hover-lift">
               <CheckCircle className="h-4 w-4 text-green-500" />
               <span>No credit card required</span>
